@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "skills": {
+    "aspire": {
+      "source": "microsoft/aspire-skills",
+      "sourceType": "github",
+      "skillPath": "skills/aspire/SKILL.md",
+      "computedHash": "fcf81a02a2f794422bea04350e128615e201d052ecb95c8b19fa4141452d20f3"
+    },
+    "aspire-deployment": {
+      "source": "microsoft/aspire-skills",
+      "sourceType": "github",
+      "skillPath": "skills/aspire-deployment/SKILL.md",
+      "computedHash": "fc71deda61e986ed2b3e216068405d76b1337b9825b23df8c35ee8a238a5acc2"
+    },
+    "aspire-init": {
+      "source": "microsoft/aspire-skills",
+      "sourceType": "github",
+      "skillPath": "skills/aspire-init/SKILL.md",
+      "computedHash": "b80490fd95311bf726f97c46b8dfc6fbe88d72f239ab13e196720e21585b490d"
+    },
+    "aspire-monitoring": {
+      "source": "microsoft/aspire-skills",
+      "sourceType": "github",
+      "skillPath": "skills/aspire-monitoring/SKILL.md",
+      "computedHash": "d2eb3be3045929365231cd72c04aa553ab4bf92c1397671c1ed4eb6c96eb82c2"
+    },
+    "aspire-orchestration": {
+      "source": "microsoft/aspire-skills",
+      "sourceType": "github",
+      "skillPath": "skills/aspire-orchestration/SKILL.md",
+      "computedHash": "5d160cc8292d227b4d7ccaa1af8b683a8a43cdd704f7ac016d93b80228a92e30"
+    },
+    "aspireify": {
+      "source": "microsoft/aspire-skills",
+      "sourceType": "github",
+      "skillPath": "skills/aspireify/SKILL.md",
+      "computedHash": "b9200146c40349b485e63a1758846ee26ce9d1dba19a97b65b6d935e1241777a"
+    }
+  }
+}
