@@ -21,5 +21,6 @@ jobs:
   tests:
     uses: ./.github/workflows/_run-tests.yml
     with:
+      publish_test_results_to_github: true
       publish_test_results_comment_mode: always
       publish_test_results_check_name: Pull Request Test Results

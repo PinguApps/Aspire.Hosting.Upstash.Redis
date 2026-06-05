@@ -11,6 +11,14 @@ on:
         required: false
         type: string
         default: Test Results
+      publish_test_results_to_github:
+        required: false
+        type: boolean
+        default: false
+      checkout_ref:
+        required: false
+        type: string
+        default: ''
   workflow_dispatch:
 
 permissions:
@@ -49,7 +57,7 @@ jobs:
             --results-directory TestResults
 
       - name: Publish test results
-        if: success() || failure()
+        if: (success() || failure()) && inputs.publish_test_results_to_github
         uses: EnricoMi/publish-unit-test-result-action/linux@c950f6fb443cb5af20a377fd0dfaa78838901040 # v2
         with:
           files: TestResults/**/*.trx
