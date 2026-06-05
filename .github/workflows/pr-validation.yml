@@ -20,6 +20,6 @@ jobs:
       checks: write
       pull-requests: write
     with:
-      publish_test_results_to_github: true
+      publish_test_results_to_github: ${{ !github.event.pull_request.head.repo.fork }}
       publish_test_results_comment_mode: always
       publish_test_results_check_name: Pull Request Test Results
