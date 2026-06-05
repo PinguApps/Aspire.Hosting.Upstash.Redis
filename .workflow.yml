@@ -1,0 +1,96 @@
+repo:
+  base_branch: main
+  remote_name: origin
+  branch_prefix: agent/
+  sync_before_dispatch: true
+  commit_on_success: true
+  push_on_success: true
+
+tracker:
+  project_slug: ################################################# TODO
+  kind: linear
+  active_states:
+    - Planned
+    - In Progress
+  terminal_states:
+    - Canceled
+    - Duplicate
+    - Done
+  move_to_state_on_dispatch: In Progress
+
+eligibility:
+  team_key: PIN
+  required_labels:
+    - Agent
+  excluded_labels:
+    - Blocked
+
+polling:
+  interval_ms: 30000
+
+hooks:
+  timeout_ms: 60000
+  after_create: |
+    dotnet restore ./Aspire.Hosting.Upstash.Redis.slnx
+  before_run: |
+    git status --short
+  after_run: |
+    git status --short
+
+agent:
+  max_concurrent_agents: 5
+  max_turns: 10
+  max_retry_backoff_ms: 300000
+
+docker:
+  enabled: true
+  image: agentorchestrator-agent:latest
+  workspace_mount_path: /workspace
+  additional_args:
+    - --network=host
+
+codex:
+  command: codex app-server
+  approval_policy: never
+  thread_sandbox: workspace-write
+  turn_sandbox_policy:
+    type: workspaceWrite
+    networkAccess: true
+  turn_timeout_ms: 3600000
+  read_timeout_ms: 5000
+  stall_timeout_ms: 300000
+  model: gpt-5.5
+  reasoning_effort: medium
+
+validation:
+  commands:
+    - dotnet build ./Aspire.Hosting.Upstash.Redis.slnx
+
+github:
+  create_pr_on_success: true
+  draft_pr: false
+  base_branch: main
+  remote_name: origin
+  labels:
+    - agent
+
+review:
+  monitor_prs: true
+  poll_interval_ms: 60000
+  max_concurrent_fix_agents: 5
+  ready_label: ReviewReady
+  ready_timeout_ms: 900000
+
+prompt: |
+  You are working in a per-issue git worktree for {{ issue.Identifier }}.
+
+  Issue: {{ issue.Title }}
+  Description:
+  {{ issue.Description }}
+  State: {{ issue.State }}
+  URL: {{ issue.Url }}
+  Team: {{ issue.TeamKey }}
+  Labels: {{ issue.Labels }}
+  Attempt: {{ attempt }}
+
+  Follow this repository's engineering standards. Make the smallest correct change, run validation, and leave a concise summary in your final response.
