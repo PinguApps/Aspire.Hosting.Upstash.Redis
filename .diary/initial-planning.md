@@ -25,3 +25,8 @@
   - Why: User requested one markdown task file per step with full execution detail, dependency order, parallelism, testing expectations, and PR/update rules.
   - Change: Created `plans/` with 22 numbered task files covering investigation, implementation, testing, docs, samples, and final validation; verified file count and numbering (files: plans/*.md, .diary/initial-planning.md | cmds: `rg --files plans`, `Get-ChildItem plans -File | Measure-Object`, `git status --short`)
   - Notes: Each task now requires its own testing, PR detail, and plan-file maintenance if investigation changes downstream scope.
+### 2026-06-06 01:00 Z (feature/initial-planning)
+- Tighten plan maintenance rules [build] (impact: low)
+  - Why: User wants every task to explicitly require repo-state synchronization before PR creation.
+  - Change: Added the same repository-state rule to all 22 task descriptions in `plans/`, requiring relevant `plans/`, `AGENTS.md`, and `README.md` updates in the same PR whenever repo state changes; verified the rule exists in every plan file (files: plans/*.md, .diary/initial-planning.md | cmds: `rg -n "Repository state rule" plans`, `rg -l "Repository state rule" plans | Measure-Object`, `git status --short`)
+  - Notes: The rule now makes plan updates, `AGENTS.md` updates, and `README.md` updates part of every task's completion criteria when those documents are affected.
