@@ -30,3 +30,8 @@
   - Why: User wants every task to explicitly require repo-state synchronization before PR creation.
   - Change: Added the same repository-state rule to all 22 task descriptions in `plans/`, requiring relevant `plans/`, `AGENTS.md`, and `README.md` updates in the same PR whenever repo state changes; verified the rule exists in every plan file (files: plans/*.md, .diary/initial-planning.md | cmds: `rg -n "Repository state rule" plans`, `rg -l "Repository state rule" plans | Measure-Object`, `git status --short`)
   - Notes: The rule now makes plan updates, `AGENTS.md` updates, and `README.md` updates part of every task's completion criteria when those documents are affected.
+### 2026-06-06 01:08 Z (feature/initial-planning)
+- Expand repository guidance [build] (impact: low)
+  - Why: User wanted `AGENTS.md` to preserve the original content while also describing the current repo state and the planned end-state succinctly for future agents.
+  - Change: Appended a repo-specific guidance section to `AGENTS.md` covering repository goal, planned product contract, current state, technical baseline, testing rules, plan-governance rules, documentation-sync requirements, and implementation boundaries; verified the final file reads cleanly and leaves the original user-authored content intact (files: AGENTS.md, .diary/initial-planning.md | cmds: `Get-Content AGENTS.md`, `git status --short`)
+  - Notes: `AGENTS.md` now mirrors the task-plan contract and gives future implementation agents a concise source of truth for the repository.

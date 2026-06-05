@@ -102,3 +102,94 @@ For multi-step tasks, state a brief plan:
 ```
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
+
+## Repository-Specific Guidance
+
+### Preserve Baseline Content
+- Everything above this section is the user-authored baseline. Keep it intact.
+- Add repo-state updates beneath the existing content unless a future change clearly requires restructuring for accuracy.
+
+### Repository Goal
+- This repository is for an open source Aspire hosting integration for Upstash Redis.
+- The intended consumer experience starts from standard Aspire Redis usage, such as `builder.AddRedis("cache")`.
+- Local development should continue to behave like normal Aspire Redis.
+- Upstash behavior is opt-in and should only happen during `aspire deploy`, not during normal local runs.
+
+### Planned Product Contract
+- The package should let a consumer opt a standard Redis resource into Upstash publishing through a single publish-oriented API.
+- The deployment contract must support three ownership modes:
+  - create-only
+  - existing-only
+  - create-or-adopt
+- The remote Upstash database name is explicit and required.
+- Upstash management authentication is infrastructure-only and uses separate account email and API key values.
+- The consuming application should receive Redis connection details, not the Upstash management API key.
+- Repeated deploys should target the same intended remote database and reconcile only settings the caller explicitly set.
+- If an explicitly requested setting cannot be safely reconciled, deployment must fail clearly.
+- The package must never auto-delete remote Upstash databases in v1.
+- App-facing outputs are expected to include:
+  - a standard Redis connection string
+  - host / endpoint
+  - port
+  - password
+  - TLS enabled flag
+  - database name
+
+### Current Repository State
+- The repository currently contains the package project, the test project, shared build settings, and planning artifacts, but no implemented product code yet.
+- `src/Aspire.Hosting.Upstash.Redis/Aspire.Hosting.Upstash.Redis.csproj` is the main package project to implement.
+- `tests/Aspire.Hosting.Upstash.Redis/` is the single test project and should remain the home for the package test suite.
+- `plans/` contains the current implementation roadmap as 22 numbered task files from `0.1` through `7.3`.
+- `.diary/` contains branch-specific session state and must be read and maintained per the diary rules above.
+- `README.md` is still effectively a placeholder and must be brought into sync as real behavior lands.
+
+### Technical Baseline
+- Target framework: `.NET 10`.
+- Target Aspire version for v1 planning: `13.4.2`.
+- The package is Upstash Redis only. Do not broaden scope to non-Redis Upstash products in v1.
+- The desired v1 option surface includes:
+  - database name
+  - platform / cloud provider
+  - primary region
+  - read regions
+  - plan
+  - budget
+  - eviction
+  - TLS
+
+### Testing Rules For This Repository
+- Full test coverage is the goal.
+- Every task that introduces or changes code must add or update tests in the same PR.
+- All tests in this repository should use Reqnroll feature files and step definitions. Do not introduce a second testing style for product behavior.
+- Each task should validate its own work before PR creation. Do not defer obvious missing coverage to later tasks unless the plan explicitly says that later task is the first valid place for it.
+
+### Plans As Source Of Truth
+- Treat `plans/` as the execution board for this repository.
+- The numbering expresses dependency stages and parallelism:
+  - `0.x` tasks can run first
+  - tasks with the same stage prefix may run in parallel if their dependencies allow it
+  - later stages assume earlier blocking work is complete
+- If implementation or investigation changes the actual required order, scope, or dependency graph, update the affected plan files in the same PR before it is created.
+- Do not let the plan drift behind the code.
+
+### Documentation Sync Rule
+- Keep the repository's documented state accurate at all times.
+- Whenever a task changes behavior, structure, workflow, usage, constraints, validation, or roadmap reality, update the relevant documentation in the same PR.
+- At minimum, consider whether the change requires updates to:
+  - `README.md`
+  - `AGENTS.md`
+  - one or more files in `plans/`
+  - `.diary/<branch>.md`
+- A PR is not complete if the code, tests, `README.md`, `AGENTS.md`, and relevant plan files describe different realities.
+
+### Task Execution Rule
+- When working a plan task, read the specific file in `plans/` first and treat it as an executable brief.
+- If a task includes investigation and that investigation changes assumptions, update the impacted task files before opening the PR.
+- If a task discovers new required work, create or revise plan files in the same branch rather than leaving the follow-up only in PR prose.
+- PR descriptions should explain the work in enough detail that the next agent can understand what changed, why it changed, what was tested, and whether any plan files were updated.
+
+### Implementation Boundaries
+- Prefer the smallest correct implementation that satisfies the current task and the locked product contract.
+- Preserve normal Aspire Redis local behavior unless the task explicitly concerns deploy-time Upstash behavior.
+- Keep application-facing Redis outputs separate from infrastructure-only Upstash management credentials.
+- Do not add speculative features such as auto-delete, non-Redis Upstash products, or extra provider abstractions that are not required by the current plan.
