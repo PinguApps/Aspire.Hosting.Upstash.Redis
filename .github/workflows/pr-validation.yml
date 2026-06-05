@@ -8,11 +8,6 @@ on:
       - reopened
       - ready_for_review
 
-permissions:
-  contents: read
-  checks: write
-  pull-requests: write
-
 concurrency:
   group: pull-request-validation-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -20,6 +15,10 @@ concurrency:
 jobs:
   tests:
     uses: ./.github/workflows/_run-tests.yml
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
     with:
       publish_test_results_to_github: true
       publish_test_results_comment_mode: always
