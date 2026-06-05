@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/repo/">
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Build.targets" />
+    <File Path="Directory.Packages.props" />
+    <File Path="global.json" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Aspire.Hosting.Upstash.Redis/Aspire.Hosting.Upstash.Redis.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Aspire.Hosting.Upstash.Redis/Aspire.Hosting.Upstash.Redis.Tests.csproj" />
+  </Folder>
+</Solution>
