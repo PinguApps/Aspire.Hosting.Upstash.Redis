@@ -7,7 +7,7 @@ repo:
   push_on_success: true
 
 tracker:
-  project_slug: ################################################# TODO
+  project_slug: aspire-upstash-cedc0e52e09f
   kind: linear
   active_states:
     - Planned
