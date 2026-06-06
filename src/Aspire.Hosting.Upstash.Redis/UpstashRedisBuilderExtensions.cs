@@ -36,6 +36,8 @@ public static class UpstashRedisBuilderExtensions
         UpstashRedisDeploymentOptions options = new();
         configure?.Invoke(options);
 
+        RemoveExistingUpstashPipelineStep(builder.Resource);
+
         builder.WithAnnotation(
             new UpstashRedisDeploymentAnnotation(
                 databaseName,
@@ -52,5 +54,26 @@ public static class UpstashRedisBuilderExtensions
             requiredBy: [WellKnownPipelineSteps.Deploy],
             tags: [WellKnownPipelineTags.ProvisionInfrastructure],
             description: "Provision or reconcile the Upstash Redis database.");
+    }
+
+    private static void RemoveExistingUpstashPipelineStep(RedisResource resource)
+    {
+        for (int annotationIndex = 0; annotationIndex < resource.Annotations.Count; annotationIndex++)
+        {
+            if (resource.Annotations[annotationIndex] is not UpstashRedisDeploymentAnnotation)
+            {
+                continue;
+            }
+
+            int pipelineStepAnnotationIndex = annotationIndex + 1;
+
+            if (pipelineStepAnnotationIndex < resource.Annotations.Count
+                && resource.Annotations[pipelineStepAnnotationIndex] is PipelineStepAnnotation)
+            {
+                resource.Annotations.RemoveAt(pipelineStepAnnotationIndex);
+            }
+
+            return;
+        }
     }
 }

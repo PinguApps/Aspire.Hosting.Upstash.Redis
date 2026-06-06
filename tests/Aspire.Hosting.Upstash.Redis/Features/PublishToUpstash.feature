@@ -13,3 +13,10 @@ Feature: Publish Redis to Upstash
     When the Redis resource is marked for Upstash database "orders-cache"
     And a consuming container references the Redis resource
     Then the Redis reference chain is configured for the consuming container
+
+  Scenario: Reconfiguring a Redis resource for Upstash replaces deployment intent
+    Given a standard Aspire Redis resource named "cache"
+    When the Redis resource is marked for Upstash database "orders-cache"
+    And the Redis resource is marked for Upstash database "updated-orders-cache"
+    Then the resource has Upstash deployment metadata for database "updated-orders-cache"
+    And the resource has one Upstash deployment pipeline step

@@ -14,6 +14,8 @@ public sealed class PublishToUpstashStepDefinitions
     private IDistributedApplicationBuilder? _appBuilder;
     private IResourceBuilder<RedisResource>? _redisBuilder;
     private IResourceBuilder<ContainerResource>? _containerBuilder;
+    private IResourceBuilder<ParameterResource>? _accountEmail;
+    private IResourceBuilder<ParameterResource>? _apiKey;
 
     [Given("a standard Aspire Redis resource named {string}")]
     public void GivenAStandardAspireRedisResourceNamed(string resourceName)
@@ -25,13 +27,13 @@ public sealed class PublishToUpstashStepDefinitions
     [When("the Redis resource is marked for Upstash database {string}")]
     public void WhenTheRedisResourceIsMarkedForUpstashDatabase(string databaseName)
     {
-        IResourceBuilder<ParameterResource> accountEmail = AppBuilder.AddParameter("upstash-account-email");
-        IResourceBuilder<ParameterResource> apiKey = AppBuilder.AddParameter("upstash-api-key", secret: true);
+        _accountEmail ??= AppBuilder.AddParameter("upstash-account-email");
+        _apiKey ??= AppBuilder.AddParameter("upstash-api-key", secret: true);
 
         _redisBuilder = RedisBuilder.PublishToUpstash(
             databaseName,
-            accountEmail,
-            apiKey,
+            _accountEmail,
+            _apiKey,
             configure: options =>
             {
                 options.PrimaryRegion = "eu-west-1";
@@ -101,6 +103,14 @@ public sealed class PublishToUpstashStepDefinitions
         Assert.Contains(
             containerBuilder.Resource.Annotations,
             annotation => annotation is EnvironmentCallbackAnnotation);
+    }
+
+    [Then("the resource has one Upstash deployment pipeline step")]
+    public void ThenTheResourceHasOneUpstashDeploymentPipelineStep()
+    {
+        Assert.Single(
+            RedisBuilder.Resource.Annotations,
+            annotation => annotation.GetType().FullName == "Aspire.Hosting.Pipelines.PipelineStepAnnotation");
     }
 
     private IDistributedApplicationBuilder AppBuilder =>
