@@ -16,6 +16,8 @@ internal sealed class LiveUpstashTestSession
 
     public void RegisterCleanup(Func<Task> cleanup)
     {
+        ArgumentNullException.ThrowIfNull(cleanup);
+
         _cleanupActions.Push(cleanup);
     }
 

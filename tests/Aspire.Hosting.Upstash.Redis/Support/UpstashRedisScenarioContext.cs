@@ -36,6 +36,17 @@ public sealed class UpstashRedisScenarioContext
         set;
     }
 
+    internal Exception? LastCleanupException
+    {
+        get;
+        set;
+    }
+
+    internal List<string> LiveCleanupLog
+    {
+        get;
+    } = [];
+
     internal LiveUpstashTestSession LiveUpstash
     {
         get;
