@@ -210,7 +210,7 @@ internal sealed class UpstashRedisManagementClient : IUpstashRedisManagementClie
             request.Content = JsonContent.Create(requestBody, options: _serializerOptions);
         }
 
-        using HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        using HttpResponseMessage response = await SendRequestAsync(request, cancellationToken).ConfigureAwait(false);
         string responseContent = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
 
         if (!response.IsSuccessStatusCode)
@@ -267,6 +267,22 @@ internal sealed class UpstashRedisManagementClient : IUpstashRedisManagementClie
         return deserialized;
     }
 
+    private async Task<HttpResponseMessage> SendRequestAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        }
+        catch (HttpRequestException exception)
+        {
+            throw CreateTransportFailureException(exception);
+        }
+        catch (OperationCanceledException exception) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw CreateTransportFailureException(exception);
+        }
+    }
+
     private UpstashRedisProviderException CreateFailureException(HttpStatusCode statusCode, string responseContent)
     {
         UpstashRedisProviderFailureKind failureKind = statusCode switch
@@ -286,6 +302,15 @@ internal sealed class UpstashRedisManagementClient : IUpstashRedisManagementClie
             failureKind,
             statusCode,
             $"Upstash Redis management API request failed with {(int)statusCode} {statusCode}: {providerMessage}");
+    }
+
+    private static UpstashRedisProviderException CreateTransportFailureException(Exception exception)
+    {
+        return new UpstashRedisProviderException(
+            UpstashRedisProviderFailureKind.Transient,
+            statusCode: null,
+            "Upstash Redis management API request failed before a response was returned.",
+            exception);
     }
 
     private string ExtractProviderMessage(string responseContent)

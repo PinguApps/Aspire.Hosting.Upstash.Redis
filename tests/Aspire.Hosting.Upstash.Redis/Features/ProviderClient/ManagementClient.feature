@@ -72,6 +72,16 @@ Feature: Upstash Redis management client
     When the Upstash management client lists databases with account "pingu@example.com" and API key "secret-key"
     Then the Upstash management client fails with provider kind "Authentication"
 
+  Scenario Outline: Transport failures are classified as transient
+    Given the Upstash management API fails before responding with "<Failure>"
+    When the Upstash management client lists databases with account "pingu@example.com" and API key "secret-key"
+    Then the Upstash management client fails with provider kind "Transient"
+
+    Examples:
+      | Failure          |
+      | RequestException |
+      | Timeout          |
+
   Scenario Outline: General provider exceptions default to unexpected failures
     When a general Upstash provider exception is created with constructor "<Constructor>"
     Then the Upstash management client fails with provider kind "Unexpected"

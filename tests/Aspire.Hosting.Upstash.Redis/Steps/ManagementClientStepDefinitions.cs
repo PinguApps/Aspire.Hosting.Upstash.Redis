@@ -127,6 +127,17 @@ public sealed class ManagementClientStepDefinitions : IDisposable
         });
     }
 
+    [Given("the Upstash management API fails before responding with {string}")]
+    public void GivenTheUpstashManagementApiFailsBeforeRespondingWith(string failure)
+    {
+        _handler.Enqueue((_, _) => failure switch
+        {
+            "RequestException" => throw new HttpRequestException("The Upstash host could not be reached."),
+            "Timeout" => throw new TaskCanceledException("The Upstash request timed out."),
+            _ => throw new InvalidOperationException($"Unknown transport failure '{failure}'."),
+        });
+    }
+
     [When("the Upstash management client lists databases with account {string} and API key {string}")]
     public async Task WhenTheUpstashManagementClientListsDatabasesWithAccountAndApiKey(string accountEmail, string apiKey)
     {
