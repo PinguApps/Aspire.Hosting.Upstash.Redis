@@ -46,6 +46,9 @@ docker:
   enabled: true
   image: agentorchestrator-agent:latest
   workspace_mount_path: /workspace
+  forward_env:
+    - UPSTASH_EMAIL
+    - UPSTASH_API_KEY
   additional_args:
     - --network=host
 
