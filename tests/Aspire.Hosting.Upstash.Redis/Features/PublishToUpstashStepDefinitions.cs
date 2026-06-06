@@ -16,6 +16,7 @@ public sealed class PublishToUpstashStepDefinitions
     private IResourceBuilder<ContainerResource>? _containerBuilder;
     private IResourceBuilder<ParameterResource>? _accountEmail;
     private IResourceBuilder<ParameterResource>? _apiKey;
+    private readonly List<string> _configuredReadRegions = ["eu-west-2"];
 
     [Given("a standard Aspire Redis resource named {string}")]
     public void GivenAStandardAspireRedisResourceNamed(string resourceName)
@@ -37,6 +38,7 @@ public sealed class PublishToUpstashStepDefinitions
             configure: options =>
             {
                 options.PrimaryRegion = "eu-west-1";
+                options.ReadRegions = _configuredReadRegions;
                 options.Tls = true;
             });
     }
@@ -64,8 +66,10 @@ public sealed class PublishToUpstashStepDefinitions
         Assert.Equal("upstash-account-email", annotation.AccountEmail.Name);
         Assert.Equal("upstash-api-key", annotation.ApiKey.Name);
         Assert.Equal("eu-west-1", annotation.Options.PrimaryRegion);
+        Assert.Equal(["eu-west-2"], annotation.Options.ReadRegions);
         Assert.Equal(true, annotation.Options.Tls);
         Assert.Contains(nameof(UpstashRedisDeploymentOptions.PrimaryRegion), annotation.Options.ExplicitSettings);
+        Assert.Contains(nameof(UpstashRedisDeploymentOptions.ReadRegions), annotation.Options.ExplicitSettings);
         Assert.Contains(nameof(UpstashRedisDeploymentOptions.Tls), annotation.Options.ExplicitSettings);
     }
 
@@ -80,6 +84,16 @@ public sealed class PublishToUpstashStepDefinitions
         }
 
         Assert.DoesNotContain(nameof(UpstashRedisDeploymentOptions.Plan), annotation.Options.ExplicitSettings);
+    }
+
+    [Then("mutating the configured read regions cannot mutate deployment metadata")]
+    public void ThenMutatingTheConfiguredReadRegionsCannotMutateDeploymentMetadata()
+    {
+        UpstashRedisDeploymentAnnotation annotation = Assert.Single(RedisBuilder.Resource.Annotations.OfType<UpstashRedisDeploymentAnnotation>());
+
+        _configuredReadRegions.Add("us-east-1");
+
+        Assert.Equal(["eu-west-2"], annotation.Options.ReadRegions);
     }
 
     [Then("the resource keeps the standard Redis connection properties")]

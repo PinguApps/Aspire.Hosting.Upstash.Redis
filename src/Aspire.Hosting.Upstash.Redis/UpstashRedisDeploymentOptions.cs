@@ -41,7 +41,7 @@ public sealed class UpstashRedisDeploymentOptions
         get;
         set
         {
-            field = value;
+            field = value is null ? null : Array.AsReadOnly([.. value]);
             TrackExplicitSetting(nameof(ReadRegions));
         }
     }
