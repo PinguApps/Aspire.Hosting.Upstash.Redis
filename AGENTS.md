@@ -136,10 +136,11 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
   - database name
 
 ### Current Repository State
-- The repository currently contains the package project, the test project, shared build settings, planning artifacts, and the initial Aspire integration skeleton from task `0.1`.
+- The repository currently contains the package project, the test project, shared build settings, planning artifacts, decision records, and the initial Aspire integration skeleton from task `0.1`.
 - `src/Aspire.Hosting.Upstash.Redis/Aspire.Hosting.Upstash.Redis.csproj` is the main package project to implement.
 - `tests/Aspire.Hosting.Upstash.Redis/` is the single test project and should remain the home for the package test suite.
 - `plans/` contains the current implementation roadmap as 22 numbered task files from `0.1` through `7.3`.
+- `decisions/` contains accepted architecture and product decision records. Future files that record durable decisions, rejected alternatives, or investigation outcomes should live there rather than in `plans/`.
 - `.diary/` contains branch-specific session state and must be read and maintained per the diary rules above.
 - `README.md` documents the current skeleton and planning/investigation state and must continue to be brought into sync as real behavior lands.
 - Plan `0.2` is complete and now contains the authoritative Upstash Redis management capability matrix for v1.
@@ -175,6 +176,11 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - If implementation or investigation changes the actual required order, scope, or dependency graph, update the affected plan files in the same PR before it is created.
 - Do not let the plan drift behind the code.
 
+### Decisions As Source Of Truth
+- Treat `decisions/` as the repository's home for durable decision records.
+- Decision files should capture the accepted direction, important evidence, rejected alternatives, and any boundaries that future implementation must preserve.
+- If later work changes or supersedes a recorded decision, update or add the affected decision record in the same PR.
+
 ### Documentation Sync Rule
 - Keep the repository's documented state accurate at all times.
 - Whenever a task changes behavior, structure, workflow, usage, constraints, validation, or roadmap reality, update the relevant documentation in the same PR.
@@ -182,6 +188,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
   - `README.md`
   - `AGENTS.md`
   - one or more files in `plans/`
+  - one or more files in `decisions/`
   - `.diary/<branch>.md`
 - A PR is not complete if the code, tests, `README.md`, `AGENTS.md`, and relevant plan files describe different realities.
 
