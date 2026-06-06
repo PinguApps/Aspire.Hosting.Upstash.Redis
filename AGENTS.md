@@ -144,6 +144,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - `.diary/` contains branch-specific session state and must be read and maintained per the diary rules above.
 - `README.md` documents the current skeleton and planning/investigation state and must continue to be brought into sync as real behavior lands.
 - Plan `0.2` is complete and now contains the authoritative Upstash Redis management capability matrix for v1.
+- Task agents can now receive Upstash management credentials through environment variables `UPSTASH_EMAIL` and `UPSTASH_API_KEY`.
 
 ### Technical Baseline
 - Target framework: `.NET 10`.
@@ -166,6 +167,9 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - Every task that introduces or changes code must add or update tests in the same PR.
 - All tests in this repository should use Reqnroll feature files and step definitions. Do not introduce a second testing style for product behavior.
 - Each task should validate its own work before PR creation. Do not defer obvious missing coverage to later tasks unless the plan explicitly says that later task is the first valid place for it.
+- Opt-in live-provider tests are allowed when `UPSTASH_EMAIL` and `UPSTASH_API_KEY` are present. Deterministic fake-provider coverage remains the default path for normal test runs.
+- Any live Upstash test must leave the remote account in the same state it found it. Use isolated explicit database names where possible, always tear down databases created by the test, and restore any pre-existing resource settings the test changed before it exits.
+- Live-provider tests must skip cleanly when the required environment variables are absent, and they must never rely on leftover remote state from prior runs.
 
 ### Plans As Source Of Truth
 - Treat `plans/` as the execution board for this repository.
