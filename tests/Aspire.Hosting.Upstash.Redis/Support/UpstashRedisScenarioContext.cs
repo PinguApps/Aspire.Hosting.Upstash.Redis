@@ -1,0 +1,82 @@
+#pragma warning disable IDE0032
+
+using Aspire.Hosting;
+using Aspire.Hosting.ApplicationModel;
+using Aspire.Hosting.Upstash.Redis;
+
+namespace PinguApps.Aspire.Hosting.Upstash.Redis.Tests.Support;
+
+public sealed class UpstashRedisScenarioContext
+{
+    private IDistributedApplicationBuilder? _appBuilder;
+    private IResourceBuilder<RedisResource>? _redisBuilder;
+    private IResourceBuilder<ContainerResource>? _containerBuilder;
+    private IResourceBuilder<ParameterResource>? _accountEmail;
+    private IResourceBuilder<ParameterResource>? _apiKey;
+
+    public UpstashRedisDeploymentOptions? CapturedDeploymentOptions
+    {
+        get;
+        private set;
+    }
+
+    public List<string> ConfiguredReadRegions
+    {
+        get;
+    } = ["eu-west-2"];
+
+    internal FakeUpstashProvider FakeProvider
+    {
+        get;
+    } = new();
+
+    internal FakeUpstashRedisDatabase? LastProviderDatabase
+    {
+        get;
+        set;
+    }
+
+    internal LiveUpstashTestSession LiveUpstash
+    {
+        get;
+    } = new();
+
+    internal IResourceBuilder<RedisResource> RedisBuilder =>
+        _redisBuilder ?? throw new InvalidOperationException("The Redis resource has not been created.");
+
+    internal IResourceBuilder<ContainerResource> ContainerBuilder =>
+        _containerBuilder ?? throw new InvalidOperationException("The consuming container has not been created.");
+
+    private IDistributedApplicationBuilder AppBuilder =>
+        _appBuilder ?? throw new InvalidOperationException("The application builder has not been created.");
+
+    public void AddRedis(string resourceName)
+    {
+        _appBuilder = DistributedApplication.CreateBuilder();
+        _redisBuilder = _appBuilder.AddRedis(resourceName);
+    }
+
+    public void MarkRedisForUpstash(string databaseName)
+    {
+        _accountEmail ??= AppBuilder.AddParameter("upstash-account-email");
+        _apiKey ??= AppBuilder.AddParameter("upstash-api-key", secret: true);
+
+        _redisBuilder = RedisBuilder.PublishToUpstash(
+            databaseName,
+            _accountEmail,
+            _apiKey,
+            configure: options =>
+            {
+                CapturedDeploymentOptions = options;
+                options.PrimaryRegion = "eu-west-1";
+                options.ReadRegions = ConfiguredReadRegions;
+                options.Tls = true;
+            });
+    }
+
+    public void AddConsumingContainerReference()
+    {
+        _containerBuilder = AppBuilder.AddContainer("worker", "redis-reference-test")
+            .WithReference(RedisBuilder);
+    }
+}

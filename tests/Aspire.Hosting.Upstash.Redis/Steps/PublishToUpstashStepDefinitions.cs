@@ -1,67 +1,48 @@
-#pragma warning disable IDE0032
-
-using Aspire.Hosting;
-using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Upstash.Redis;
+using PinguApps.Aspire.Hosting.Upstash.Redis.Tests.Support;
 using Reqnroll;
 using Xunit;
 
-namespace PinguApps.Aspire.Hosting.Upstash.Redis.Tests.Features;
+namespace PinguApps.Aspire.Hosting.Upstash.Redis.Tests.Steps;
 
 [Binding]
 public sealed class PublishToUpstashStepDefinitions
 {
-    private IDistributedApplicationBuilder? _appBuilder;
-    private IResourceBuilder<RedisResource>? _redisBuilder;
-    private IResourceBuilder<ContainerResource>? _containerBuilder;
-    private IResourceBuilder<ParameterResource>? _accountEmail;
-    private IResourceBuilder<ParameterResource>? _apiKey;
-    private UpstashRedisDeploymentOptions? _capturedDeploymentOptions;
-    private readonly List<string> _configuredReadRegions = ["eu-west-2"];
+    private readonly UpstashRedisScenarioContext _context;
+
+    public PublishToUpstashStepDefinitions(UpstashRedisScenarioContext context)
+    {
+        _context = context;
+    }
 
     [Given("a standard Aspire Redis resource named {string}")]
     public void GivenAStandardAspireRedisResourceNamed(string resourceName)
     {
-        _appBuilder = DistributedApplication.CreateBuilder();
-        _redisBuilder = _appBuilder.AddRedis(resourceName);
+        _context.AddRedis(resourceName);
     }
 
     [When("the Redis resource is marked for Upstash database {string}")]
     public void WhenTheRedisResourceIsMarkedForUpstashDatabase(string databaseName)
     {
-        _accountEmail ??= AppBuilder.AddParameter("upstash-account-email");
-        _apiKey ??= AppBuilder.AddParameter("upstash-api-key", secret: true);
-
-        _redisBuilder = RedisBuilder.PublishToUpstash(
-            databaseName,
-            _accountEmail,
-            _apiKey,
-            configure: options =>
-            {
-                _capturedDeploymentOptions = options;
-                options.PrimaryRegion = "eu-west-1";
-                options.ReadRegions = _configuredReadRegions;
-                options.Tls = true;
-            });
+        _context.MarkRedisForUpstash(databaseName);
     }
 
     [When("a consuming container references the Redis resource")]
     public void WhenAConsumingContainerReferencesTheRedisResource()
     {
-        _containerBuilder = AppBuilder.AddContainer("worker", "redis-reference-test")
-            .WithReference(RedisBuilder);
+        _context.AddConsumingContainerReference();
     }
 
     [Then("the resource remains a standard Aspire Redis resource")]
     public void ThenTheResourceRemainsAStandardAspireRedisResource()
     {
-        Assert.IsType<RedisResource>(RedisBuilder.Resource);
+        AspireModelAssertions.AssertStandardRedisResource(_context.RedisBuilder.Resource);
     }
 
     [Then("the resource has Upstash deployment metadata for database {string}")]
     public void ThenTheResourceHasUpstashDeploymentMetadataForDatabase(string databaseName)
     {
-        UpstashRedisDeploymentAnnotation annotation = Assert.Single(RedisBuilder.Resource.Annotations.OfType<UpstashRedisDeploymentAnnotation>());
+        UpstashRedisDeploymentAnnotation annotation = AspireModelInspector.GetUpstashAnnotation(_context.RedisBuilder.Resource);
 
         Assert.Equal(databaseName, annotation.DatabaseName);
         Assert.Equal(UpstashRedisOwnershipMode.CreateOrAdopt, annotation.OwnershipMode);
@@ -79,13 +60,13 @@ public sealed class PublishToUpstashStepDefinitions
     public void ThenMutatingCapturedCallbackOptionsCannotMutateDeploymentMetadata()
     {
         UpstashRedisDeploymentOptions capturedOptions =
-            _capturedDeploymentOptions ?? throw new InvalidOperationException("The deployment options were not captured.");
+            _context.CapturedDeploymentOptions ?? throw new InvalidOperationException("The deployment options were not captured.");
 
         capturedOptions.PrimaryRegion = "us-east-1";
         capturedOptions.Plan = "payg";
         capturedOptions.Tls = false;
 
-        UpstashRedisDeploymentAnnotation annotation = Assert.Single(RedisBuilder.Resource.Annotations.OfType<UpstashRedisDeploymentAnnotation>());
+        UpstashRedisDeploymentAnnotation annotation = AspireModelInspector.GetUpstashAnnotation(_context.RedisBuilder.Resource);
 
         Assert.Equal("eu-west-1", annotation.Options.PrimaryRegion);
         Assert.Null(annotation.Options.Plan);
@@ -96,7 +77,7 @@ public sealed class PublishToUpstashStepDefinitions
     [Then("the explicit setting snapshot cannot mutate deployment metadata")]
     public void ThenTheExplicitSettingSnapshotCannotMutateDeploymentMetadata()
     {
-        UpstashRedisDeploymentAnnotation annotation = Assert.Single(RedisBuilder.Resource.Annotations.OfType<UpstashRedisDeploymentAnnotation>());
+        UpstashRedisDeploymentAnnotation annotation = AspireModelInspector.GetUpstashAnnotation(_context.RedisBuilder.Resource);
 
         if (annotation.Options.ExplicitSettings is ISet<string> exposedSettings)
         {
@@ -109,9 +90,9 @@ public sealed class PublishToUpstashStepDefinitions
     [Then("mutating the configured read regions cannot mutate deployment metadata")]
     public void ThenMutatingTheConfiguredReadRegionsCannotMutateDeploymentMetadata()
     {
-        UpstashRedisDeploymentAnnotation annotation = Assert.Single(RedisBuilder.Resource.Annotations.OfType<UpstashRedisDeploymentAnnotation>());
+        UpstashRedisDeploymentAnnotation annotation = AspireModelInspector.GetUpstashAnnotation(_context.RedisBuilder.Resource);
 
-        _configuredReadRegions.Add("us-east-1");
+        _context.ConfiguredReadRegions.Add("us-east-1");
 
         Assert.Equal(["eu-west-2"], annotation.Options.ReadRegions);
     }
@@ -119,37 +100,18 @@ public sealed class PublishToUpstashStepDefinitions
     [Then("the resource keeps the standard Redis connection properties")]
     public void ThenTheResourceKeepsTheStandardRedisConnectionProperties()
     {
-        IResourceWithConnectionString connectionResource = Assert.IsAssignableFrom<IResourceWithConnectionString>(RedisBuilder.Resource);
-        string[] propertyNames = [.. connectionResource.GetConnectionProperties().Select(property => property.Key)];
-
-        Assert.Contains("Host", propertyNames);
-        Assert.Contains("Port", propertyNames);
-        Assert.Contains("Password", propertyNames);
-        Assert.Contains("Uri", propertyNames);
+        AspireModelAssertions.AssertRedisConnectionProperties(_context.RedisBuilder.Resource);
     }
 
     [Then("the Redis reference chain is configured for the consuming container")]
     public void ThenTheRedisReferenceChainIsConfiguredForTheConsumingContainer()
     {
-        IResourceBuilder<ContainerResource> containerBuilder =
-            _containerBuilder ?? throw new InvalidOperationException("The consuming container has not been created.");
-
-        Assert.Contains(
-            containerBuilder.Resource.Annotations,
-            annotation => annotation is EnvironmentCallbackAnnotation);
+        AspireModelAssertions.AssertContainerHasEnvironmentCallback(_context.ContainerBuilder.Resource);
     }
 
     [Then("the resource has one Upstash deployment pipeline step")]
     public void ThenTheResourceHasOneUpstashDeploymentPipelineStep()
     {
-        Assert.Single(
-            RedisBuilder.Resource.Annotations,
-            annotation => annotation.GetType().FullName == "Aspire.Hosting.Pipelines.PipelineStepAnnotation");
+        Assert.Equal(1, AspireModelInspector.GetPipelineStepCount(_context.RedisBuilder.Resource));
     }
-
-    private IDistributedApplicationBuilder AppBuilder =>
-        _appBuilder ?? throw new InvalidOperationException("The application builder has not been created.");
-
-    private IResourceBuilder<RedisResource> RedisBuilder =>
-        _redisBuilder ?? throw new InvalidOperationException("The Redis resource has not been created.");
 }
