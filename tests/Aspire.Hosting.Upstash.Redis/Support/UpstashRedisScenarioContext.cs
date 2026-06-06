@@ -15,43 +15,19 @@ public sealed class UpstashRedisScenarioContext
     private IResourceBuilder<ParameterResource>? _accountEmail;
     private IResourceBuilder<ParameterResource>? _apiKey;
 
-    public UpstashRedisDeploymentOptions? CapturedDeploymentOptions
-    {
-        get;
-        private set;
-    }
+    public UpstashRedisDeploymentOptions? CapturedDeploymentOptions { get; private set; }
 
-    public List<UpstashRedisValue> ConfiguredReadRegions
-    {
-        get;
-    } = ["eu-west-2"];
+    public List<UpstashRedisValue> ConfiguredReadRegions { get; } = ["eu-west-2"];
 
-    internal FakeUpstashProvider FakeProvider
-    {
-        get;
-    } = new();
+    internal FakeUpstashProvider FakeProvider { get; } = new();
 
-    internal FakeUpstashRedisDatabase? LastProviderDatabase
-    {
-        get;
-        set;
-    }
+    internal FakeUpstashRedisDatabase? LastProviderDatabase { get; set; }
 
-    internal Exception? LastCleanupException
-    {
-        get;
-        set;
-    }
+    internal Exception? LastCleanupException { get; set; }
 
-    internal List<string> LiveCleanupLog
-    {
-        get;
-    } = [];
+    internal List<string> LiveCleanupLog { get; } = [];
 
-    internal LiveUpstashTestSession LiveUpstash
-    {
-        get;
-    } = new();
+    internal LiveUpstashTestSession LiveUpstash { get; } = new();
 
     internal IResourceBuilder<RedisResource> RedisBuilder =>
         _redisBuilder ?? throw new InvalidOperationException("The Redis resource has not been created.");
@@ -119,11 +95,16 @@ public sealed class UpstashRedisScenarioContext
             });
     }
 
-    public Exception? ConfigurationException
+    public void MarkRedisForUpstashWithExplicitNullPrimaryRegion()
     {
-        get;
-        private set;
+        _redisBuilder = RedisBuilder.PublishToUpstash(
+            "orders-cache",
+            AppBuilder.AddParameter("upstash-account-email"),
+            AppBuilder.AddParameter("upstash-api-key", secret: true),
+            configure: options => options.PrimaryRegion = null);
     }
+
+    public Exception? ConfigurationException { get; private set; }
 
     public void TryMarkRedisForBlankUpstashDatabaseName()
     {
