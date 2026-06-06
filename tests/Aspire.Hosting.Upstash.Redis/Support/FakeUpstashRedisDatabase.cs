@@ -20,38 +20,17 @@ internal sealed class FakeUpstashRedisDatabase
         TlsEnabled = tlsEnabled;
     }
 
-    public string DatabaseName
-    {
-        get;
-    }
+    public string DatabaseName { get; }
 
-    public string DatabaseId
-    {
-        get;
-    }
+    public string DatabaseId { get; }
 
-    public string PrimaryRegion
-    {
-        get;
-    }
+    public string PrimaryRegion { get; }
 
-    public string Endpoint
-    {
-        get;
-    }
+    public string Endpoint { get; }
 
-    public int Port
-    {
-        get;
-    }
+    public int Port { get; }
 
-    public string Password
-    {
-        get;
-    }
+    public string Password { get; }
 
-    public bool TlsEnabled
-    {
-        get;
-    }
+    public bool TlsEnabled { get; }
 }
