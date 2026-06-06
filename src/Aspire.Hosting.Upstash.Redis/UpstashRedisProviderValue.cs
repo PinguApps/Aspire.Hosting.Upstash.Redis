@@ -8,15 +8,9 @@ internal sealed class UpstashRedisProviderValue
         LiteralValue = literalValue;
     }
 
-    public UpstashRedisValue Source
-    {
-        get;
-    }
+    public UpstashRedisValue Source { get; }
 
-    public object? LiteralValue
-    {
-        get;
-    }
+    public object? LiteralValue { get; }
 
     public bool IsParameter => Source.IsParameter;
 }
