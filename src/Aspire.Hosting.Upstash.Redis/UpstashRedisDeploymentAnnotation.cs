@@ -12,16 +12,28 @@ public sealed class UpstashRedisDeploymentAnnotation : IResourceAnnotation
     /// </summary>
     /// <param name="databaseName">The explicit remote Upstash Redis database name.</param>
     /// <param name="ownershipMode">The requested ownership mode for the remote database.</param>
-    /// <param name="accountEmail">The infrastructure-only Upstash account email parameter.</param>
-    /// <param name="apiKey">The infrastructure-only Upstash API key parameter.</param>
+    /// <param name="accountEmail">The infrastructure-only Upstash account email value.</param>
+    /// <param name="apiKey">The infrastructure-only Upstash API key value.</param>
     /// <param name="options">The optional deployment settings and explicit-setting tracking.</param>
     public UpstashRedisDeploymentAnnotation(
-        string databaseName,
+        UpstashRedisValue databaseName,
         UpstashRedisOwnershipMode ownershipMode,
-        ParameterResource accountEmail,
-        ParameterResource apiKey,
+        UpstashRedisValue accountEmail,
+        UpstashRedisValue apiKey,
         UpstashRedisDeploymentOptions options)
     {
+        ArgumentNullException.ThrowIfNull(databaseName);
+        ArgumentNullException.ThrowIfNull(accountEmail);
+        ArgumentNullException.ThrowIfNull(apiKey);
+        ArgumentNullException.ThrowIfNull(options);
+
+        if (!Enum.IsDefined(ownershipMode))
+        {
+            throw new ArgumentOutOfRangeException(nameof(ownershipMode), ownershipMode, "The Upstash Redis ownership mode is not supported.");
+        }
+
+        options.Validate();
+
         DatabaseName = databaseName;
         OwnershipMode = ownershipMode;
         AccountEmail = accountEmail;
@@ -32,7 +44,7 @@ public sealed class UpstashRedisDeploymentAnnotation : IResourceAnnotation
     /// <summary>
     /// Gets the explicit remote Upstash Redis database name.
     /// </summary>
-    public string DatabaseName
+    public UpstashRedisValue DatabaseName
     {
         get;
     }
@@ -46,17 +58,17 @@ public sealed class UpstashRedisDeploymentAnnotation : IResourceAnnotation
     }
 
     /// <summary>
-    /// Gets the infrastructure-only Upstash account email parameter.
+    /// Gets the infrastructure-only Upstash account email value.
     /// </summary>
-    public ParameterResource AccountEmail
+    public UpstashRedisValue AccountEmail
     {
         get;
     }
 
     /// <summary>
-    /// Gets the infrastructure-only Upstash API key parameter.
+    /// Gets the infrastructure-only Upstash API key value.
     /// </summary>
-    public ParameterResource ApiKey
+    public UpstashRedisValue ApiKey
     {
         get;
     }

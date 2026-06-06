@@ -2,18 +2,50 @@
 
 This package is an Aspire hosting integration for publishing a standard Aspire Redis resource to Upstash Redis during deployment.
 
-Current state: the Aspire integration shape is confirmed and an implementation-ready skeleton is present. The package now extends the built-in Redis resource returned by `builder.AddRedis("cache")` and attaches Upstash deployment metadata with `.PublishToUpstash(...)`. The deploy pipeline step is intentionally a no-op until the later implementation tasks add Upstash API calls, reconciliation, and deployed connection outputs.
+Current state: the Aspire integration shape and public API shape are confirmed. The package extends the built-in Redis resource returned by `builder.AddRedis("cache")` and attaches Upstash deployment metadata with `.PublishToUpstash(...)`. The deploy pipeline step is intentionally a no-op until the later implementation tasks add Upstash API calls, reconciliation, and deployed connection outputs.
 
 ```csharp
+var databaseName = builder.AddParameter("upstash-database-name");
 var accountEmail = builder.AddParameter("upstash-account-email");
 var apiKey = builder.AddParameter("upstash-api-key", secret: true);
 
 var cache = builder.AddRedis("cache")
-    .PublishToUpstash("orders-cache", accountEmail, apiKey);
+    .PublishToUpstash(
+        databaseName,
+        accountEmail,
+        apiKey,
+        UpstashRedisOwnershipMode.CreateOrAdopt);
 
 builder.AddProject<Projects.Api>("api")
     .WithReference(cache);
 ```
+
+Ownership intent is explicit at the call site:
+
+```csharp
+builder.AddRedis("cache")
+    .PublishToUpstash(
+        "orders-cache",
+        accountEmail,
+        apiKey,
+        UpstashRedisOwnershipMode.CreateOnly);
+
+builder.AddRedis("cache")
+    .PublishToUpstash(
+        "orders-cache",
+        accountEmail,
+        apiKey,
+        UpstashRedisOwnershipMode.ExistingOnly);
+
+builder.AddRedis("cache")
+    .PublishToUpstash(
+        "orders-cache",
+        accountEmail,
+        apiKey,
+        UpstashRedisOwnershipMode.CreateOrAdopt);
+```
+
+Required values and optional string settings are represented as `UpstashRedisValue`, which can hold either a literal string or an Aspire `ParameterResource`. Literal strings convert implicitly; parameterized optional settings use `UpstashRedisValue.FromParameter(...)`.
 
 Local Aspire behavior is preserved: `.PublishToUpstash(...)` does not replace the Redis resource, does not call Upstash during model construction or local runs, and does not prevent normal `WithReference(cache)` usage.
 

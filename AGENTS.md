@@ -136,7 +136,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
   - database name
 
 ### Current Repository State
-- The repository currently contains the package project, the test project, shared build settings, planning artifacts, decision records, and the initial Aspire integration skeleton from task `0.1`.
+- The repository currently contains the package project, the test project, shared build settings, planning artifacts, decision records, the Aspire integration skeleton from task `0.1`, and the locked public API shape from task `1.1`.
 - `src/Aspire.Hosting.Upstash.Redis/Aspire.Hosting.Upstash.Redis.csproj` is the main package project to implement.
 - `tests/Aspire.Hosting.Upstash.Redis/` is the single test project and should remain the home for the package test suite.
 - The test project now has a Reqnroll feature taxonomy and shared support layer from task `1.2`; read `tests/Aspire.Hosting.Upstash.Redis/README.md` before adding scenarios.
@@ -145,6 +145,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - `.diary/` contains branch-specific session state and must be read and maintained per the diary rules above.
 - `README.md` documents the current skeleton and planning/investigation state and must continue to be brought into sync as real behavior lands.
 - Plan `0.2` is complete and now contains the authoritative Upstash Redis management capability matrix for v1.
+- Plan `1.1` is complete; `.PublishToUpstash(...)` is the locked public entry point, ownership is expressed with `UpstashRedisOwnershipMode`, and required/optional deploy-time strings are captured as `UpstashRedisValue` literal-or-parameter sources.
 - Plan `1.2` is complete and now defines the Reqnroll spec matrix, fake-provider default pattern, Aspire model inspection helpers, and opt-in live-provider cleanup pattern.
 - Task agents can now receive Upstash management credentials through environment variables `UPSTASH_EMAIL` and `UPSTASH_API_KEY`.
 
