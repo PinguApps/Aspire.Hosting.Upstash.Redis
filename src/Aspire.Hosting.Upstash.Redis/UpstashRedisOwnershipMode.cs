@@ -6,6 +6,11 @@ namespace Aspire.Hosting.Upstash.Redis;
 public enum UpstashRedisOwnershipMode
 {
     /// <summary>
+    /// Deployment may create a missing database or adopt an existing database with the requested name.
+    /// </summary>
+    CreateOrAdopt,
+
+    /// <summary>
     /// Deployment must create a new database and fail if one already exists.
     /// </summary>
     CreateOnly,
@@ -13,10 +18,5 @@ public enum UpstashRedisOwnershipMode
     /// <summary>
     /// Deployment must use an existing database and fail if it cannot be found.
     /// </summary>
-    ExistingOnly,
-
-    /// <summary>
-    /// Deployment may create a missing database or adopt an existing database with the requested name.
-    /// </summary>
-    CreateOrAdopt
+    ExistingOnly
 }
