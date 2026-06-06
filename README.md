@@ -2,7 +2,7 @@
 
 This package is an Aspire hosting integration for publishing a standard Aspire Redis resource to Upstash Redis during deployment.
 
-Current state: the Aspire integration shape, public API shape, and internal resource state model are confirmed. The package extends the built-in Redis resource returned by `builder.AddRedis("cache")` and attaches internal Upstash deployment state with `.PublishToUpstash(...)`. The deploy pipeline step is intentionally a no-op until the later implementation tasks add Upstash API calls, reconciliation, and deployed connection outputs.
+Current state: the Aspire integration shape, public API shape, internal resource state model, and Upstash Redis management client layer are implemented. The package extends the built-in Redis resource returned by `builder.AddRedis("cache")` and attaches internal Upstash deployment state with `.PublishToUpstash(...)`. The deploy pipeline step is intentionally a no-op until the later implementation tasks wire the management client into lookup, creation, reconciliation, and deployed connection outputs.
 
 ```csharp
 var databaseName = builder.AddParameter("upstash-database-name");
@@ -63,3 +63,16 @@ The Upstash management capability matrix is documented in [`plans/0.2-confirm-up
 - TLS is treated as required-on/read-only for v1, not as a mutable setting.
 - Password reset, rename, delete, team move, backups, autoscaling, prod pack, ACL, and private networking are intentionally out of scope for v1.
 - App-facing outputs come from credential-bearing database detail responses and must never expose the Upstash Management API key.
+
+The internal management client in `src/Aspire.Hosting.Upstash.Redis/Management/` implements only the v1 Redis endpoints from that matrix:
+
+- `GET /redis/databases`
+- `GET /redis/database/{id}`
+- `POST /redis/database`
+- `POST /redis/update-regions/{id}`
+- `POST /redis/{id}/change-plan`
+- `PATCH /redis/update-budget/{id}`
+- `POST /redis/enable-eviction/{id}`
+- `POST /redis/disable-eviction/{id}`
+
+Provider failures are surfaced as typed `UpstashRedisProviderException` values with a failure kind such as validation, authentication, authorization, not found, rate limited, transient, provider contract, or unexpected. The client preserves provider error text where useful and redacts the Management API key. Credential-bearing database detail fetches require `password`; if Upstash omits it, the client fails with a provider-contract error rather than guessing or rotating credentials.

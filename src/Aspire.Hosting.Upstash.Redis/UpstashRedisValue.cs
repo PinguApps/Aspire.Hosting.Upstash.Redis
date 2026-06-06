@@ -20,18 +20,12 @@ public sealed class UpstashRedisValue
     /// <summary>
     /// Gets the literal string value when this value was created from a string.
     /// </summary>
-    public string? LiteralValue
-    {
-        get;
-    }
+    public string? LiteralValue { get; }
 
     /// <summary>
     /// Gets the Aspire parameter when this value was created from a parameter resource.
     /// </summary>
-    public ParameterResource? Parameter
-    {
-        get;
-    }
+    public ParameterResource? Parameter { get; }
 
     /// <summary>
     /// Gets a value indicating whether this value is backed by an Aspire parameter.
