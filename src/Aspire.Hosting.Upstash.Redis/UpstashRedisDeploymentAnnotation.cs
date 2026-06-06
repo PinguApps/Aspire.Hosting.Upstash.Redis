@@ -19,8 +19,5 @@ internal sealed class UpstashRedisDeploymentAnnotation : IResourceAnnotation
             options);
     }
 
-    public UpstashRedisDeploymentState State
-    {
-        get;
-    }
+    public UpstashRedisDeploymentState State { get; }
 }

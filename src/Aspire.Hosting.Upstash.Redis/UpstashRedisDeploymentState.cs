@@ -28,30 +28,15 @@ internal sealed class UpstashRedisDeploymentState
         OptionsSnapshot = new UpstashRedisDeploymentOptions(options);
     }
 
-    public UpstashRedisValue DatabaseName
-    {
-        get;
-    }
+    public UpstashRedisValue DatabaseName { get; }
 
-    public UpstashRedisOwnershipMode OwnershipMode
-    {
-        get;
-    }
+    public UpstashRedisOwnershipMode OwnershipMode { get; }
 
-    public UpstashRedisValue AccountEmail
-    {
-        get;
-    }
+    public UpstashRedisValue AccountEmail { get; }
 
-    public UpstashRedisValue ApiKey
-    {
-        get;
-    }
+    public UpstashRedisValue ApiKey { get; }
 
     public UpstashRedisDeploymentOptions Options => new(OptionsSnapshot);
 
-    private UpstashRedisDeploymentOptions OptionsSnapshot
-    {
-        get;
-    }
+    private UpstashRedisDeploymentOptions OptionsSnapshot { get; }
 }
