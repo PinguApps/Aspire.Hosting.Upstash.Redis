@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.Redis" />
     <ProjectReference Include="..\..\src\Aspire.Hosting.Upstash.Redis\Aspire.Hosting.Upstash.Redis.csproj" />
   </ItemGroup>
 
