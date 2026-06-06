@@ -141,7 +141,8 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - `tests/Aspire.Hosting.Upstash.Redis/` is the single test project and should remain the home for the package test suite.
 - `plans/` contains the current implementation roadmap as 22 numbered task files from `0.1` through `7.3`.
 - `.diary/` contains branch-specific session state and must be read and maintained per the diary rules above.
-- `README.md` is still effectively a placeholder and must be brought into sync as real behavior lands.
+- `README.md` documents the current planning/investigation state and must be brought into sync as real behavior lands.
+- Plan `0.2` is complete and now contains the authoritative Upstash Redis management capability matrix for v1.
 
 ### Technical Baseline
 - Target framework: `.NET 10`.
@@ -155,7 +156,9 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
   - plan
   - budget
   - eviction
-  - TLS
+- TLS, treated as required-on/read-only rather than safely mutable
+- The v1 mutable provider settings are read regions, plan, budget, and eviction.
+- The v1 create-time-only or fail-fast settings include platform, primary region, database name identity, and TLS disabled state.
 
 ### Testing Rules For This Repository
 - Full test coverage is the goal.
