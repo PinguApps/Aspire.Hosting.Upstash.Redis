@@ -32,7 +32,7 @@ public sealed class UpstashRedisDeploymentAnnotation : IResourceAnnotation
             throw new ArgumentOutOfRangeException(nameof(ownershipMode), ownershipMode, "The Upstash Redis ownership mode is not supported.");
         }
 
-        options.Validate();
+        options.ToProviderOptions();
 
         DatabaseName = databaseName;
         OwnershipMode = ownershipMode;
