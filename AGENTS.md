@@ -139,12 +139,14 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - The repository currently contains the package project, the test project, shared build settings, planning artifacts, decision records, the Aspire integration skeleton from task `0.1`, and the locked public API shape from task `1.1`.
 - `src/Aspire.Hosting.Upstash.Redis/Aspire.Hosting.Upstash.Redis.csproj` is the main package project to implement.
 - `tests/Aspire.Hosting.Upstash.Redis/` is the single test project and should remain the home for the package test suite.
+- The test project now has a Reqnroll feature taxonomy and shared support layer from task `1.2`; read `tests/Aspire.Hosting.Upstash.Redis/README.md` before adding scenarios.
 - `plans/` contains the current implementation roadmap as 22 numbered task files from `0.1` through `7.3`.
 - `decisions/` contains accepted architecture and product decision records. Future files that record durable decisions, rejected alternatives, or investigation outcomes should live there rather than in `plans/`.
 - `.diary/` contains branch-specific session state and must be read and maintained per the diary rules above.
 - `README.md` documents the current skeleton and planning/investigation state and must continue to be brought into sync as real behavior lands.
 - Plan `0.2` is complete and now contains the authoritative Upstash Redis management capability matrix for v1.
 - Plan `1.1` is complete; `.PublishToUpstash(...)` is the locked public entry point, ownership is expressed with `UpstashRedisOwnershipMode`, and required/optional deploy-time strings are captured as `UpstashRedisValue` literal-or-parameter sources.
+- Plan `1.2` is complete and now defines the Reqnroll spec matrix, fake-provider default pattern, Aspire model inspection helpers, and opt-in live-provider cleanup pattern.
 - Task agents can now receive Upstash management credentials through environment variables `UPSTASH_EMAIL` and `UPSTASH_API_KEY`.
 
 ### Technical Baseline
@@ -169,6 +171,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - All tests in this repository should use Reqnroll feature files and step definitions. Do not introduce a second testing style for product behavior.
 - Each task should validate its own work before PR creation. Do not defer obvious missing coverage to later tasks unless the plan explicitly says that later task is the first valid place for it.
 - Opt-in live-provider tests are allowed when `UPSTASH_EMAIL` and `UPSTASH_API_KEY` are present. Deterministic fake-provider coverage remains the default path for normal test runs.
+- Live-provider scenarios must use the `@live-upstash` tag so the shared hook can skip without credentials and run registered cleanup actions.
 - Any live Upstash test must leave the remote account in the same state it found it. Use isolated explicit database names where possible, always tear down databases created by the test, and restore any pre-existing resource settings the test changed before it exits.
 - Live-provider tests must skip cleanly when the required environment variables are absent, and they must never rely on leftover remote state from prior runs.
 
