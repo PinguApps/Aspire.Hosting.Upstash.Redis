@@ -8,7 +8,30 @@ namespace Aspire.Hosting.Upstash.Redis.Management;
 
 internal sealed class UpstashRedisManagementClient : IUpstashRedisManagementClient
 {
-    private const string DatabasesPath = "redis/databases";
+    private const string RedisPath = "redis";
+    private const string RedisDatabasePath = $"{RedisPath}/database";
+    private const string RedisDatabasesPath = $"{RedisDatabasePath}s";
+    private const string UpdateRegionsAction = "update-regions";
+    private const string ChangePlanAction = "change-plan";
+    private const string UpdateBudgetAction = "update-budget";
+    private const string EnableEvictionAction = "enable-eviction";
+    private const string DisableEvictionAction = "disable-eviction";
+
+    private static string BuildRedisDatabasePath(string databaseId) => $"{RedisDatabasePath}/{Uri.EscapeDataString(databaseId)}";
+
+    private static string BuildUpdateRegionsPath(string databaseId) => $"{RedisPath}/{UpdateRegionsAction}/{Uri.EscapeDataString(databaseId)}";
+
+    private static string BuildChangePlanPath(string databaseId) => $"{RedisPath}/{Uri.EscapeDataString(databaseId)}/{ChangePlanAction}";
+
+    private static string BuildUpdateBudgetPath(string databaseId) => $"{RedisPath}/{UpdateBudgetAction}/{Uri.EscapeDataString(databaseId)}";
+
+    private static string BuildEvictionPath(string databaseId, bool enabled)
+    {
+        string action = enabled ? EnableEvictionAction : DisableEvictionAction;
+
+        return $"{RedisPath}/{action}/{Uri.EscapeDataString(databaseId)}";
+    }
+
     private readonly HttpClient _httpClient;
     private readonly UpstashRedisManagementCredentials _credentials;
 
@@ -32,7 +55,7 @@ internal sealed class UpstashRedisManagementClient : IUpstashRedisManagementClie
     {
         return await SendAsync<IReadOnlyList<UpstashRedisDatabaseSummary>>(
             HttpMethod.Get,
-            DatabasesPath,
+            RedisDatabasesPath,
             requestBody: null,
             requireCredentials: false,
             cancellationToken).ConfigureAwait(false);
@@ -44,7 +67,7 @@ internal sealed class UpstashRedisManagementClient : IUpstashRedisManagementClie
 
         return await SendAsync<UpstashRedisDatabaseDetails>(
             HttpMethod.Get,
-            $"redis/database/{Uri.EscapeDataString(databaseId)}",
+            BuildRedisDatabasePath(databaseId),
             requestBody: null,
             requireCredentials: true,
             cancellationToken).ConfigureAwait(false);
@@ -80,7 +103,7 @@ internal sealed class UpstashRedisManagementClient : IUpstashRedisManagementClie
 
         return await SendAsync<UpstashRedisDatabaseDetails>(
             HttpMethod.Post,
-            "redis/database",
+            RedisDatabasePath,
             request,
             requireCredentials: false,
             cancellationToken).ConfigureAwait(false);
@@ -96,7 +119,7 @@ internal sealed class UpstashRedisManagementClient : IUpstashRedisManagementClie
 
         await SendOkAsync(
             HttpMethod.Post,
-            $"redis/update-regions/{Uri.EscapeDataString(databaseId)}",
+            BuildUpdateRegionsPath(databaseId),
             request,
             cancellationToken).ConfigureAwait(false);
     }
@@ -111,7 +134,7 @@ internal sealed class UpstashRedisManagementClient : IUpstashRedisManagementClie
 
         await SendOkAsync(
             HttpMethod.Post,
-            $"redis/{Uri.EscapeDataString(databaseId)}/change-plan",
+            BuildChangePlanPath(databaseId),
             request,
             cancellationToken).ConfigureAwait(false);
     }
@@ -126,7 +149,7 @@ internal sealed class UpstashRedisManagementClient : IUpstashRedisManagementClie
 
         await SendOkAsync(
             HttpMethod.Patch,
-            $"redis/update-budget/{Uri.EscapeDataString(databaseId)}",
+            BuildUpdateBudgetPath(databaseId),
             request,
             cancellationToken).ConfigureAwait(false);
     }
@@ -135,11 +158,9 @@ internal sealed class UpstashRedisManagementClient : IUpstashRedisManagementClie
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(databaseId);
 
-        string action = enabled ? "enable-eviction" : "disable-eviction";
-
         await SendOkAsync(
             HttpMethod.Post,
-            $"redis/{action}/{Uri.EscapeDataString(databaseId)}",
+            BuildEvictionPath(databaseId, enabled),
             requestBody: null,
             cancellationToken).ConfigureAwait(false);
     }
