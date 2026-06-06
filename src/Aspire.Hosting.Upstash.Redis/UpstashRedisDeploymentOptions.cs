@@ -294,12 +294,12 @@ public sealed class UpstashRedisDeploymentOptions
 
         if (Eviction is not null)
         {
-            eviction = new(UpstashRedisValue.FromString(Eviction.Value.ToString()), Eviction.Value);
+            eviction = new(UpstashRedisValue.FromString(Eviction.Value ? "true" : "false"), Eviction.Value);
         }
 
         if (Tls is not null)
         {
-            tls = new(UpstashRedisValue.FromString(Tls.Value.ToString()), Tls.Value);
+            tls = new(UpstashRedisValue.FromString(Tls.Value ? "true" : "false"), Tls.Value);
         }
 
         return new UpstashRedisProviderDeploymentOptions(

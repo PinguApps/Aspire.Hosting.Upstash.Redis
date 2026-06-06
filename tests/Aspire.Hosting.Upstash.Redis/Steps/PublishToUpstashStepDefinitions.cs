@@ -160,7 +160,9 @@ public sealed class PublishToUpstashStepDefinitions
         Assert.Equal("payg", providerOptions.Plan?.LiteralValue);
         Assert.Equal(360, providerOptions.Budget?.LiteralValue);
         Assert.Equal(true, providerOptions.Eviction?.LiteralValue);
+        Assert.Equal("true", providerOptions.Eviction?.Source.LiteralValue);
         Assert.Equal(true, providerOptions.Tls?.LiteralValue);
+        Assert.Equal("true", providerOptions.Tls?.Source.LiteralValue);
     }
 
     [Then("the provider domain preserves explicit settings for reconcile")]
