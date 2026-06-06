@@ -136,12 +136,12 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
   - database name
 
 ### Current Repository State
-- The repository currently contains the package project, the test project, shared build settings, and planning artifacts, but no implemented product code yet.
+- The repository currently contains the package project, the test project, shared build settings, planning artifacts, and the initial Aspire integration skeleton from task `0.1`.
 - `src/Aspire.Hosting.Upstash.Redis/Aspire.Hosting.Upstash.Redis.csproj` is the main package project to implement.
 - `tests/Aspire.Hosting.Upstash.Redis/` is the single test project and should remain the home for the package test suite.
 - `plans/` contains the current implementation roadmap as 22 numbered task files from `0.1` through `7.3`.
 - `.diary/` contains branch-specific session state and must be read and maintained per the diary rules above.
-- `README.md` is still effectively a placeholder and must be brought into sync as real behavior lands.
+- `README.md` documents the current skeleton and must continue to be brought into sync as real behavior lands.
 
 ### Technical Baseline
 - Target framework: `.NET 10`.
@@ -193,3 +193,4 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - Preserve normal Aspire Redis local behavior unless the task explicitly concerns deploy-time Upstash behavior.
 - Keep application-facing Redis outputs separate from infrastructure-only Upstash management credentials.
 - Do not add speculative features such as auto-delete, non-Redis Upstash products, or extra provider abstractions that are not required by the current plan.
+- The `0.1` decision keeps Aspire's built-in `RedisResource` as the resource of record. Upstash intent is attached through resource annotations and Aspire `13.4.2` deploy pipeline steps, not through a wrapper resource or local-run behavior.
