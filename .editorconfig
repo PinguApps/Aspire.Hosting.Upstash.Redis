@@ -148,7 +148,6 @@ csharp_style_prefer_switch_expression = true:warning
 csharp_prefer_simple_using_statement = true:warning
 csharp_style_deconstructed_variable_declaration = true:warning
 csharp_style_prefer_primary_constructors = false:error
-dotnet_diagnostic.PIN0001.severity = error
 csharp_style_prefer_top_level_statements = true:warning
 csharp_style_prefer_tuple_swap = true:warning
 csharp_prefer_simple_default_expression = true:warning
@@ -305,6 +304,9 @@ dotnet_naming_rule.enum_members_must_be_pascal_case.severity = error
 dotnet_naming_rule.namespaces_must_be_pascal_case.symbols = namespaces
 dotnet_naming_rule.namespaces_must_be_pascal_case.style = pascal_case
 dotnet_naming_rule.namespaces_must_be_pascal_case.severity = warning
+
+# Explicit custom analyzer rule severities chosen for this repository.
+dotnet_diagnostic.PIN0001.severity = error
 
 # Explicit IDE rule severities chosen for this repository.
 dotnet_diagnostic.IDE0001.severity = warning
