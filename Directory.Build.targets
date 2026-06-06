@@ -16,7 +16,7 @@
     </PackageReference>
   </ItemGroup>
 
-  <ItemGroup Condition="'$(MSBuildProjectName)' != 'PinguApps.CodeAnalysis'">
+  <ItemGroup Condition="'$(IsAnalyzer)' != 'true'">
     <ProjectReference Include="$(MSBuildThisFileDirectory)build\PinguApps.CodeAnalysis\PinguApps.CodeAnalysis.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false"
