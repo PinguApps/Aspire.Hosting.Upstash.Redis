@@ -62,7 +62,7 @@ public sealed class PublishToUpstashStepDefinitions
         Assert.Equal("upstash-account-email", annotation.AccountEmail.Name);
         Assert.Equal("upstash-api-key", annotation.ApiKey.Name);
         Assert.Equal("eu-west-1", annotation.Options.PrimaryRegion);
-        Assert.True(annotation.Options.Tls);
+        Assert.Equal(true, annotation.Options.Tls);
         Assert.Contains(nameof(UpstashRedisDeploymentOptions.PrimaryRegion), annotation.Options.ExplicitSettings);
         Assert.Contains(nameof(UpstashRedisDeploymentOptions.Tls), annotation.Options.ExplicitSettings);
     }
