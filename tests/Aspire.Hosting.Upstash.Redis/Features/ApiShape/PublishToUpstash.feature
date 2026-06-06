@@ -34,6 +34,11 @@ Feature: Publish Redis to Upstash
     Then the resource stores parameter references for the required Upstash inputs
     And the resource stores parameter references for optional Upstash inputs
 
+  Scenario: Marking a Redis resource for Upstash preserves explicit option intent
+    Given a standard Aspire Redis resource named "cache"
+    When the Redis resource is marked for Upstash with an explicitly unset primary region
+    Then the Upstash state distinguishes the explicitly unset primary region from an unspecified plan
+
   Scenario: Marking a Redis resource for Upstash rejects a blank database name
     Given a standard Aspire Redis resource named "cache"
     When the Redis resource is marked for a blank Upstash database name

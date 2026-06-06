@@ -39,6 +39,12 @@ public sealed class PublishToUpstashStepDefinitions
         _context.MarkRedisForUpstashWithParameterBasedInputs();
     }
 
+    [When("the Redis resource is marked for Upstash with an explicitly unset primary region")]
+    public void WhenTheRedisResourceIsMarkedForUpstashWithAnExplicitlyUnsetPrimaryRegion()
+    {
+        _context.MarkRedisForUpstashWithExplicitNullPrimaryRegion();
+    }
+
     [When("the Redis resource is marked for a blank Upstash database name")]
     public void WhenTheRedisResourceIsMarkedForABlankUpstashDatabaseName()
     {
@@ -78,48 +84,59 @@ public sealed class PublishToUpstashStepDefinitions
     [Then("the resource has Upstash deployment metadata for database {string}")]
     public void ThenTheResourceHasUpstashDeploymentMetadataForDatabase(string databaseName)
     {
-        UpstashRedisDeploymentAnnotation annotation = AspireModelInspector.GetUpstashAnnotation(_context.RedisBuilder.Resource);
+        UpstashRedisDeploymentState state = AspireModelInspector.GetUpstashState(_context.RedisBuilder.Resource);
 
-        Assert.Equal(databaseName, annotation.DatabaseName.LiteralValue);
-        Assert.Equal(UpstashRedisOwnershipMode.CreateOrAdopt, annotation.OwnershipMode);
-        Assert.Equal("upstash-account-email", annotation.AccountEmail.Parameter?.Name);
-        Assert.Equal("upstash-api-key", annotation.ApiKey.Parameter?.Name);
-        Assert.Equal("eu-west-1", annotation.Options.PrimaryRegion?.LiteralValue);
-        Assert.Equal(["eu-west-2"], annotation.Options.ReadRegions?.Select(region => region.LiteralValue));
-        Assert.Equal(true, annotation.Options.Tls);
-        Assert.Contains(nameof(UpstashRedisDeploymentOptions.PrimaryRegion), annotation.Options.ExplicitSettings);
-        Assert.Contains(nameof(UpstashRedisDeploymentOptions.ReadRegions), annotation.Options.ExplicitSettings);
-        Assert.Contains(nameof(UpstashRedisDeploymentOptions.Tls), annotation.Options.ExplicitSettings);
+        Assert.Equal(databaseName, state.DatabaseName.LiteralValue);
+        Assert.Equal(UpstashRedisOwnershipMode.CreateOrAdopt, state.OwnershipMode);
+        Assert.Equal("upstash-account-email", state.AccountEmail.Parameter?.Name);
+        Assert.Equal("upstash-api-key", state.ApiKey.Parameter?.Name);
+        Assert.Equal("eu-west-1", state.Options.PrimaryRegion?.LiteralValue);
+        Assert.Equal(["eu-west-2"], state.Options.ReadRegions?.Select(region => region.LiteralValue));
+        Assert.Equal(true, state.Options.Tls);
+        Assert.Contains(nameof(UpstashRedisDeploymentOptions.PrimaryRegion), state.Options.ExplicitSettings);
+        Assert.Contains(nameof(UpstashRedisDeploymentOptions.ReadRegions), state.Options.ExplicitSettings);
+        Assert.Contains(nameof(UpstashRedisDeploymentOptions.Tls), state.Options.ExplicitSettings);
     }
 
     [Then("the resource has Upstash ownership mode {string}")]
     public void ThenTheResourceHasUpstashOwnershipMode(string ownershipMode)
     {
-        UpstashRedisDeploymentAnnotation annotation = AspireModelInspector.GetUpstashAnnotation(_context.RedisBuilder.Resource);
+        UpstashRedisDeploymentState state = AspireModelInspector.GetUpstashState(_context.RedisBuilder.Resource);
 
-        Assert.Equal(Enum.Parse<UpstashRedisOwnershipMode>(ownershipMode), annotation.OwnershipMode);
+        Assert.Equal(Enum.Parse<UpstashRedisOwnershipMode>(ownershipMode), state.OwnershipMode);
     }
 
     [Then("the resource stores parameter references for the required Upstash inputs")]
     public void ThenTheResourceStoresParameterReferencesForTheRequiredUpstashInputs()
     {
-        UpstashRedisDeploymentAnnotation annotation = AspireModelInspector.GetUpstashAnnotation(_context.RedisBuilder.Resource);
+        UpstashRedisDeploymentState state = AspireModelInspector.GetUpstashState(_context.RedisBuilder.Resource);
 
-        Assert.Equal("upstash-database-name", annotation.DatabaseName.Parameter?.Name);
-        Assert.Equal("upstash-account-email", annotation.AccountEmail.Parameter?.Name);
-        Assert.Equal("upstash-api-key", annotation.ApiKey.Parameter?.Name);
-        Assert.Null(annotation.ApiKey.LiteralValue);
+        Assert.Equal("upstash-database-name", state.DatabaseName.Parameter?.Name);
+        Assert.Equal("upstash-account-email", state.AccountEmail.Parameter?.Name);
+        Assert.Equal("upstash-api-key", state.ApiKey.Parameter?.Name);
+        Assert.Null(state.ApiKey.LiteralValue);
     }
 
     [Then("the resource stores parameter references for optional Upstash inputs")]
     public void ThenTheResourceStoresParameterReferencesForOptionalUpstashInputs()
     {
-        UpstashRedisDeploymentAnnotation annotation = AspireModelInspector.GetUpstashAnnotation(_context.RedisBuilder.Resource);
+        UpstashRedisDeploymentState state = AspireModelInspector.GetUpstashState(_context.RedisBuilder.Resource);
 
-        Assert.Equal("upstash-primary-region", annotation.Options.PrimaryRegion?.Parameter?.Name);
-        UpstashRedisValue readRegion = Assert.Single(annotation.Options.ReadRegions ?? []);
+        Assert.Equal("upstash-primary-region", state.Options.PrimaryRegion?.Parameter?.Name);
+        UpstashRedisValue readRegion = Assert.Single(state.Options.ReadRegions ?? []);
         Assert.Equal("upstash-read-region", readRegion.Parameter?.Name);
-        Assert.Equal("payg", annotation.Options.Plan?.LiteralValue);
+        Assert.Equal("payg", state.Options.Plan?.LiteralValue);
+    }
+
+    [Then("the Upstash state distinguishes the explicitly unset primary region from an unspecified plan")]
+    public void ThenTheUpstashStateDistinguishesTheExplicitlyUnsetPrimaryRegionFromAnUnspecifiedPlan()
+    {
+        UpstashRedisDeploymentState state = AspireModelInspector.GetUpstashState(_context.RedisBuilder.Resource);
+
+        Assert.Null(state.Options.PrimaryRegion);
+        Assert.Null(state.Options.Plan);
+        Assert.Contains(nameof(UpstashRedisDeploymentOptions.PrimaryRegion), state.Options.ExplicitSettings);
+        Assert.DoesNotContain(nameof(UpstashRedisDeploymentOptions.Plan), state.Options.ExplicitSettings);
     }
 
     [Then("the Upstash configuration fails with {string}")]
@@ -141,35 +158,35 @@ public sealed class PublishToUpstashStepDefinitions
         capturedOptions.Plan = "payg";
         capturedOptions.Tls = false;
 
-        UpstashRedisDeploymentAnnotation annotation = AspireModelInspector.GetUpstashAnnotation(_context.RedisBuilder.Resource);
+        UpstashRedisDeploymentState state = AspireModelInspector.GetUpstashState(_context.RedisBuilder.Resource);
 
-        Assert.Equal("eu-west-1", annotation.Options.PrimaryRegion?.LiteralValue);
-        Assert.Null(annotation.Options.Plan);
-        Assert.Equal(true, annotation.Options.Tls);
-        Assert.DoesNotContain(nameof(UpstashRedisDeploymentOptions.Plan), annotation.Options.ExplicitSettings);
+        Assert.Equal("eu-west-1", state.Options.PrimaryRegion?.LiteralValue);
+        Assert.Null(state.Options.Plan);
+        Assert.Equal(true, state.Options.Tls);
+        Assert.DoesNotContain(nameof(UpstashRedisDeploymentOptions.Plan), state.Options.ExplicitSettings);
     }
 
     [Then("the explicit setting snapshot cannot mutate deployment metadata")]
     public void ThenTheExplicitSettingSnapshotCannotMutateDeploymentMetadata()
     {
-        UpstashRedisDeploymentAnnotation annotation = AspireModelInspector.GetUpstashAnnotation(_context.RedisBuilder.Resource);
+        UpstashRedisDeploymentState state = AspireModelInspector.GetUpstashState(_context.RedisBuilder.Resource);
 
-        if (annotation.Options.ExplicitSettings is ISet<string> exposedSettings)
+        if (state.Options.ExplicitSettings is ISet<string> exposedSettings)
         {
             exposedSettings.Add(nameof(UpstashRedisDeploymentOptions.Plan));
         }
 
-        Assert.DoesNotContain(nameof(UpstashRedisDeploymentOptions.Plan), annotation.Options.ExplicitSettings);
+        Assert.DoesNotContain(nameof(UpstashRedisDeploymentOptions.Plan), state.Options.ExplicitSettings);
     }
 
     [Then("mutating the configured read regions cannot mutate deployment metadata")]
     public void ThenMutatingTheConfiguredReadRegionsCannotMutateDeploymentMetadata()
     {
-        UpstashRedisDeploymentAnnotation annotation = AspireModelInspector.GetUpstashAnnotation(_context.RedisBuilder.Resource);
+        UpstashRedisDeploymentState state = AspireModelInspector.GetUpstashState(_context.RedisBuilder.Resource);
 
         _context.ConfiguredReadRegions.Add("us-east-1");
 
-        Assert.Equal(["eu-west-2"], annotation.Options.ReadRegions?.Select(region => region.LiteralValue));
+        Assert.Equal(["eu-west-2"], state.Options.ReadRegions?.Select(region => region.LiteralValue));
     }
 
     [Then("the resource keeps the standard Redis connection properties")]

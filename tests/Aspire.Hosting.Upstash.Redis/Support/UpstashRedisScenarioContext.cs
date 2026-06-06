@@ -119,6 +119,15 @@ public sealed class UpstashRedisScenarioContext
             });
     }
 
+    public void MarkRedisForUpstashWithExplicitNullPrimaryRegion()
+    {
+        _redisBuilder = RedisBuilder.PublishToUpstash(
+            "orders-cache",
+            AppBuilder.AddParameter("upstash-account-email"),
+            AppBuilder.AddParameter("upstash-api-key", secret: true),
+            configure: options => options.PrimaryRegion = null);
+    }
+
     public Exception? ConfigurationException
     {
         get;
