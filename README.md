@@ -1,4 +1,4 @@
-# Aspire Hosting Upstash Redis
+# Aspire.Hosting.Upstash.Redis
 
 This package is an Aspire hosting integration for publishing a standard Aspire Redis resource to Upstash Redis during deployment.
 
