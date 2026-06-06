@@ -42,7 +42,7 @@ internal sealed class UpstashRedisProviderException : Exception
     public UpstashRedisProviderFailureKind FailureKind
     {
         get;
-    }
+    } = UpstashRedisProviderFailureKind.Unexpected;
 
     public HttpStatusCode? StatusCode
     {

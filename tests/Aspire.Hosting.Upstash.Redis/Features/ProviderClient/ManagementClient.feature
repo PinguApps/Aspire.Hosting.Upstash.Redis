@@ -72,6 +72,16 @@ Feature: Upstash Redis management client
     When the Upstash management client lists databases with account "pingu@example.com" and API key "secret-key"
     Then the Upstash management client fails with provider kind "Authentication"
 
+  Scenario Outline: General provider exceptions default to unexpected failures
+    When a general Upstash provider exception is created with constructor "<Constructor>"
+    Then the Upstash management client fails with provider kind "Unexpected"
+
+    Examples:
+      | Constructor     |
+      | Parameterless   |
+      | Message         |
+      | MessageAndInner |
+
   Scenario: Request cancellation is preserved
     Given the Upstash management API waits until cancellation
     When the Upstash management client lists databases with a cancelled token

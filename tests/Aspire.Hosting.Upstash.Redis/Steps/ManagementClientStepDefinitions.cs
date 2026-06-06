@@ -227,6 +227,18 @@ public sealed class ManagementClientStepDefinitions : IDisposable
             .ConfigureAwait(false);
     }
 
+    [When("a general Upstash provider exception is created with constructor {string}")]
+    public void WhenAGeneralUpstashProviderExceptionIsCreatedWithConstructor(string constructor)
+    {
+        _lastException = constructor switch
+        {
+            "Parameterless" => new UpstashRedisProviderException(),
+            "Message" => new UpstashRedisProviderException("Provider failure."),
+            "MessageAndInner" => new UpstashRedisProviderException("Provider failure.", new InvalidOperationException()),
+            _ => throw new InvalidOperationException($"Unknown constructor '{constructor}'."),
+        };
+    }
+
     [Then("the Upstash management request uses {word} {string}")]
     public void ThenTheUpstashManagementRequestUses(string method, string path)
     {
