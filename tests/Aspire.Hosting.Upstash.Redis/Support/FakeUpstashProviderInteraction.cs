@@ -8,13 +8,7 @@ internal sealed class FakeUpstashProviderInteraction
         DatabaseName = databaseName;
     }
 
-    public string Name
-    {
-        get;
-    }
+    public string Name { get; }
 
-    public string DatabaseName
-    {
-        get;
-    }
+    public string DatabaseName { get; }
 }
