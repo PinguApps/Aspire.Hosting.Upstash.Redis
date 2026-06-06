@@ -2,7 +2,7 @@
 
 This package is an Aspire hosting integration for publishing a standard Aspire Redis resource to Upstash Redis during deployment.
 
-Current state: the Aspire integration shape, public API shape, and Upstash Redis option/domain model are confirmed. The package extends the built-in Redis resource returned by `builder.AddRedis("cache")` and attaches Upstash deployment metadata with `.PublishToUpstash(...)`. The deploy pipeline step is intentionally a no-op until the later implementation tasks add Upstash API calls, reconciliation, and deployed connection outputs.
+Current state: the Aspire integration shape, public API shape, internal resource state model, and Upstash Redis option/domain model are confirmed. The package extends the built-in Redis resource returned by `builder.AddRedis("cache")` and attaches internal Upstash deployment state with `.PublishToUpstash(...)`. The deploy pipeline step is intentionally a no-op until the later implementation tasks add Upstash API calls, reconciliation, and deployed connection outputs.
 
 ```csharp
 var databaseName = builder.AddParameter("upstash-database-name");
@@ -45,7 +45,7 @@ builder.AddRedis("cache")
         UpstashRedisOwnershipMode.CreateOrAdopt);
 ```
 
-Required values and optional string settings are represented as `UpstashRedisValue`, which can hold either a literal string or an Aspire `ParameterResource`. Literal strings convert implicitly; parameterized optional settings use `UpstashRedisValue.FromParameter(...)`.
+Required values and optional string settings are represented as `UpstashRedisValue`, which can hold either a literal string or an Aspire `ParameterResource`. Literal strings convert implicitly; parameterized optional settings use `UpstashRedisValue.FromParameter(...)`. Internally, the Redis resource annotation stores a single deployment state snapshot containing required values, ownership mode, infrastructure-only management credential sources, optional settings, and explicit-setting metadata for later reconcile tasks.
 
 Optional provider-domain settings can be configured with typed helpers when values are known at AppHost configuration time:
 

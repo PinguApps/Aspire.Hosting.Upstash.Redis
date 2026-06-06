@@ -41,6 +41,11 @@ Feature: Publish Redis to Upstash
     Then the provider domain maps the typed options to Upstash payload values
     And the provider domain preserves explicit settings for reconcile
 
+  Scenario: Marking a Redis resource for Upstash preserves explicit option intent
+    Given a standard Aspire Redis resource named "cache"
+    When the Redis resource is marked for Upstash with an explicitly unset primary region
+    Then the Upstash state distinguishes the explicitly unset primary region from an unspecified plan
+
   Scenario: Marking a Redis resource for Upstash rejects a blank database name
     Given a standard Aspire Redis resource named "cache"
     When the Redis resource is marked for a blank Upstash database name
