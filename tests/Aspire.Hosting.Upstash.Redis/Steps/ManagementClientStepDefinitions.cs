@@ -99,11 +99,11 @@ public sealed class ManagementClientStepDefinitions : IDisposable
     [Given("the Upstash management API returns OK for five operations")]
     public void GivenTheUpstashManagementApiReturnsOkForFiveOperations()
     {
-        _handler.Enqueue(HttpStatusCode.OK, "\"OK\"");
-        _handler.Enqueue(HttpStatusCode.OK, "\"OK\"");
-        _handler.Enqueue(HttpStatusCode.OK, "\"OK\"");
-        _handler.Enqueue(HttpStatusCode.OK, "\"OK\"");
-        _handler.Enqueue(HttpStatusCode.OK, "\"OK\"");
+        _handler.Enqueue(HttpStatusCode.OK, "\"OK\"\n");
+        _handler.Enqueue(HttpStatusCode.OK, "\"OK\"\n");
+        _handler.Enqueue(HttpStatusCode.OK, "\"OK\"\n");
+        _handler.Enqueue(HttpStatusCode.OK, "\"OK\"\n");
+        _handler.Enqueue(HttpStatusCode.OK, "\"OK\"\n");
     }
 
     [Given("the Upstash management API returns a modifying database then an active database")]

@@ -220,7 +220,22 @@ internal sealed class UpstashRedisManagementClient : IUpstashRedisManagementClie
 
         if (typeof(TResponse) == typeof(string))
         {
-            return (TResponse)(object)responseContent.Trim('"');
+            try
+            {
+                return (TResponse)(object)(JsonSerializer.Deserialize<string>(responseContent, _serializerOptions)
+                    ?? throw new UpstashRedisProviderException(
+                        UpstashRedisProviderFailureKind.ProviderContract,
+                        response.StatusCode,
+                        "Upstash Redis returned an empty or unrecognized response body."));
+            }
+            catch (JsonException exception)
+            {
+                throw new UpstashRedisProviderException(
+                    UpstashRedisProviderFailureKind.ProviderContract,
+                    response.StatusCode,
+                    "Upstash Redis returned an invalid JSON response body.",
+                    exception);
+            }
         }
 
         TResponse deserialized;
