@@ -14,6 +14,12 @@ internal static class AspireModelInspector
         return Assert.Single(resource.Annotations.OfType<UpstashRedisDeploymentAnnotation>());
     }
 
+    public static UpstashRedisDeploymentState GetUpstashState(RedisResource resource)
+    {
+        return resource.GetUpstashRedisDeploymentState()
+            ?? throw new InvalidOperationException("The Redis resource does not have Upstash deployment state.");
+    }
+
     public static int GetPipelineStepCount(RedisResource resource)
     {
         return resource.Annotations.OfType<PipelineStepAnnotation>().Count();
