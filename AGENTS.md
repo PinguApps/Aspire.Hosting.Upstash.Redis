@@ -136,7 +136,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
   - database name
 
 ### Current Repository State
-- The repository currently contains the package project, the test project, shared build settings, planning artifacts, decision records, the Aspire integration skeleton from task `0.1`, and the locked public API shape from task `1.1`.
+- The repository currently contains the package project, the test project, shared build settings, planning artifacts, decision records, the Aspire integration skeleton from task `0.1`, the locked public API shape from task `1.1`, and the typed Upstash Redis management client layer from task `2.2`.
 - `src/Aspire.Hosting.Upstash.Redis/Aspire.Hosting.Upstash.Redis.csproj` is the main package project to implement.
 - `tests/Aspire.Hosting.Upstash.Redis/` is the single test project and should remain the home for the package test suite.
 - The test project now has a Reqnroll feature taxonomy and shared support layer from task `1.2`; read `tests/Aspire.Hosting.Upstash.Redis/README.md` before adding scenarios.
@@ -147,6 +147,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - Plan `0.2` is complete and now contains the authoritative Upstash Redis management capability matrix for v1.
 - Plan `1.1` is complete; `.PublishToUpstash(...)` is the locked public entry point, ownership is expressed with `UpstashRedisOwnershipMode`, and required/optional deploy-time strings are captured as `UpstashRedisValue` literal-or-parameter sources.
 - Plan `1.2` is complete and now defines the Reqnroll spec matrix, fake-provider default pattern, Aspire model inspection helpers, and opt-in live-provider cleanup pattern.
+- Plan `2.2` is complete; `src/Aspire.Hosting.Upstash.Redis/Management/` contains the narrow internal client for the supported Upstash Redis Developer API endpoints, typed DTOs, Basic-auth helper, readiness polling helper, and typed provider failure classification.
 - Task agents can now receive Upstash management credentials through environment variables `UPSTASH_EMAIL` and `UPSTASH_API_KEY`.
 
 ### Technical Baseline
