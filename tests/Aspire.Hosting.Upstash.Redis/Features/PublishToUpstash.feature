@@ -50,6 +50,11 @@ Feature: Publish Redis to Upstash
     When the Redis resource is marked for Upstash with a missing API key value
     Then the Upstash configuration fails with "ArgumentNullException"
 
+  Scenario: Marking a Redis resource for Upstash rejects a literal API key value
+    Given a standard Aspire Redis resource named "cache"
+    When the Redis resource is marked for Upstash with a literal API key value
+    Then the Upstash configuration fails with "InvalidOperationException"
+
   Scenario: Marking a Redis resource for Upstash rejects an unsupported ownership mode
     Given a standard Aspire Redis resource named "cache"
     When the Redis resource is marked for Upstash with an unsupported ownership mode
