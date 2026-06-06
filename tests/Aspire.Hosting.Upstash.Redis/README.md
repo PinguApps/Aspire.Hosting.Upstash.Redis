@@ -18,7 +18,7 @@ Only the groups needed by the current skeleton have feature files today. Future 
 - `UpstashRedisScenarioContext` is the per-scenario object model for Aspire builders, captured options, fake provider state, and live-provider cleanup.
 - `AspireModelInspector` and `AspireModelAssertions` centralize annotation, connection-property, pipeline-step, and reference-chain checks.
 - `FakeUpstashProvider` is the default Upstash simulation path. It is deterministic, in memory, and records provider interactions for assertions.
-- `LiveUpstashTestSession` is the opt-in live-provider pattern. Live scenarios must use the `@live-upstash` tag, read only `UPSTASH_EMAIL` and `UPSTASH_API_KEY`, and register every delete or restore action through the shared cleanup stack.
+- `LiveUpstashTestSession` is the opt-in live-provider pattern. Live scenarios must use the `@live-upstash` tag, read only `UPSTASH_EMAIL` and `UPSTASH_API_KEY`, and register every delete or restore action through the shared cleanup stack. Cleanup runs best-effort through the full stack and reports failures after all actions have been attempted.
 
 ## Scenario Map
 

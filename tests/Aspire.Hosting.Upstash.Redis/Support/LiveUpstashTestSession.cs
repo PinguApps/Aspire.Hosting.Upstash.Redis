@@ -1,3 +1,5 @@
+using System.Runtime.ExceptionServices;
+
 namespace PinguApps.Aspire.Hosting.Upstash.Redis.Tests.Support;
 
 internal sealed class LiveUpstashTestSession
@@ -19,9 +21,30 @@ internal sealed class LiveUpstashTestSession
 
     public async Task CleanupAsync()
     {
+        List<Exception>? failures = null;
+
         while (_cleanupActions.TryPop(out Func<Task>? cleanup))
         {
-            await cleanup().ConfigureAwait(false);
+            try
+            {
+                await cleanup().ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                (failures ??= []).Add(ex);
+            }
         }
+
+        if (failures is null)
+        {
+            return;
+        }
+
+        if (failures.Count == 1)
+        {
+            ExceptionDispatchInfo.Capture(failures[0]).Throw();
+        }
+
+        throw new AggregateException("One or more live Upstash cleanup actions failed.", failures);
     }
 }
