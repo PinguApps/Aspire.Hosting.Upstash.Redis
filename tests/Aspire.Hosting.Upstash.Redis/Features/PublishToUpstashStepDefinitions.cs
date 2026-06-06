@@ -16,6 +16,7 @@ public sealed class PublishToUpstashStepDefinitions
     private IResourceBuilder<ContainerResource>? _containerBuilder;
     private IResourceBuilder<ParameterResource>? _accountEmail;
     private IResourceBuilder<ParameterResource>? _apiKey;
+    private UpstashRedisDeploymentOptions? _capturedDeploymentOptions;
     private readonly List<string> _configuredReadRegions = ["eu-west-2"];
 
     [Given("a standard Aspire Redis resource named {string}")]
@@ -37,6 +38,7 @@ public sealed class PublishToUpstashStepDefinitions
             _apiKey,
             configure: options =>
             {
+                _capturedDeploymentOptions = options;
                 options.PrimaryRegion = "eu-west-1";
                 options.ReadRegions = _configuredReadRegions;
                 options.Tls = true;
@@ -71,6 +73,24 @@ public sealed class PublishToUpstashStepDefinitions
         Assert.Contains(nameof(UpstashRedisDeploymentOptions.PrimaryRegion), annotation.Options.ExplicitSettings);
         Assert.Contains(nameof(UpstashRedisDeploymentOptions.ReadRegions), annotation.Options.ExplicitSettings);
         Assert.Contains(nameof(UpstashRedisDeploymentOptions.Tls), annotation.Options.ExplicitSettings);
+    }
+
+    [Then("mutating captured callback options cannot mutate deployment metadata")]
+    public void ThenMutatingCapturedCallbackOptionsCannotMutateDeploymentMetadata()
+    {
+        UpstashRedisDeploymentOptions capturedOptions =
+            _capturedDeploymentOptions ?? throw new InvalidOperationException("The deployment options were not captured.");
+
+        capturedOptions.PrimaryRegion = "us-east-1";
+        capturedOptions.Plan = "payg";
+        capturedOptions.Tls = false;
+
+        UpstashRedisDeploymentAnnotation annotation = Assert.Single(RedisBuilder.Resource.Annotations.OfType<UpstashRedisDeploymentAnnotation>());
+
+        Assert.Equal("eu-west-1", annotation.Options.PrimaryRegion);
+        Assert.Null(annotation.Options.Plan);
+        Assert.Equal(true, annotation.Options.Tls);
+        Assert.DoesNotContain(nameof(UpstashRedisDeploymentOptions.Plan), annotation.Options.ExplicitSettings);
     }
 
     [Then("the explicit setting snapshot cannot mutate deployment metadata")]

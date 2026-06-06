@@ -26,7 +26,7 @@ public sealed class UpstashRedisDeploymentAnnotation : IResourceAnnotation
         OwnershipMode = ownershipMode;
         AccountEmail = accountEmail;
         ApiKey = apiKey;
-        Options = options;
+        OptionsSnapshot = new UpstashRedisDeploymentOptions(options);
     }
 
     /// <summary>
@@ -64,7 +64,9 @@ public sealed class UpstashRedisDeploymentAnnotation : IResourceAnnotation
     /// <summary>
     /// Gets the optional deployment settings and explicit-setting tracking.
     /// </summary>
-    public UpstashRedisDeploymentOptions Options
+    public UpstashRedisDeploymentOptions Options => new(OptionsSnapshot);
+
+    private UpstashRedisDeploymentOptions OptionsSnapshot
     {
         get;
     }

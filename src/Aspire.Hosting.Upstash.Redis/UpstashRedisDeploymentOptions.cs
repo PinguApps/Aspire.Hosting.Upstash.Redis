@@ -8,6 +8,29 @@ public sealed class UpstashRedisDeploymentOptions
     private readonly HashSet<string> _explicitSettings = [];
 
     /// <summary>
+    /// Initializes a new instance of the <see cref="UpstashRedisDeploymentOptions"/> class.
+    /// </summary>
+    public UpstashRedisDeploymentOptions()
+    {
+    }
+
+    internal UpstashRedisDeploymentOptions(UpstashRedisDeploymentOptions source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+
+        Platform = source.Platform;
+        PrimaryRegion = source.PrimaryRegion;
+        ReadRegions = source.ReadRegions;
+        Plan = source.Plan;
+        Budget = source.Budget;
+        Eviction = source.Eviction;
+        Tls = source.Tls;
+
+        _explicitSettings.Clear();
+        _explicitSettings.UnionWith(source._explicitSettings);
+    }
+
+    /// <summary>
     /// Gets or sets the Upstash platform or cloud provider.
     /// </summary>
     public string? Platform
