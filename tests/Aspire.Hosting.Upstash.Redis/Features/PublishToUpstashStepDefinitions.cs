@@ -67,6 +67,19 @@ public sealed class PublishToUpstashStepDefinitions
         Assert.Contains(nameof(UpstashRedisDeploymentOptions.Tls), annotation.Options.ExplicitSettings);
     }
 
+    [Then("the explicit setting snapshot cannot mutate deployment metadata")]
+    public void ThenTheExplicitSettingSnapshotCannotMutateDeploymentMetadata()
+    {
+        UpstashRedisDeploymentAnnotation annotation = Assert.Single(RedisBuilder.Resource.Annotations.OfType<UpstashRedisDeploymentAnnotation>());
+
+        if (annotation.Options.ExplicitSettings is ISet<string> exposedSettings)
+        {
+            exposedSettings.Add(nameof(UpstashRedisDeploymentOptions.Plan));
+        }
+
+        Assert.DoesNotContain(nameof(UpstashRedisDeploymentOptions.Plan), annotation.Options.ExplicitSettings);
+    }
+
     [Then("the resource keeps the standard Redis connection properties")]
     public void ThenTheResourceKeepsTheStandardRedisConnectionProperties()
     {

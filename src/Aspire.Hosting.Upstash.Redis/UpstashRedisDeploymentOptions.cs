@@ -110,7 +110,7 @@ public sealed class UpstashRedisDeploymentOptions
     /// <summary>
     /// Gets the option property names explicitly set by the caller.
     /// </summary>
-    public IReadOnlySet<string> ExplicitSettings => _explicitSettings;
+    public IReadOnlySet<string> ExplicitSettings => new HashSet<string>(_explicitSettings);
 
     private void TrackExplicitSetting(string settingName)
     {
