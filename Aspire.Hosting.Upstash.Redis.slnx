@@ -9,6 +9,9 @@
   <Folder Name="/src/">
     <Project Path="src/Aspire.Hosting.Upstash.Redis/Aspire.Hosting.Upstash.Redis.csproj" />
   </Folder>
+  <Folder Name="/build/">
+    <Project Path="build/PinguApps.CodeAnalysis/PinguApps.CodeAnalysis.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Aspire.Hosting.Upstash.Redis/Aspire.Hosting.Upstash.Redis.Tests.csproj" />
   </Folder>
