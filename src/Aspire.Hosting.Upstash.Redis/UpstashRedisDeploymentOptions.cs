@@ -1,5 +1,3 @@
-#pragma warning disable IDE0032
-
 namespace Aspire.Hosting.Upstash.Redis;
 
 /// <summary>
@@ -8,23 +6,16 @@ namespace Aspire.Hosting.Upstash.Redis;
 public sealed class UpstashRedisDeploymentOptions
 {
     private readonly HashSet<string> _explicitSettings = [];
-    private string? _platform;
-    private string? _primaryRegion;
-    private IReadOnlyList<string>? _readRegions;
-    private string? _plan;
-    private string? _budget;
-    private bool? _eviction;
-    private bool? _tls;
 
     /// <summary>
     /// Gets or sets the Upstash platform or cloud provider.
     /// </summary>
     public string? Platform
     {
-        get => _platform;
+        get;
         set
         {
-            _platform = value;
+            field = value;
             TrackExplicitSetting(nameof(Platform));
         }
     }
@@ -34,10 +25,10 @@ public sealed class UpstashRedisDeploymentOptions
     /// </summary>
     public string? PrimaryRegion
     {
-        get => _primaryRegion;
+        get;
         set
         {
-            _primaryRegion = value;
+            field = value;
             TrackExplicitSetting(nameof(PrimaryRegion));
         }
     }
@@ -47,10 +38,10 @@ public sealed class UpstashRedisDeploymentOptions
     /// </summary>
     public IReadOnlyList<string>? ReadRegions
     {
-        get => _readRegions;
+        get;
         set
         {
-            _readRegions = value;
+            field = value;
             TrackExplicitSetting(nameof(ReadRegions));
         }
     }
@@ -60,10 +51,10 @@ public sealed class UpstashRedisDeploymentOptions
     /// </summary>
     public string? Plan
     {
-        get => _plan;
+        get;
         set
         {
-            _plan = value;
+            field = value;
             TrackExplicitSetting(nameof(Plan));
         }
     }
@@ -73,10 +64,10 @@ public sealed class UpstashRedisDeploymentOptions
     /// </summary>
     public string? Budget
     {
-        get => _budget;
+        get;
         set
         {
-            _budget = value;
+            field = value;
             TrackExplicitSetting(nameof(Budget));
         }
     }
@@ -86,10 +77,10 @@ public sealed class UpstashRedisDeploymentOptions
     /// </summary>
     public bool? Eviction
     {
-        get => _eviction;
+        get;
         set
         {
-            _eviction = value;
+            field = value;
             TrackExplicitSetting(nameof(Eviction));
         }
     }
@@ -99,10 +90,10 @@ public sealed class UpstashRedisDeploymentOptions
     /// </summary>
     public bool? Tls
     {
-        get => _tls;
+        get;
         set
         {
-            _tls = value;
+            field = value;
             TrackExplicitSetting(nameof(Tls));
         }
     }
