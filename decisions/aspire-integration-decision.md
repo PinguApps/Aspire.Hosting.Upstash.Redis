@@ -14,9 +14,10 @@ Upstash opt-in is attached to that same resource:
 
 ```csharp
 cache.PublishToUpstash(
-    "orders-cache",
+    builder.AddParameter("upstash-database-name"),
     builder.AddParameter("upstash-account-email"),
-    builder.AddParameter("upstash-api-key", secret: true));
+    builder.AddParameter("upstash-api-key", secret: true),
+    UpstashRedisOwnershipMode.CreateOrAdopt);
 ```
 
 The extension point is an `IResourceBuilder<RedisResource>` extension method. It attaches an `UpstashRedisDeploymentAnnotation` to `cache.Resource` and registers a deploy-only Aspire pipeline step with `WithPipelineStepFactory`. The step depends on `WellKnownPipelineSteps.DeployPrereq` and is required by `WellKnownPipelineSteps.Deploy`.
@@ -75,5 +76,6 @@ This task adds a no-op deployment skeleton so later tasks have concrete types to
 - `UpstashRedisDeploymentAnnotation`
 - `UpstashRedisDeploymentOptions`
 - `UpstashRedisOwnershipMode`
+- `UpstashRedisValue`
 
 Reqnroll scenarios prove that `.PublishToUpstash(...)` attaches metadata to the existing `RedisResource`, keeps standard Redis connection properties, and does not prevent a consuming container from building the normal `WithReference(cache)` chain.

@@ -33,7 +33,7 @@ public sealed class UpstashRedisDeploymentOptions
     /// <summary>
     /// Gets or sets the Upstash platform or cloud provider.
     /// </summary>
-    public string? Platform
+    public UpstashRedisValue? Platform
     {
         get;
         set
@@ -46,7 +46,7 @@ public sealed class UpstashRedisDeploymentOptions
     /// <summary>
     /// Gets or sets the primary Upstash region.
     /// </summary>
-    public string? PrimaryRegion
+    public UpstashRedisValue? PrimaryRegion
     {
         get;
         set
@@ -59,7 +59,7 @@ public sealed class UpstashRedisDeploymentOptions
     /// <summary>
     /// Gets or sets optional read regions.
     /// </summary>
-    public IReadOnlyList<string>? ReadRegions
+    public IReadOnlyList<UpstashRedisValue>? ReadRegions
     {
         get;
         set
@@ -72,7 +72,7 @@ public sealed class UpstashRedisDeploymentOptions
     /// <summary>
     /// Gets or sets the Upstash plan.
     /// </summary>
-    public string? Plan
+    public UpstashRedisValue? Plan
     {
         get;
         set
@@ -85,7 +85,7 @@ public sealed class UpstashRedisDeploymentOptions
     /// <summary>
     /// Gets or sets the budget setting.
     /// </summary>
-    public string? Budget
+    public UpstashRedisValue? Budget
     {
         get;
         set
@@ -121,10 +121,15 @@ public sealed class UpstashRedisDeploymentOptions
         }
     }
 
-    /// <summary>
-    /// Gets the option property names explicitly set by the caller.
-    /// </summary>
-    public IReadOnlySet<string> ExplicitSettings => new HashSet<string>(_explicitSettings);
+    internal IReadOnlySet<string> ExplicitSettings => new HashSet<string>(_explicitSettings);
+
+    internal void Validate()
+    {
+        if (Tls == false)
+        {
+            throw new InvalidOperationException("Upstash Redis requires TLS for v1 deployments. Set TLS to true or leave it unset.");
+        }
+    }
 
     private void TrackExplicitSetting(string settingName)
     {
