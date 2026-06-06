@@ -99,9 +99,9 @@ public sealed class UpstashRedisDeploymentOptions
     {
         ArgumentNullException.ThrowIfNull(regions);
 
-        ReadRegions = Array.AsReadOnly(regions
+        ReadRegions = regions
             .Select(static region => UpstashRedisValue.FromString(UpstashRedisProviderDomain.MapRegion(region)))
-            .ToArray());
+            .ToArray();
     }
 
     /// <summary>
