@@ -101,16 +101,6 @@ public sealed class PublishToUpstashStepDefinitions
                 null!));
     }
 
-    [When("the Redis resource is marked for Upstash with a literal API key value")]
-    public void WhenTheRedisResourceIsMarkedForUpstashWithALiteralApiKeyValue()
-    {
-        _configurationException = Record.Exception(() =>
-            RedisBuilder.PublishToUpstash(
-                UpstashRedisValue.FromString("orders-cache"),
-                UpstashRedisValue.FromParameter(AppBuilder.AddParameter("upstash-account-email")),
-                UpstashRedisValue.FromString("literal-api-key")));
-    }
-
     [When("the Redis resource is marked for Upstash with an unsupported ownership mode")]
     public void WhenTheRedisResourceIsMarkedForUpstashWithAnUnsupportedOwnershipMode()
     {

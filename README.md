@@ -45,7 +45,7 @@ builder.AddRedis("cache")
         UpstashRedisOwnershipMode.CreateOrAdopt);
 ```
 
-Most required values and optional string settings are represented as `UpstashRedisValue`, which can hold either a literal string or an Aspire `ParameterResource`. Literal strings convert implicitly; parameterized optional settings use `UpstashRedisValue.FromParameter(...)`. The Upstash Management API key is the exception: it must be parameter-backed, and the recommended AppHost shape is `builder.AddParameter("upstash-api-key", secret: true)`.
+Required values and optional string settings are represented as `UpstashRedisValue`, which can hold either a literal string or an Aspire `ParameterResource`. Literal strings convert implicitly; parameterized optional settings use `UpstashRedisValue.FromParameter(...)`.
 
 Local Aspire behavior is preserved: `.PublishToUpstash(...)` does not replace the Redis resource, does not call Upstash during model construction or local runs, and does not prevent normal `WithReference(cache)` usage.
 

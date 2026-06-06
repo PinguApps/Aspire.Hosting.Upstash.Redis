@@ -144,7 +144,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - `.diary/` contains branch-specific session state and must be read and maintained per the diary rules above.
 - `README.md` documents the current skeleton and planning/investigation state and must continue to be brought into sync as real behavior lands.
 - Plan `0.2` is complete and now contains the authoritative Upstash Redis management capability matrix for v1.
-- Plan `1.1` is complete; `.PublishToUpstash(...)` is the locked public entry point, ownership is expressed with `UpstashRedisOwnershipMode`, required/optional deploy-time strings are captured as `UpstashRedisValue` literal-or-parameter sources, and the Upstash Management API key must be parameter-backed.
+- Plan `1.1` is complete; `.PublishToUpstash(...)` is the locked public entry point, ownership is expressed with `UpstashRedisOwnershipMode`, and required/optional deploy-time strings are captured as `UpstashRedisValue` literal-or-parameter sources.
 - Task agents can now receive Upstash management credentials through environment variables `UPSTASH_EMAIL` and `UPSTASH_API_KEY`.
 
 ### Technical Baseline

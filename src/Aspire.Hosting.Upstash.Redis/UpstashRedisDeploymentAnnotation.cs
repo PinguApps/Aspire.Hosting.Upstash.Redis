@@ -27,11 +27,6 @@ public sealed class UpstashRedisDeploymentAnnotation : IResourceAnnotation
         ArgumentNullException.ThrowIfNull(apiKey);
         ArgumentNullException.ThrowIfNull(options);
 
-        if (!apiKey.IsParameter)
-        {
-            throw new InvalidOperationException("The Upstash Management API key must be supplied from an Aspire parameter. Use builder.AddParameter(\"upstash-api-key\", secret: true) and pass that parameter to PublishToUpstash.");
-        }
-
         if (!Enum.IsDefined(ownershipMode))
         {
             throw new ArgumentOutOfRangeException(nameof(ownershipMode), ownershipMode, "The Upstash Redis ownership mode is not supported.");
