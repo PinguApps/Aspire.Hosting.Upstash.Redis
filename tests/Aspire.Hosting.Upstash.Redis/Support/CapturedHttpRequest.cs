@@ -16,28 +16,13 @@ internal sealed class CapturedHttpRequest
         Content = content;
     }
 
-    public HttpMethod Method
-    {
-        get;
-    }
+    public HttpMethod Method { get; }
 
-    public string PathAndQuery
-    {
-        get;
-    }
+    public string PathAndQuery { get; }
 
-    public string? AuthorizationScheme
-    {
-        get;
-    }
+    public string? AuthorizationScheme { get; }
 
-    public string? AuthorizationParameter
-    {
-        get;
-    }
+    public string? AuthorizationParameter { get; }
 
-    public string? Content
-    {
-        get;
-    }
+    public string? Content { get; }
 }

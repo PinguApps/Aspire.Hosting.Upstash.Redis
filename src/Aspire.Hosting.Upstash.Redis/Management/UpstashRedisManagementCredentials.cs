@@ -14,15 +14,9 @@ internal sealed class UpstashRedisManagementCredentials
         ApiKey = apiKey;
     }
 
-    public string AccountEmail
-    {
-        get;
-    }
+    public string AccountEmail { get; }
 
-    public string ApiKey
-    {
-        get;
-    }
+    public string ApiKey { get; }
 
     public AuthenticationHeaderValue CreateAuthorizationHeader()
     {

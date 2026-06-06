@@ -39,13 +39,7 @@ internal sealed class UpstashRedisProviderException : Exception
         StatusCode = statusCode;
     }
 
-    public UpstashRedisProviderFailureKind FailureKind
-    {
-        get;
-    } = UpstashRedisProviderFailureKind.Unexpected;
+    public UpstashRedisProviderFailureKind FailureKind { get; } = UpstashRedisProviderFailureKind.Unexpected;
 
-    public HttpStatusCode? StatusCode
-    {
-        get;
-    }
+    public HttpStatusCode? StatusCode { get; }
 }
