@@ -16,6 +16,16 @@
     </PackageReference>
   </ItemGroup>
 
+  <PropertyGroup Condition="'$(IsAnalyzer)' == 'true'">
+    <IsPackable>false</IsPackable>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    <NoWarn>$(NoWarn);RS2008</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(IsAnalyzer)' == 'true'">
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
+  </ItemGroup>
+
   <ItemGroup Condition="'$(IsAnalyzer)' != 'true'">
     <ProjectReference Include="$(MSBuildThisFileDirectory)build\PinguApps.CodeAnalysis\PinguApps.CodeAnalysis.csproj"
                       OutputItemType="Analyzer"
