@@ -22,45 +22,21 @@ internal sealed class UpstashRedisProviderDeploymentOptions
         ExplicitSettings = explicitSettings;
     }
 
-    public UpstashRedisProviderValue? Platform
-    {
-        get;
-    }
+    public UpstashRedisProviderValue? Platform { get; }
 
-    public UpstashRedisProviderValue? PrimaryRegion
-    {
-        get;
-    }
+    public UpstashRedisProviderValue? PrimaryRegion { get; }
 
-    public IReadOnlyList<UpstashRedisProviderValue>? ReadRegions
-    {
-        get;
-    }
+    public IReadOnlyList<UpstashRedisProviderValue>? ReadRegions { get; }
 
-    public UpstashRedisProviderValue? Plan
-    {
-        get;
-    }
+    public UpstashRedisProviderValue? Plan { get; }
 
-    public UpstashRedisProviderValue? Budget
-    {
-        get;
-    }
+    public UpstashRedisProviderValue? Budget { get; }
 
-    public UpstashRedisProviderValue? Eviction
-    {
-        get;
-    }
+    public UpstashRedisProviderValue? Eviction { get; }
 
-    public UpstashRedisProviderValue? Tls
-    {
-        get;
-    }
+    public UpstashRedisProviderValue? Tls { get; }
 
-    public IReadOnlySet<string> ExplicitSettings
-    {
-        get;
-    }
+    public IReadOnlySet<string> ExplicitSettings { get; }
 }
 
 internal sealed class UpstashRedisProviderValue
@@ -71,15 +47,9 @@ internal sealed class UpstashRedisProviderValue
         LiteralValue = literalValue;
     }
 
-    public UpstashRedisValue Source
-    {
-        get;
-    }
+    public UpstashRedisValue Source { get; }
 
-    public object? LiteralValue
-    {
-        get;
-    }
+    public object? LiteralValue { get; }
 
     public bool IsParameter => Source.IsParameter;
 }

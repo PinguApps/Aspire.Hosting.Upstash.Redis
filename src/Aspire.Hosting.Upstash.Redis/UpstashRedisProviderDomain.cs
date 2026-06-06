@@ -154,19 +154,10 @@ internal static class UpstashRedisProviderDomain
             SupportsReadReplica = supportsReadReplica;
         }
 
-        public string ProviderValue
-        {
-            get;
-        }
+        public string ProviderValue { get; }
 
-        public UpstashRedisCloudPlatform Platform
-        {
-            get;
-        }
+        public UpstashRedisCloudPlatform Platform { get; }
 
-        public bool SupportsReadReplica
-        {
-            get;
-        }
+        public bool SupportsReadReplica { get; }
     }
 }
