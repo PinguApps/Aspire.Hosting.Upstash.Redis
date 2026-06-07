@@ -23,13 +23,13 @@ public sealed class OwnershipResolutionStepDefinitions
     [Given("the Upstash ownership resolver finds database {string} in region {string} with TLS enabled")]
     public void GivenTheUpstashOwnershipResolverFindsDatabaseInRegionWithTlsEnabled(string databaseName, string primaryRegion)
     {
-        ConfigureFoundDatabase(databaseName, primaryRegion, tls: true);
+        SetExistingDatabase(databaseName, primaryRegion, tls: true);
     }
 
     [Given("the Upstash ownership resolver finds database {string} in region {string} with TLS disabled")]
     public void GivenTheUpstashOwnershipResolverFindsDatabaseInRegionWithTlsDisabled(string databaseName, string primaryRegion)
     {
-        ConfigureFoundDatabase(databaseName, primaryRegion, tls: false);
+        SetExistingDatabase(databaseName, primaryRegion, tls: false);
     }
 
     [When("ownership is resolved for database {string} with mode {string}")]
@@ -38,8 +38,8 @@ public sealed class OwnershipResolutionStepDefinitions
         await ResolveAsync(databaseName, ownershipMode, options => options.Tls = true).ConfigureAwait(false);
     }
 
-    [When("ownership is resolved for database {string} with mode {string} and TLS unset")]
-    public async Task WhenOwnershipIsResolvedForDatabaseWithModeAndTlsUnset(string databaseName, string ownershipMode)
+    [When("ownership is resolved for database {string} with mode {string} and default options")]
+    public async Task WhenOwnershipIsResolvedForDatabaseWithModeAndDefaultOptions(string databaseName, string ownershipMode)
     {
         await ResolveAsync(databaseName, ownershipMode, _ => { }).ConfigureAwait(false);
     }
@@ -97,7 +97,7 @@ public sealed class OwnershipResolutionStepDefinitions
         Assert.Contains(expectedText, _exception.Message, StringComparison.Ordinal);
     }
 
-    private void ConfigureFoundDatabase(string databaseName, string primaryRegion, bool tls)
+    private void SetExistingDatabase(string databaseName, string primaryRegion, bool tls)
     {
         _client.DatabaseName = databaseName;
         _client.Database = new UpstashRedisDatabaseDetails

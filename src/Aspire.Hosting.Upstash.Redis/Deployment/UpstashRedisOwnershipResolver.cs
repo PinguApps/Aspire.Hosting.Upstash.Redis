@@ -87,7 +87,7 @@ internal static class UpstashRedisOwnershipResolver
         {
             throw new UpstashRedisOwnershipResolutionException(
                 UpstashRedisOwnershipResolutionFailureReason.ExistingDatabaseIncompatible,
-                $"Upstash Redis database '{request.DatabaseName}' already exists but has TLS disabled. Upstash Redis requires TLS for v1 deployments, and the package will not replace or mutate this setting automatically in v1.");
+                $"Upstash Redis database '{request.DatabaseName}' already exists but is incompatible with the package TLS requirement. TLS is required-on/read-only for v1, found 'disabled'.");
         }
     }
 
