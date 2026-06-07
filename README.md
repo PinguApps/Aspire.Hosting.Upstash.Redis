@@ -80,7 +80,7 @@ builder.AddRedis("cache")
 ```
 
 - `CreateOrAdopt`: create the database when the configured name is missing, or adopt the existing compatible database with that name.
-- `CreateOnly`: create the database when the configured name is missing. If an unmanaged database with that name already exists, deployment fails. Repeated deploys may reuse this deployment's verified cached identity.
+- `CreateOnly`: create the database when the configured name is missing. If a database with that name already exists, deployment fails, including on repeated deploys after the first create.
 - `ExistingOnly`: adopt an existing compatible database with the configured name. If it does not exist, deployment fails.
 
 Create paths require enough placement information for Upstash to create a database. In practice, configure at least `Platform` and `PrimaryRegion` when `CreateOrAdopt` or `CreateOnly` may create a new database.

@@ -121,6 +121,14 @@ public sealed class OwnershipDeploymentStepDefinitions
         await RunPipelineAsync().ConfigureAwait(false);
     }
 
+    [When("the Upstash ownership deployment pipeline is attempted again")]
+    public async Task WhenTheUpstashOwnershipDeploymentPipelineIsAttemptedAgain()
+    {
+        _previousCreateCount = _client.CreateCount;
+
+        _exception = await Record.ExceptionAsync(RunPipelineAsync).ConfigureAwait(false);
+    }
+
     [When("the Upstash ownership deployment pipeline is attempted")]
     public async Task WhenTheUpstashOwnershipDeploymentPipelineIsAttempted()
     {

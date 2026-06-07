@@ -52,13 +52,6 @@ internal static class UpstashRedisOwnershipResolver
             return UpstashRedisOwnershipResolutionResult.Create();
         }
 
-        if (request.ExistingDatabaseIsManagedIdentity)
-        {
-            ValidateExistingDatabaseCompatibility(request, existingDatabase);
-
-            return UpstashRedisOwnershipResolutionResult.Adopt(existingDatabase);
-        }
-
         throw new UpstashRedisOwnershipResolutionException(
             UpstashRedisOwnershipResolutionFailureReason.CreateOnlyDatabaseAlreadyExists,
             $"Upstash Redis database '{request.DatabaseName}' already exists, but ownership mode is create-only. Choose a different database name, delete the existing database outside Aspire, or use create-or-adopt/existing-only if this deployment should manage it.");

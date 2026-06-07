@@ -8,7 +8,7 @@ Feature: Upstash Redis ownership deployment
     And the Upstash ownership deployment saved remote identity database "orders-cache"
     And the Upstash ownership deployment populated Redis outputs for database "orders-cache"
 
-  Scenario: Create-only fails when an unmanaged database already exists
+  Scenario: Create-only fails when a database already exists
     Given an Upstash ownership deployment for database "orders-cache" with mode "CreateOnly"
     And the Upstash ownership deployment provider has database "orders-cache" with id "db-orders"
     When the Upstash ownership deployment pipeline is attempted
@@ -48,19 +48,23 @@ Feature: Upstash Redis ownership deployment
     And the Upstash ownership deployment saved remote identity database "orders-cache"
     And the Upstash ownership deployment populated Redis outputs for database "orders-cache"
 
-  Scenario Outline: Repeated deployments reuse the managed identity without recreating
-    Given an Upstash ownership deployment for database "orders-cache" with mode "<Mode>"
+  Scenario: Repeated create-only deployment fails when the first deployment created the named database
+    Given an Upstash ownership deployment for database "orders-cache" with mode "CreateOnly"
+    And the Upstash ownership deployment provider has no database named "orders-cache"
+    When the Upstash ownership deployment pipeline runs
+    And the Upstash ownership deployment pipeline is attempted again
+    Then the Upstash ownership deployment created 1 database
+    And the Upstash ownership deployment fails because "CreateOnlyDatabaseAlreadyExists"
+    And the Upstash ownership deployment saved remote identity database "orders-cache"
+
+  Scenario: Repeated create-or-adopt deployment reuses the managed identity without recreating
+    Given an Upstash ownership deployment for database "orders-cache" with mode "CreateOrAdopt"
     And the Upstash ownership deployment provider has no database named "orders-cache"
     When the Upstash ownership deployment pipeline runs
     And the Upstash ownership deployment pipeline runs again
     Then the Upstash ownership deployment created 1 database
     And the Upstash ownership deployment succeeded using the "Adopt" path
     And the Upstash ownership deployment saved remote identity database "orders-cache"
-
-    Examples:
-      | Mode          |
-      | CreateOnly    |
-      | CreateOrAdopt |
 
   Scenario: Repeated existing-only deployments keep adopting the same managed identity
     Given an Upstash ownership deployment for database "orders-cache" with mode "ExistingOnly"
