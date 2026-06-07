@@ -37,18 +37,19 @@ internal sealed class UpstashRedisRemoteIdentityResolver
             UpstashRedisDatabaseDetails cachedDatabase =
                 await _client.GetDatabaseAsync(cachedIdentity.ProviderDatabaseId, cancellationToken).ConfigureAwait(false);
 
-            return cachedDatabase.DatabaseId != cachedIdentity.ProviderDatabaseId
-                ? throw CreateMismatchedCachedDetailException(
+            return (cachedDatabase.DatabaseId == cachedIdentity.ProviderDatabaseId, cachedDatabase.DatabaseName == configuredDatabaseName) switch
+            {
+                (false, _) => throw CreateMismatchedCachedDetailException(
                     configuredDatabaseName,
                     cachedIdentity.ProviderDatabaseId,
-                    cachedDatabase.DatabaseId)
-                : cachedDatabase.DatabaseName == configuredDatabaseName
-                ? UpstashRedisRemoteIdentityResolution.FoundDatabase(cachedDatabase)
-                : await ResolveDriftedCachedIdentityAsync(
+                    cachedDatabase.DatabaseId),
+                (_, true) => UpstashRedisRemoteIdentityResolution.FoundDatabase(cachedDatabase),
+                _ => await ResolveDriftedCachedIdentityAsync(
                     configuredDatabaseName,
                     cachedIdentity,
                     cachedDatabase.DatabaseName,
-                    cancellationToken).ConfigureAwait(false);
+                    cancellationToken).ConfigureAwait(false)
+            };
         }
         catch (UpstashRedisProviderException exception) when (exception.FailureKind == UpstashRedisProviderFailureKind.NotFound)
         {
@@ -77,14 +78,15 @@ internal sealed class UpstashRedisRemoteIdentityResolver
         UpstashRedisDatabaseDetails? database =
             await _client.FindDatabaseByNameAsync(configuredDatabaseName, cancellationToken).ConfigureAwait(false);
 
-        return database is null
-            ? UpstashRedisRemoteIdentityResolution.NotFound()
-            : database.DatabaseId != cachedIdentity.ProviderDatabaseId
-            ? throw CreateUnsafeIdentityException(
+        return database switch
+        {
+            null => UpstashRedisRemoteIdentityResolution.NotFound(),
+            { DatabaseId: var databaseId } when databaseId != cachedIdentity.ProviderDatabaseId => throw CreateUnsafeIdentityException(
                 configuredDatabaseName,
                 cachedIdentity.ProviderDatabaseId,
-                database.DatabaseId)
-            : UpstashRedisRemoteIdentityResolution.FoundDatabase(database);
+                database.DatabaseId),
+            _ => UpstashRedisRemoteIdentityResolution.FoundDatabase(database)
+        };
     }
 
     private async Task<UpstashRedisRemoteIdentityResolution> ResolveDriftedCachedIdentityAsync(

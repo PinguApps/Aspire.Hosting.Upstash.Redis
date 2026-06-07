@@ -97,17 +97,18 @@ internal sealed class UpstashRedisManagementClient : IUpstashRedisManagementClie
 
         UpstashRedisDatabaseDetails database = await GetDatabaseAsync(match.DatabaseId, cancellationToken).ConfigureAwait(false);
 
-        return database.DatabaseId != match.DatabaseId
-            ? throw new UpstashRedisProviderException(
+        return (database.DatabaseId == match.DatabaseId, database.DatabaseName == databaseName) switch
+        {
+            (false, _) => throw new UpstashRedisProviderException(
                 UpstashRedisProviderFailureKind.ProviderContract,
                 statusCode: null,
-                $"Upstash Redis database '{match.DatabaseId}' was listed as '{databaseName}' but detail lookup returned provider id '{database.DatabaseId}'.")
-            : database.DatabaseName == databaseName
-            ? database
-            : throw new UpstashRedisProviderException(
+                $"Upstash Redis database '{match.DatabaseId}' was listed as '{databaseName}' but detail lookup returned provider id '{database.DatabaseId}'."),
+            (_, true) => database,
+            _ => throw new UpstashRedisProviderException(
                 UpstashRedisProviderFailureKind.ProviderContract,
                 statusCode: null,
-                $"Upstash Redis database '{match.DatabaseId}' was listed as '{databaseName}' but detail lookup returned '{database.DatabaseName}'.");
+                $"Upstash Redis database '{match.DatabaseId}' was listed as '{databaseName}' but detail lookup returned '{database.DatabaseName}'.")
+        };
     }
 
     public async Task<UpstashRedisDatabaseDetails> CreateDatabaseAsync(
