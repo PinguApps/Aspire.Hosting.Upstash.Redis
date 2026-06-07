@@ -60,7 +60,8 @@ internal static class UpstashRedisDeploymentPipeline
         UpstashRedisOwnershipResolutionRequest ownershipRequest = new(
             deployment.DatabaseName,
             deployment.OwnershipMode,
-            deployment.Options);
+            deployment.Options,
+            remoteIdentity.ResolvedFromCachedIdentity);
         UpstashRedisOwnershipResolutionResult ownership = UpstashRedisOwnershipResolver.Resolve(
             ownershipRequest,
             remoteIdentity.Database);
