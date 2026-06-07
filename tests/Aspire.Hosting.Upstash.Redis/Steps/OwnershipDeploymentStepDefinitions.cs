@@ -89,7 +89,7 @@ public sealed class OwnershipDeploymentStepDefinitions
     [Given("a live Upstash ownership deployment for isolated database prefix {string}")]
     public void GivenALiveUpstashOwnershipDeploymentForIsolatedDatabasePrefix(string prefix)
     {
-        _liveDatabaseName = $"{prefix}-{Guid.NewGuid():N}";
+        _liveDatabaseName = LiveUpstashTestSession.CreateDisposableDatabaseName(prefix);
     }
 
     [Given("the live Upstash ownership provider has an isolated database to adopt")]
