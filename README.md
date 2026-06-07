@@ -60,6 +60,8 @@ builder.AddProject<Projects.Api>("api")
 builder.Build().Run();
 ```
 
+The compile-validated source for the AppHost snippets lives in [`samples/AppHostSnippets/UpstashRedisAppHostSnippets.cs`](samples/AppHostSnippets/UpstashRedisAppHostSnippets.cs). The test project links that file into compilation and exercises each snippet against a fresh Aspire builder so README examples and future docs can use it as the source of truth.
+
 During local development this remains standard Aspire Redis behavior. `.PublishToUpstash(...)` attaches deployment metadata and a deploy pipeline step, but it does not call Upstash during model construction or local runs and it does not replace the `RedisResource`.
 
 During deployment the package resolves the parameters, finds or creates the configured Upstash Redis database according to the ownership mode, reconciles only explicitly configured mutable settings, and redirects the standard Redis connection string output to the deployed Upstash endpoint. Your app can keep using the normal `WithReference(cache)` path.
@@ -202,7 +204,7 @@ The package never auto-deletes Upstash Redis databases in v1. It also does not a
 
 ## Validation
 
-The README snippets were checked against the implemented public API in `src/Aspire.Hosting.Upstash.Redis/` and the Reqnroll-backed API-shape coverage in `tests/Aspire.Hosting.Upstash.Redis/`. The full validation command for this repository is:
+The README snippets are backed by the compile-validated sample source in `samples/AppHostSnippets/UpstashRedisAppHostSnippets.cs`, the docs sample scenarios in `tests/Aspire.Hosting.Upstash.Redis/Features/DocsSamples/`, and the Reqnroll-backed API-shape coverage in `tests/Aspire.Hosting.Upstash.Redis/`. The full validation command for this repository is:
 
 ```bash
 dotnet build ./Aspire.Hosting.Upstash.Redis.slnx
