@@ -36,5 +36,6 @@ Only the groups needed by the current skeleton have feature files today. Future 
 - `5.1`: covered in `Features/DeployReconcileOutputs/RedisConnectionOutput.feature` for the standard Redis connection string, deploy-time connection-property overrides, local pre-deploy no-op behavior, secret boundaries, and endpoint slug rejection.
 - `5.3`: covered in `Features/DeployReconcileOutputs/DeploymentDiagnostics.feature` for deploy progress phase order, actionable failure context, secret redaction, and provider id visibility.
 - `5.2`: covered in `Features/DeployReconcileOutputs/SupplementaryOutputs.feature` for deployed supplementary output values, stable names, secret classification, and management-key exclusion.
-- `6.1`, `6.2`, and `6.3`: harden the already populated groups rather than duplicating shallow coverage elsewhere.
+- `6.1`: covered in `Features/LocalBehavior/RedisReference.feature` and `Features/ApiShape/PublishToUpstash.feature` for plain `AddRedis` no-op behavior, local pre-deploy Upstash no-op behavior, standard Redis references, overload consistency, same-builder fluent chaining, and management-secret exclusion from app-facing Redis outputs/references.
+- `6.2` and `6.3`: harden the already populated ownership, reconcile, and output groups rather than duplicating shallow coverage elsewhere.
 - `7.1` and `7.2`: add `Features/DocsSamples` scenarios for README and sample snippets where practical.

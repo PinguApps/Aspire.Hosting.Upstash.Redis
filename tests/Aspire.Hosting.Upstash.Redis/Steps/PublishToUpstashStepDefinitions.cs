@@ -33,6 +33,18 @@ public sealed class PublishToUpstashStepDefinitions
         _context.MarkRedisForUpstash(databaseName, Enum.Parse<UpstashRedisOwnershipMode>(ownershipMode));
     }
 
+    [When("the Redis resource is marked for Upstash with literal management credentials")]
+    public void WhenTheRedisResourceIsMarkedForUpstashWithLiteralManagementCredentials()
+    {
+        _context.MarkRedisForUpstashWithLiteralManagementCredentials();
+    }
+
+    [When("the Redis resource is marked for Upstash through the {string} overload")]
+    public void WhenTheRedisResourceIsMarkedForUpstashThroughTheOverload(string overload)
+    {
+        _context.MarkRedisForUpstashThroughOverload(overload);
+    }
+
     [When("the Redis resource is marked for Upstash with parameter-based inputs")]
     public void WhenTheRedisResourceIsMarkedForUpstashWithParameterBasedInputs()
     {
@@ -287,5 +299,81 @@ public sealed class PublishToUpstashStepDefinitions
     public void ThenTheResourceHasOneUpstashDeploymentPipelineStep()
     {
         Assert.Equal(1, AspireModelInspector.GetPipelineStepCount(_context.RedisBuilder.Resource));
+    }
+
+    [Then("the resource has no Upstash deployment metadata")]
+    public void ThenTheResourceHasNoUpstashDeploymentMetadata()
+    {
+        Assert.False(AspireModelInspector.HasUpstashState(_context.RedisBuilder.Resource));
+    }
+
+    [Then("the resource has no Upstash deployment pipeline step")]
+    public void ThenTheResourceHasNoUpstashDeploymentPipelineStep()
+    {
+        Assert.Equal(0, AspireModelInspector.GetPipelineStepCount(_context.RedisBuilder.Resource));
+    }
+
+    [Then("the resource has no supplementary Upstash Redis outputs")]
+    public void ThenTheResourceHasNoSupplementaryUpstashRedisOutputs()
+    {
+        Assert.DoesNotContain(
+            _context.RedisBuilder.Resource.Annotations,
+            annotation => annotation is UpstashRedisOutputsAnnotation);
+    }
+
+    [Then("the fake Upstash provider has no recorded interactions")]
+    public void ThenTheFakeUpstashProviderHasNoRecordedInteractions()
+    {
+        Assert.Empty(_context.FakeProvider.Interactions);
+    }
+
+    [Then("the app-facing Redis outputs and references do not contain {string}")]
+    public void ThenTheAppFacingRedisOutputsAndReferencesDoNotContain(string unexpectedValue)
+    {
+        AspireModelAssertions.AssertRedisConnectionPropertiesDoNotContain(_context.RedisBuilder.Resource, unexpectedValue);
+
+        UpstashRedisOutputs outputs = _context.RedisBuilder.Resource.GetUpstashRedisOutputs();
+
+        foreach (UpstashRedisOutputReference output in outputs.Properties)
+        {
+            Assert.DoesNotContain(unexpectedValue, output.Name, StringComparison.Ordinal);
+            Assert.DoesNotContain(unexpectedValue, output.ValueExpression, StringComparison.Ordinal);
+        }
+    }
+
+    [Then("the Upstash deployment metadata matches the {string} overload")]
+    public void ThenTheUpstashDeploymentMetadataMatchesTheOverload(string overload)
+    {
+        UpstashRedisDeploymentState state = AspireModelInspector.GetUpstashState(_context.RedisBuilder.Resource);
+
+        switch (overload)
+        {
+            case "literal database and parameter credentials":
+                Assert.Equal("orders-cache", state.DatabaseName.LiteralValue);
+                Assert.Equal("upstash-account-email", state.AccountEmail.Parameter?.Name);
+                Assert.Equal("upstash-api-key", state.ApiKey.Parameter?.Name);
+                break;
+
+            case "parameter database and parameter credentials":
+                Assert.Equal("upstash-database-name", state.DatabaseName.Parameter?.Name);
+                Assert.Equal("upstash-account-email", state.AccountEmail.Parameter?.Name);
+                Assert.Equal("upstash-api-key", state.ApiKey.Parameter?.Name);
+                break;
+
+            case "literal deployment values":
+                Assert.Equal("orders-cache", state.DatabaseName.LiteralValue);
+                Assert.Equal("owner@example.com", state.AccountEmail.LiteralValue);
+                Assert.Equal("management-secret", state.ApiKey.LiteralValue);
+                break;
+
+            default:
+                throw new ArgumentOutOfRangeException(nameof(overload), overload, "Unknown PublishToUpstash overload.");
+        }
+    }
+
+    [Then("the fluent API returns the same Redis resource builder")]
+    public void ThenTheFluentApiReturnsTheSameRedisResourceBuilder()
+    {
+        Assert.True(_context.FluentApiReturnedSameBuilder);
     }
 }

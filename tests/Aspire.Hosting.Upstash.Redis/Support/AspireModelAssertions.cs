@@ -27,4 +27,15 @@ internal static class AspireModelAssertions
             resource.Annotations,
             annotation => annotation is EnvironmentCallbackAnnotation);
     }
+
+    public static void AssertRedisConnectionPropertiesDoNotContain(RedisResource resource, string unexpectedValue)
+    {
+        IResourceWithConnectionString connectionResource = Assert.IsAssignableFrom<IResourceWithConnectionString>(resource);
+
+        foreach (KeyValuePair<string, ReferenceExpression> property in connectionResource.GetConnectionProperties())
+        {
+            Assert.DoesNotContain(unexpectedValue, property.Key, StringComparison.Ordinal);
+            Assert.DoesNotContain(unexpectedValue, property.Value.ValueExpression, StringComparison.Ordinal);
+        }
+    }
 }
