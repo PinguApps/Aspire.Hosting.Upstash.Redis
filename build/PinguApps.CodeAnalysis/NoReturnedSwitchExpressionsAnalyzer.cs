@@ -15,7 +15,7 @@ public sealed class NoReturnedSwitchExpressionsAnalyzer : DiagnosticAnalyzer
     /// <summary>
     /// The diagnostic identifier for returned switch expression usage.
     /// </summary>
-    public const string DiagnosticId = "PIN0003";
+    public const string DiagnosticId = "PIN0004";
 
     private static readonly DiagnosticDescriptor _rule = new(
         DiagnosticId,
