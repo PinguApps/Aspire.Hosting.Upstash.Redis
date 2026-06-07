@@ -126,7 +126,7 @@ public static class UpstashRedisBuilderExtensions
                 ResourceAnnotationMutationBehavior.Replace);
 
             builder.WithAnnotation(
-                new UpstashRedisOutputsAnnotation(new UpstashRedisOutputs(builder.Resource.Name)),
+                new UpstashRedisOutputsAnnotation(new UpstashRedisOutputs(builder.Resource)),
                 ResourceAnnotationMutationBehavior.Replace);
 
             RedisResource resource = builder.Resource;

@@ -14,15 +14,15 @@ public sealed class UpstashRedisOutputs
     private readonly UpstashRedisOutputValue _tls;
     private readonly UpstashRedisOutputValue _databaseName;
 
-    internal UpstashRedisOutputs(string resourceName)
+    internal UpstashRedisOutputs(RedisResource resource)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(resourceName);
+        ArgumentNullException.ThrowIfNull(resource);
 
-        _endpoint = new(resourceName, UpstashRedisOutputNames.Endpoint);
-        _port = new(resourceName, UpstashRedisOutputNames.Port);
-        _password = new(resourceName, UpstashRedisOutputNames.Password, secret: true);
-        _tls = new(resourceName, UpstashRedisOutputNames.Tls);
-        _databaseName = new(resourceName, UpstashRedisOutputNames.DatabaseName);
+        _endpoint = new(resource, UpstashRedisOutputNames.Endpoint);
+        _port = new(resource, UpstashRedisOutputNames.Port);
+        _password = new(resource, UpstashRedisOutputNames.Password, secret: true);
+        _tls = new(resource, UpstashRedisOutputNames.Tls);
+        _databaseName = new(resource, UpstashRedisOutputNames.DatabaseName);
 
         Endpoint = CreateReference(_endpoint);
         Port = CreateReference(_port);
@@ -81,17 +81,21 @@ public sealed class UpstashRedisOutputs
         return ReferenceExpression.Create($"{value}");
     }
 
-    private sealed class UpstashRedisOutputValue : IValueProvider, IManifestExpressionProvider
+    private sealed class UpstashRedisOutputValue : IValueProvider, IManifestExpressionProvider, IValueWithReferences
     {
+        private readonly RedisResource _resource;
         private string? _value;
 
-        public UpstashRedisOutputValue(string resourceName, string name, bool secret = false)
+        public UpstashRedisOutputValue(RedisResource resource, string name, bool secret = false)
         {
-            ValueExpression = $"{{{resourceName}.outputs.{name}}}";
+            _resource = resource;
+            ValueExpression = $"{{{resource.Name}.outputs.{name}}}";
             Secret = secret;
         }
 
         public bool Secret { get; }
+
+        public IEnumerable<object> References => [_resource];
 
         public string ValueExpression { get; }
 

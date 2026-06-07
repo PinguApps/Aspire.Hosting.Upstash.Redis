@@ -14,6 +14,7 @@ public sealed class SupplementaryOutputsStepDefinitions
     private const string ManagementApiKey = "management-secret";
 
     private UpstashRedisOutputs? _outputs;
+    private RedisResource? _resource;
     private UpstashRedisResolvedDeployment? _deployment;
     private FakeSupplementaryOutputsManagementClient? _client;
 
@@ -41,6 +42,7 @@ public sealed class SupplementaryOutputsStepDefinitions
                 });
 
         _outputs = redis.Resource.GetUpstashRedisOutputs();
+        _resource = redis.Resource;
         _deployment = new UpstashRedisResolvedDeployment(
             "orders-cache",
             UpstashRedisOwnershipMode.CreateOnly,
@@ -126,6 +128,19 @@ public sealed class SupplementaryOutputsStepDefinitions
             GetOutputs().Properties.Select(property => property.Key));
     }
 
+    [Then("each supplementary Upstash Redis output references the Redis resource")]
+    public void ThenEachSupplementaryUpstashRedisOutputReferencesTheRedisResource()
+    {
+        RedisResource resource = GetResource();
+
+        foreach (ReferenceExpression output in GetOutputs().Properties.Select(property => property.Value))
+        {
+            IValueProvider valueProvider = Assert.Single(output.ValueProviders);
+            IValueWithReferences valueWithReferences = Assert.IsAssignableFrom<IValueWithReferences>(valueProvider);
+            Assert.Contains(resource, valueWithReferences.References);
+        }
+    }
+
     private IReadOnlyDictionary<string, ReferenceExpression> GetOutputReferences()
     {
         return GetOutputs().Properties.ToDictionary(
@@ -137,6 +152,11 @@ public sealed class SupplementaryOutputsStepDefinitions
     private UpstashRedisOutputs GetOutputs()
     {
         return _outputs ?? throw new InvalidOperationException("The supplementary outputs were not created.");
+    }
+
+    private RedisResource GetResource()
+    {
+        return _resource ?? throw new InvalidOperationException("The Redis resource was not created.");
     }
 
     private UpstashRedisResolvedDeployment GetDeployment()

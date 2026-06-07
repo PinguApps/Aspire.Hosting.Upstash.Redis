@@ -14,3 +14,4 @@ Feature: Supplementary Upstash Redis outputs
     And only the supplementary Upstash Redis password output is secret
     And the Upstash management API key is not surfaced as a supplementary output
     And the supplementary Upstash Redis output names are stable
+    And each supplementary Upstash Redis output references the Redis resource
