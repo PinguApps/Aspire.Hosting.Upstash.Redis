@@ -2,7 +2,7 @@
 
 This package is an Aspire hosting integration for publishing a standard Aspire Redis resource to Upstash Redis during deployment.
 
-Current state: the Aspire integration shape, public API shape, internal resource state model, Upstash Redis management client layer, Upstash Redis option/domain model, and remote identity resolver are implemented. The package extends the built-in Redis resource returned by `builder.AddRedis("cache")` and attaches internal Upstash deployment state with `.PublishToUpstash(...)`. The deploy pipeline step is intentionally a no-op until the later implementation tasks wire parameter resolution, ownership resolution, creation, reconciliation, and deployed connection outputs together.
+Current state: the Aspire integration shape, public API shape, internal resource state model, Upstash Redis management client layer, Upstash Redis option/domain model, deploy-time parameter resolution, and remote identity resolver are implemented. The package extends the built-in Redis resource returned by `builder.AddRedis("cache")`, attaches internal Upstash deployment state with `.PublishToUpstash(...)`, resolves the configured deployment values from the Aspire deploy pipeline step, and can resolve the intended remote identity by explicit database name. Later implementation tasks still own creation, reconciliation, and deployed connection outputs.
 
 ```csharp
 var databaseName = builder.AddParameter("upstash-database-name");
@@ -47,6 +47,16 @@ builder.AddRedis("cache")
 
 Required values and optional string settings are represented as `UpstashRedisValue`, which can hold either a literal string or an Aspire `ParameterResource`. Literal strings convert implicitly; parameterized optional settings use `UpstashRedisValue.FromParameter(...)`. Internally, the Redis resource annotation stores a single deployment state snapshot containing required values, ownership mode, infrastructure-only management credential sources, optional settings, and explicit-setting metadata for later reconcile tasks.
 
+Use Aspire parameters for secrets and deploy-specific values:
+
+```csharp
+var databaseName = builder.AddParameter("upstash-database-name");
+var accountEmail = builder.AddParameter("upstash-account-email");
+var apiKey = builder.AddParameter("upstash-api-key", secret: true);
+```
+
+Aspire can resolve those parameters from its normal parameter sources during deployment, including cached prompted values and configuration-backed parameters such as `builder.AddParameterFromConfiguration(...)`. The Upstash Management API key is resolved only by the internal deploy pipeline path and is kept in infrastructure-only management credentials; it is not added to Redis connection properties or application references.
+
 Optional provider-domain settings can be configured with typed helpers when values are known at AppHost configuration time:
 
 ```csharp
@@ -67,7 +77,7 @@ builder.AddRedis("cache")
         });
 ```
 
-Literal option values are validated during AppHost model construction and mapped internally to Upstash API payload values. Parameter-backed option values keep their source and are validated after deploy-time parameter resolution. TLS remains required-on/read-only for v1: `Tls = false` is rejected and deployment logic must not try to disable TLS.
+Literal option values are validated during AppHost model construction and mapped internally to Upstash API payload values. Parameter-backed option values keep their source and are validated after deploy-time parameter resolution. Missing required deploy-time parameters fail with an explicit message naming the missing parameter. TLS remains required-on/read-only for v1: `Tls = false` is rejected and deployment logic must not try to disable TLS.
 
 Local Aspire behavior is preserved: `.PublishToUpstash(...)` does not replace the Redis resource, does not call Upstash during model construction or local runs, and does not prevent normal `WithReference(cache)` usage.
 
