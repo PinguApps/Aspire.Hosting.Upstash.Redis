@@ -81,6 +81,29 @@ public sealed class CreateFlowStepDefinitions
         _client.ReadyResponse = CreateDatabaseDetails(databaseName, databaseId, includePassword: false);
     }
 
+    [Given("the Upstash readiness API returns active database {string} with id {string} with invalid connection field {string}")]
+    public void GivenTheUpstashReadinessApiReturnsActiveDatabaseWithInvalidConnectionField(string databaseName, string databaseId, string field)
+    {
+        UpstashRedisDatabaseDetails database = CreateDatabaseDetails(databaseName, databaseId, includePassword: true);
+
+        switch (field)
+        {
+            case "endpoint":
+                database.Endpoint = string.Empty;
+                break;
+            case "port":
+                database.Port = 0;
+                break;
+            case "tls":
+                database.Tls = false;
+                break;
+            default:
+                throw new InvalidOperationException($"Unknown connection field '{field}'.");
+        }
+
+        _client.ReadyResponse = database;
+    }
+
     [When("the Upstash create flow executes")]
     public async Task WhenTheUpstashCreateFlowExecutes()
     {

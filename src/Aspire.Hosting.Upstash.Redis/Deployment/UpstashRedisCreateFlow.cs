@@ -114,6 +114,30 @@ internal sealed class UpstashRedisCreateFlow
                 statusCode: null,
                 $"Upstash Redis returned database '{createdDatabaseId}' without credentials.");
         }
+
+        if (string.IsNullOrWhiteSpace(readyDatabase.Endpoint))
+        {
+            throw new UpstashRedisProviderException(
+                UpstashRedisProviderFailureKind.ProviderContract,
+                statusCode: null,
+                $"Upstash Redis returned database '{createdDatabaseId}' without an endpoint.");
+        }
+
+        if (readyDatabase.Port <= 0)
+        {
+            throw new UpstashRedisProviderException(
+                UpstashRedisProviderFailureKind.ProviderContract,
+                statusCode: null,
+                $"Upstash Redis returned database '{createdDatabaseId}' without a valid port.");
+        }
+
+        if (!readyDatabase.Tls)
+        {
+            throw new UpstashRedisProviderException(
+                UpstashRedisProviderFailureKind.ProviderContract,
+                statusCode: null,
+                $"Upstash Redis returned database '{createdDatabaseId}' with TLS disabled.");
+        }
     }
 
     private static string GetRequiredString(

@@ -47,6 +47,22 @@ Feature: Deploy-time Upstash create flow
     And the Upstash create flow fails with provider kind "ProviderContract"
     And the Upstash create flow failure message contains "without credentials"
 
+  Scenario Outline: Missing connection fields after create fail as provider contract errors
+    Given an Upstash create flow deployment for database "orders-cache"
+    And ownership resolution selected create
+    And the Upstash create API returns database id "db-orders"
+    And the Upstash readiness API returns active database "orders-cache" with id "db-orders" with invalid connection field "<Field>"
+    When the Upstash create flow is attempted
+    Then the Upstash create flow fails with "UpstashRedisProviderException"
+    And the Upstash create flow fails with provider kind "ProviderContract"
+    And the Upstash create flow failure message contains "<Message>"
+
+    Examples:
+      | Field    | Message              |
+      | endpoint | without an endpoint  |
+      | port     | without a valid port |
+      | tls      | with TLS disabled    |
+
   Scenario: Adopt ownership skips database creation
     Given an Upstash create flow deployment for database "orders-cache"
     And ownership resolution selected adopt for database "orders-cache" with id "db-orders"
