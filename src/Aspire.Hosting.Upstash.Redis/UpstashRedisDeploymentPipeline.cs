@@ -62,6 +62,8 @@ internal static class UpstashRedisDeploymentPipeline
             context.CancellationToken)
             .ConfigureAwait(false);
 
+        resource.ApplyUpstashRedisConnectionOutput(result.Database);
+
         if (result.Created)
         {
             _createdDatabase(context.Logger, deployment.DatabaseName, resource.Name, null);

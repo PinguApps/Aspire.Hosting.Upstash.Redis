@@ -93,6 +93,7 @@ public sealed class PublishToUpstashStepDefinitions
         _context.TryMarkRedisForUpstashWithBudgetOnFixedPlan();
     }
 
+    [Given("a consuming container references the Redis resource")]
     [When("a consuming container references the Redis resource")]
     public void WhenAConsumingContainerReferencesTheRedisResource()
     {
