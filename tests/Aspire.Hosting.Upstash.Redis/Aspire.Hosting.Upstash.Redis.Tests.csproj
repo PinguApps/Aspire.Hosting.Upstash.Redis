@@ -10,6 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\..\samples\AppHostSnippets\Projects\Api.cs" Link="Samples\Projects\Api.cs" />
     <Compile Include="..\..\samples\AppHostSnippets\UpstashRedisAppHostSnippets.cs" Link="Samples\UpstashRedisAppHostSnippets.cs" />
   </ItemGroup>
 
