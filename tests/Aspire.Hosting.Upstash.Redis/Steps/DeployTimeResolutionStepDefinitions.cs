@@ -89,8 +89,10 @@ public sealed class DeployTimeResolutionStepDefinitions
         Assert.DoesNotContain(apiKey, deployment.ManagementCredentials.AccountEmail, StringComparison.Ordinal);
         Assert.DoesNotContain(apiKey, deployment.Options.ExplicitSettings, StringComparer.Ordinal);
         IResourceWithConnectionString redisConnection = Assert.IsAssignableFrom<IResourceWithConnectionString>(_context.RedisBuilder.Resource);
+        IEnumerable<KeyValuePair<string, ReferenceExpression>> connectionProperties = redisConnection.GetConnectionProperties();
 
-        Assert.DoesNotContain(apiKey, redisConnection.GetConnectionProperties().Select(property => property.Key), StringComparer.Ordinal);
+        Assert.DoesNotContain(apiKey, connectionProperties.Select(property => property.Key), StringComparer.Ordinal);
+        Assert.DoesNotContain(apiKey, connectionProperties.Select(property => property.Value.ToString()), StringComparer.Ordinal);
     }
 
     [Then("the Upstash deployment resolution fails with {string}")]
