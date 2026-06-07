@@ -53,27 +53,16 @@ internal static class UpstashRedisDeploymentPipeline
             context.Services.GetRequiredService<IDeploymentStateManager>());
         UpstashRedisRemoteIdentityState? cachedIdentity =
             await identityStore.LoadAsync(resource.Name, context.CancellationToken).ConfigureAwait(false);
-        UpstashRedisRemoteIdentityResolution remoteIdentity =
-            await new UpstashRedisRemoteIdentityResolver(client)
-                .ResolveAsync(deployment.DatabaseName, cachedIdentity, context.CancellationToken)
-                .ConfigureAwait(false);
-        UpstashRedisOwnershipResolutionRequest ownershipRequest = new(
-            deployment.DatabaseName,
-            deployment.OwnershipMode,
-            deployment.Options,
-            remoteIdentity.ResolvedFromCachedIdentity);
-        UpstashRedisOwnershipResolutionResult ownership = UpstashRedisOwnershipResolver.Resolve(
-            ownershipRequest,
-            remoteIdentity.Database);
 
-        UpstashRedisCreateFlow createFlow = new(client);
-        UpstashRedisCreateFlowResult createResult =
-            await createFlow.ExecuteAsync(deployment, ownership, context.CancellationToken).ConfigureAwait(false);
-
-        await identityStore.SaveAsync(resource.Name, createResult.RemoteIdentity, context.CancellationToken)
+        UpstashRedisCreateFlowResult result = await ExecuteCoreAsync(
+            deployment,
+            client,
+            cachedIdentity,
+            identityState => identityStore.SaveAsync(resource.Name, identityState, context.CancellationToken),
+            context.CancellationToken)
             .ConfigureAwait(false);
 
-        if (createResult.Created)
+        if (result.Created)
         {
             _createdDatabase(context.Logger, deployment.DatabaseName, resource.Name, null);
         }
@@ -81,5 +70,81 @@ internal static class UpstashRedisDeploymentPipeline
         {
             _usingExistingDatabase(context.Logger, deployment.DatabaseName, resource.Name, null);
         }
+    }
+
+    internal static async Task<UpstashRedisDatabaseDetails?> ExecuteAsync(
+        UpstashRedisResolvedDeployment deployment,
+        IUpstashRedisManagementClient client,
+        CancellationToken cancellationToken)
+    {
+        UpstashRedisCreateFlowResult result = await ExecuteCoreAsync(
+            deployment,
+            client,
+            cachedIdentity: null,
+            saveIdentityStateAsync: null,
+            cancellationToken).ConfigureAwait(false);
+
+        return result.Database;
+    }
+
+    internal static async Task<UpstashRedisDatabaseDetails?> ExecuteAsync(
+        UpstashRedisResolvedDeployment deployment,
+        IUpstashRedisManagementClient client,
+        UpstashRedisRemoteIdentityState? cachedIdentity,
+        Func<UpstashRedisRemoteIdentityState, Task>? saveIdentityStateAsync,
+        CancellationToken cancellationToken)
+    {
+        UpstashRedisCreateFlowResult result = await ExecuteCoreAsync(
+            deployment,
+            client,
+            cachedIdentity,
+            saveIdentityStateAsync,
+            cancellationToken).ConfigureAwait(false);
+
+        return result.Database;
+    }
+
+    private static async Task<UpstashRedisCreateFlowResult> ExecuteCoreAsync(
+        UpstashRedisResolvedDeployment deployment,
+        IUpstashRedisManagementClient client,
+        UpstashRedisRemoteIdentityState? cachedIdentity,
+        Func<UpstashRedisRemoteIdentityState, Task>? saveIdentityStateAsync,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(deployment);
+        ArgumentNullException.ThrowIfNull(client);
+
+        UpstashRedisRemoteIdentityResolution remoteIdentity =
+            await new UpstashRedisRemoteIdentityResolver(client)
+                .ResolveAsync(deployment.DatabaseName, cachedIdentity, cancellationToken)
+                .ConfigureAwait(false);
+
+        UpstashRedisOwnershipResolutionRequest ownershipRequest = new(
+            deployment.DatabaseName,
+            deployment.OwnershipMode,
+            deployment.Options,
+            remoteIdentity.ResolvedFromCachedIdentity,
+            remoteIdentity.Database);
+        UpstashRedisOwnershipResolutionResult ownership = UpstashRedisOwnershipResolver.Resolve(
+            ownershipRequest,
+            remoteIdentity.Database);
+
+        UpstashRedisCreateFlowResult createResult =
+            await new UpstashRedisCreateFlow(client)
+                .ExecuteAsync(deployment, ownership, cancellationToken)
+                .ConfigureAwait(false);
+
+        UpstashRedisDatabaseDetails reconciledDatabase = await new UpstashRedisReconciler(client)
+            .ReconcileAsync(createResult.Database, deployment.Options, cancellationToken)
+            .ConfigureAwait(false);
+
+        UpstashRedisCreateFlowResult result = new(reconciledDatabase, createResult.Created);
+
+        if (saveIdentityStateAsync is not null)
+        {
+            await saveIdentityStateAsync(result.RemoteIdentity).ConfigureAwait(false);
+        }
+
+        return result;
     }
 }

@@ -1,3 +1,5 @@
+using Aspire.Hosting.Upstash.Redis.Management;
+
 namespace Aspire.Hosting.Upstash.Redis.Deployment;
 
 internal sealed class UpstashRedisOwnershipResolutionRequest
@@ -6,7 +8,8 @@ internal sealed class UpstashRedisOwnershipResolutionRequest
         string databaseName,
         UpstashRedisOwnershipMode ownershipMode,
         UpstashRedisProviderDeploymentOptions options,
-        bool existingDatabaseIsManagedIdentity = false)
+        bool existingDatabaseIsManagedIdentity = false,
+        UpstashRedisDatabaseDetails? existingDatabase = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(databaseName);
         ArgumentNullException.ThrowIfNull(options);
@@ -20,6 +23,7 @@ internal sealed class UpstashRedisOwnershipResolutionRequest
         OwnershipMode = ownershipMode;
         Options = options;
         ExistingDatabaseIsManagedIdentity = existingDatabaseIsManagedIdentity;
+        ExistingDatabase = existingDatabase;
     }
 
     public string DatabaseName { get; }
@@ -29,4 +33,6 @@ internal sealed class UpstashRedisOwnershipResolutionRequest
     public UpstashRedisProviderDeploymentOptions Options { get; }
 
     public bool ExistingDatabaseIsManagedIdentity { get; }
+
+    public UpstashRedisDatabaseDetails? ExistingDatabase { get; }
 }

@@ -37,6 +37,9 @@ internal sealed class UpstashRedisDatabaseDetails
     [JsonPropertyName("type")]
     public string? Type { get; set; }
 
+    [JsonPropertyName("db_disk_threshold")]
+    public long? DbDiskThreshold { get; set; }
+
     [JsonPropertyName("budget")]
     public int? Budget { get; set; }
 
