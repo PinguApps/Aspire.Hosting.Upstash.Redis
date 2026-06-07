@@ -3,9 +3,30 @@ using Aspire.Hosting.Upstash.Redis.Management;
 
 namespace Aspire.Hosting.Upstash.Redis;
 
-internal static class UpstashRedisResourceExtensions
+/// <summary>
+/// Provides accessors for Upstash Redis metadata attached to Aspire Redis resources.
+/// </summary>
+public static class UpstashRedisResourceExtensions
 {
-    public static UpstashRedisDeploymentState? GetUpstashRedisDeploymentState(this RedisResource resource)
+    /// <summary>
+    /// Gets the supplementary app-facing outputs for a Redis resource marked with <c>PublishToUpstash</c>.
+    /// </summary>
+    /// <param name="resource">The Redis resource.</param>
+    /// <returns>The stable Upstash Redis output references.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="resource"/> is null.</exception>
+    /// <exception cref="InvalidOperationException">The Redis resource has not been marked for Upstash publishing.</exception>
+    public static UpstashRedisOutputs GetUpstashRedisOutputs(this RedisResource resource)
+    {
+        ArgumentNullException.ThrowIfNull(resource);
+
+        return resource.Annotations
+            .OfType<UpstashRedisOutputsAnnotation>()
+            .SingleOrDefault()
+            ?.Outputs
+            ?? throw new InvalidOperationException($"Redis resource '{resource.Name}' has not been marked for Upstash publishing.");
+    }
+
+    internal static UpstashRedisDeploymentState? GetUpstashRedisDeploymentState(this RedisResource resource)
     {
         ArgumentNullException.ThrowIfNull(resource);
 
@@ -15,7 +36,7 @@ internal static class UpstashRedisResourceExtensions
             ?.State;
     }
 
-    public static UpstashRedisConnectionOutput ApplyUpstashRedisConnectionOutput(
+    internal static UpstashRedisConnectionOutput ApplyUpstashRedisConnectionOutput(
         this RedisResource resource,
         UpstashRedisDatabaseDetails database)
     {
@@ -79,5 +100,15 @@ internal static class UpstashRedisResourceExtensions
         }
 
         resource.Annotations.RemoveAt(annotationIndex);
+    }
+
+    internal static UpstashRedisOutputs? TryGetUpstashRedisOutputs(this RedisResource resource)
+    {
+        ArgumentNullException.ThrowIfNull(resource);
+
+        return resource.Annotations
+            .OfType<UpstashRedisOutputsAnnotation>()
+            .SingleOrDefault()
+            ?.Outputs;
     }
 }
