@@ -1,3 +1,4 @@
+using System.Runtime.ExceptionServices;
 using Aspire.Hosting.Upstash.Redis;
 using Aspire.Hosting.Upstash.Redis.Deployment;
 using Aspire.Hosting.Upstash.Redis.Management;
@@ -226,7 +227,7 @@ public sealed class ReconcileMutableSettingsStepDefinitions
 
         if (_exception is not null)
         {
-            throw _exception;
+            ExceptionDispatchInfo.Capture(_exception).Throw();
         }
     }
 
