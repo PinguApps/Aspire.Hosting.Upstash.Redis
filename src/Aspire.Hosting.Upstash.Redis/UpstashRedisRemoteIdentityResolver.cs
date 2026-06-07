@@ -37,19 +37,26 @@ internal sealed class UpstashRedisRemoteIdentityResolver
             UpstashRedisDatabaseDetails cachedDatabase =
                 await _client.GetDatabaseAsync(cachedIdentity.ProviderDatabaseId, cancellationToken).ConfigureAwait(false);
 
-            return (cachedDatabase.DatabaseId == cachedIdentity.ProviderDatabaseId, cachedDatabase.DatabaseName == configuredDatabaseName) switch
+            if (cachedDatabase.DatabaseId != cachedIdentity.ProviderDatabaseId)
             {
-                (false, _) => throw CreateMismatchedCachedDetailException(
+                throw CreateMismatchedCachedDetailException(
                     configuredDatabaseName,
                     cachedIdentity.ProviderDatabaseId,
-                    cachedDatabase.DatabaseId),
-                (_, true) => UpstashRedisRemoteIdentityResolution.FoundDatabase(cachedDatabase),
-                _ => await ResolveDriftedCachedIdentityAsync(
+                    cachedDatabase.DatabaseId);
+            }
+
+            UpstashRedisRemoteIdentityResolution resolution = UpstashRedisRemoteIdentityResolution.FoundDatabase(cachedDatabase);
+
+            if (cachedDatabase.DatabaseName != configuredDatabaseName)
+            {
+                resolution = await ResolveDriftedCachedIdentityAsync(
                     configuredDatabaseName,
                     cachedIdentity,
                     cachedDatabase.DatabaseName,
-                    cancellationToken).ConfigureAwait(false)
-            };
+                    cancellationToken).ConfigureAwait(false);
+            }
+
+            return resolution;
         }
         catch (UpstashRedisProviderException exception) when (exception.FailureKind == UpstashRedisProviderFailureKind.NotFound)
         {

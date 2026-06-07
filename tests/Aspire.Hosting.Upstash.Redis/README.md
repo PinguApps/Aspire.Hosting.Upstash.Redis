@@ -10,6 +10,7 @@ The test project uses Reqnroll feature files and step definitions for product be
 - `Features/ProviderClient`: deterministic fake-provider behaviour plus opt-in live-provider patterns.
 - `Features/DeployReconcileOutputs`: deploy auth, lookup, create, reconcile, failure, diagnostics, and app-facing outputs.
 - `Features/DocsSamples`: README and sample snippets where they can be validated without brittle text tests.
+- `Features/CodeStyle`: narrow source-style guards agreed during review.
 
 Only the groups needed by the current skeleton have feature files today. Future tasks should add scenarios under the group that matches the behaviour they implement.
 
