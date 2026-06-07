@@ -28,6 +28,19 @@ Feature: Publish Redis to Upstash
       | ExistingOnly   |
       | CreateOrAdopt  |
 
+  Scenario Outline: PublishToUpstash overloads capture equivalent deployment intent
+    Given a standard Aspire Redis resource named "cache"
+    When the Redis resource is marked for Upstash through the "<overload>" overload
+    Then the resource has Upstash ownership mode "ExistingOnly"
+    And the Upstash deployment metadata matches the "<overload>" overload
+    And the fluent API returns the same Redis resource builder
+
+    Examples:
+      | overload                                   |
+      | literal database and parameter credentials |
+      | parameter database and parameter credentials |
+      | literal deployment values                  |
+
   Scenario: Marking a Redis resource for Upstash supports parameter-based inputs
     Given a standard Aspire Redis resource named "cache"
     When the Redis resource is marked for Upstash with parameter-based inputs

@@ -17,6 +17,8 @@ public sealed class UpstashRedisScenarioContext
 
     public UpstashRedisDeploymentOptions? CapturedDeploymentOptions { get; private set; }
 
+    internal bool? FluentApiReturnedSameBuilder { get; private set; }
+
     public List<UpstashRedisValue> ConfiguredReadRegions { get; } = ["eu-west-2"];
 
     internal FakeUpstashProvider FakeProvider { get; } = new();
@@ -76,6 +78,45 @@ public sealed class UpstashRedisScenarioContext
             _accountEmail,
             _apiKey,
             ownershipMode);
+    }
+
+    public void MarkRedisForUpstashWithLiteralManagementCredentials()
+    {
+        _redisBuilder = RedisBuilder.PublishToUpstash(
+            UpstashRedisValue.FromString("orders-cache"),
+            UpstashRedisValue.FromString("owner@example.com"),
+            UpstashRedisValue.FromString("management-secret"),
+            UpstashRedisOwnershipMode.CreateOrAdopt);
+    }
+
+    public void MarkRedisForUpstashThroughOverload(string overload)
+    {
+        IResourceBuilder<RedisResource> originalBuilder = RedisBuilder;
+
+        _redisBuilder = overload switch
+        {
+            "literal database and parameter credentials" => RedisBuilder.PublishToUpstash(
+                "orders-cache",
+                AppBuilder.AddParameter("upstash-account-email"),
+                AppBuilder.AddParameter("upstash-api-key", secret: true),
+                UpstashRedisOwnershipMode.ExistingOnly),
+
+            "parameter database and parameter credentials" => RedisBuilder.PublishToUpstash(
+                AppBuilder.AddParameter("upstash-database-name"),
+                AppBuilder.AddParameter("upstash-account-email"),
+                AppBuilder.AddParameter("upstash-api-key", secret: true),
+                UpstashRedisOwnershipMode.ExistingOnly),
+
+            "literal deployment values" => RedisBuilder.PublishToUpstash(
+                UpstashRedisValue.FromString("orders-cache"),
+                UpstashRedisValue.FromString("owner@example.com"),
+                UpstashRedisValue.FromString("management-secret"),
+                UpstashRedisOwnershipMode.ExistingOnly),
+
+            _ => throw new ArgumentOutOfRangeException(nameof(overload), overload, "Unknown PublishToUpstash overload."),
+        };
+
+        FluentApiReturnedSameBuilder = ReferenceEquals(originalBuilder, _redisBuilder);
     }
 
     public void MarkRedisForUpstashWithParameterBasedInputs()

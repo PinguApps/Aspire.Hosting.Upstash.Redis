@@ -20,6 +20,11 @@ internal static class AspireModelInspector
             ?? throw new InvalidOperationException("The Redis resource does not have Upstash deployment state.");
     }
 
+    public static bool HasUpstashState(RedisResource resource)
+    {
+        return resource.GetUpstashRedisDeploymentState() is not null;
+    }
+
     public static int GetPipelineStepCount(RedisResource resource)
     {
         return resource.Annotations.OfType<PipelineStepAnnotation>().Count();
