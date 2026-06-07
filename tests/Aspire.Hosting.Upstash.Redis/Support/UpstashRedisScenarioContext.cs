@@ -29,6 +29,10 @@ public sealed class UpstashRedisScenarioContext
 
     internal LiveUpstashTestSession LiveUpstash { get; } = new();
 
+    internal UpstashRedisResolvedDeployment? ResolvedDeployment { get; private set; }
+
+    internal Exception? DeploymentResolutionException { get; private set; }
+
     internal IResourceBuilder<RedisResource> RedisBuilder =>
         _redisBuilder ?? throw new InvalidOperationException("The Redis resource has not been created.");
 
@@ -93,6 +97,61 @@ public sealed class UpstashRedisScenarioContext
                 options.ReadRegions = [UpstashRedisValue.FromParameter(readRegion)];
                 options.Plan = "payg";
             });
+    }
+
+    public void MarkRedisForUpstashWithResolvableParameterInputs()
+    {
+        IResourceBuilder<ParameterResource> databaseName = AppBuilder.AddParameter("upstash-database-name", "orders-cache");
+        _accountEmail = AppBuilder.AddParameter("upstash-account-email", "owner@example.com");
+        _apiKey = AppBuilder.AddParameter("upstash-api-key", "management-secret", secret: true);
+        IResourceBuilder<ParameterResource> platform = AppBuilder.AddParameter("upstash-platform", "aws");
+        IResourceBuilder<ParameterResource> primaryRegion = AppBuilder.AddParameter("upstash-primary-region", "eu-west-1");
+        IResourceBuilder<ParameterResource> readRegion = AppBuilder.AddParameter("upstash-read-region", "eu-west-2");
+        IResourceBuilder<ParameterResource> budget = AppBuilder.AddParameter("upstash-budget", "360");
+
+        _redisBuilder = RedisBuilder.PublishToUpstash(
+            databaseName,
+            _accountEmail,
+            _apiKey,
+            UpstashRedisOwnershipMode.CreateOnly,
+            options =>
+            {
+                options.Platform = UpstashRedisValue.FromParameter(platform);
+                options.PrimaryRegion = UpstashRedisValue.FromParameter(primaryRegion);
+                options.ReadRegions = [UpstashRedisValue.FromParameter(readRegion)];
+                options.Plan = "payg";
+                options.Budget = UpstashRedisValue.FromParameter(budget);
+                options.Eviction = true;
+                options.Tls = true;
+            });
+    }
+
+    public void MarkRedisForUpstashWithUnresolvedApiKeyParameter()
+    {
+        IResourceBuilder<ParameterResource> databaseName = AppBuilder.AddParameter("upstash-database-name", "orders-cache");
+        _accountEmail = AppBuilder.AddParameter("upstash-account-email", "owner@example.com");
+        _apiKey = AppBuilder.AddParameter("upstash-api-key", secret: true);
+
+        _redisBuilder = RedisBuilder.PublishToUpstash(
+            databaseName,
+            _accountEmail,
+            _apiKey);
+    }
+
+    public async Task ResolveUpstashDeploymentInputsAsync()
+    {
+        UpstashRedisDeploymentState state = AspireModelInspector.GetUpstashState(RedisBuilder.Resource);
+
+        ResolvedDeployment = await UpstashRedisDeployTimeResolver.ResolveAsync(
+            state,
+            RedisBuilder.Resource,
+            executionContext: null,
+            CancellationToken.None);
+    }
+
+    public async Task TryResolveUpstashDeploymentInputsAsync()
+    {
+        DeploymentResolutionException = await Record.ExceptionAsync(ResolveUpstashDeploymentInputsAsync);
     }
 
     public void MarkRedisForUpstashWithTypedDomainOptions()

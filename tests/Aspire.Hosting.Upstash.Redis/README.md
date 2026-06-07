@@ -26,7 +26,7 @@ Only the groups needed by the current skeleton have feature files today. Future 
 - `2.1`: covered in `Features/ApiShape` and `Features/LocalBehavior` for annotation/state-model details, explicit-setting snapshots, unchanged Redis connection properties, and the standard reference chain.
 - `2.2`: covered by `Features/ProviderClient/ManagementClient.feature` for management auth, request paths and bodies, response parsing, credential contract failures, provider error classification, readiness polling, mutable operation endpoints, and cancellation.
 - `2.3`: extend `Features/ApiShape` and `Features/DeployReconcileOutputs` for option/domain validation.
-- `3.1`: extend `Features/DeployReconcileOutputs` for deploy-time parameter resolution and secret boundaries.
+- `3.1`: covered in `Features/DeployReconcileOutputs` for deploy-time parameter resolution, missing required values, secret boundaries, and local model construction without deploy-only credentials.
 - `3.2` and `3.3`: add `Features/OwnershipModes` scenarios for ownership resolution and stable remote identity.
 - `4.1`, `4.2`, and `4.3`: extend `Features/DeployReconcileOutputs` for create, reconcile, and immutable drift failures.
 - `5.1`, `5.2`, and `5.3`: extend `Features/DeployReconcileOutputs` for Redis outputs, supplementary outputs, progress, and diagnostics.
