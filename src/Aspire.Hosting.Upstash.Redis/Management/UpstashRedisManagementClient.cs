@@ -97,7 +97,12 @@ internal sealed class UpstashRedisManagementClient : IUpstashRedisManagementClie
 
         UpstashRedisDatabaseDetails database = await GetDatabaseAsync(match.DatabaseId, cancellationToken).ConfigureAwait(false);
 
-        return database.DatabaseName == databaseName
+        return database.DatabaseId != match.DatabaseId
+            ? throw new UpstashRedisProviderException(
+                UpstashRedisProviderFailureKind.ProviderContract,
+                statusCode: null,
+                $"Upstash Redis database '{match.DatabaseId}' was listed as '{databaseName}' but detail lookup returned provider id '{database.DatabaseId}'.")
+            : database.DatabaseName == databaseName
             ? database
             : throw new UpstashRedisProviderException(
                 UpstashRedisProviderFailureKind.ProviderContract,

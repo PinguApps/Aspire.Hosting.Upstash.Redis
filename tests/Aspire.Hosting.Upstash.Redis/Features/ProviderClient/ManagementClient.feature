@@ -26,6 +26,12 @@ Feature: Upstash Redis management client
     When the Upstash management client finds database "orders-cache" by name
     Then the Upstash management client fails with provider kind "ProviderContract"
 
+  Scenario: Detail lookup id drift is surfaced as a provider contract failure
+    Given the Upstash management API returns a list containing database "orders-cache"
+    And the Upstash management API returns database details for "orders-cache" with id "db-other"
+    When the Upstash management client finds database "orders-cache" by name
+    Then the Upstash management client fails with provider kind "ProviderContract"
+
   Scenario: Database creation sends the supported request body
     Given the Upstash management API returns database details for "orders-cache"
     When the Upstash management client creates database "orders-cache"

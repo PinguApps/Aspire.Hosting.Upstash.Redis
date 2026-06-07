@@ -84,6 +84,12 @@ public sealed class ManagementClientStepDefinitions : IDisposable
         _handler.Enqueue(HttpStatusCode.OK, CreateDatabaseDetailsJson(databaseName, includePassword: true));
     }
 
+    [Given("the Upstash management API returns database details for {string} with id {string}")]
+    public void GivenTheUpstashManagementApiReturnsDatabaseDetailsForWithId(string databaseName, string databaseId)
+    {
+        _handler.Enqueue(HttpStatusCode.OK, CreateDatabaseDetailsJson(databaseName, includePassword: true, databaseId: databaseId));
+    }
+
     [Given("the Upstash management API returns database details without a password")]
     public void GivenTheUpstashManagementApiReturnsDatabaseDetailsWithoutAPassword()
     {
@@ -364,14 +370,15 @@ public sealed class ManagementClientStepDefinitions : IDisposable
         string databaseName,
         bool includePassword,
         string state = "active",
-        string? modifyingState = null)
+        string? modifyingState = null,
+        string databaseId = "db-orders")
     {
         string passwordJson = includePassword ? "\"password\": \"redis-password\"," : string.Empty;
         string modifyingStateJson = modifyingState is null ? "null" : $"\"{modifyingState}\"";
 
         return $$"""
         {
-          "database_id": "db-orders",
+          "database_id": "{{databaseId}}",
           "database_name": "{{databaseName}}",
           "endpoint": "global-apt-1.upstash.io",
           "port": 6379,
