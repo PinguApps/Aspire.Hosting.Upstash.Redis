@@ -2,7 +2,7 @@
 
 This package is an Aspire hosting integration for publishing a standard Aspire Redis resource to Upstash Redis during deployment.
 
-Current state: the Aspire integration shape, public API shape, internal resource state model, Upstash Redis management client layer, Upstash Redis option/domain model, and deploy-time parameter resolution are implemented. The package extends the built-in Redis resource returned by `builder.AddRedis("cache")`, attaches internal Upstash deployment state with `.PublishToUpstash(...)`, and resolves the configured deployment values from the Aspire deploy pipeline step. Later implementation tasks still own remote lookup, creation, reconciliation, and deployed connection outputs.
+Current state: the Aspire integration shape, public API shape, internal resource state model, Upstash Redis management client layer, Upstash Redis option/domain model, deploy-time parameter resolution, and ownership-resolution decision engine are implemented. The package extends the built-in Redis resource returned by `builder.AddRedis("cache")`, attaches internal Upstash deployment state with `.PublishToUpstash(...)`, and resolves the configured deployment values from the Aspire deploy pipeline step. Later implementation tasks still own creation, reconciliation, and deployed connection outputs.
 
 ```csharp
 var databaseName = builder.AddParameter("upstash-database-name");
@@ -44,6 +44,14 @@ builder.AddRedis("cache")
         apiKey,
         UpstashRedisOwnershipMode.CreateOrAdopt);
 ```
+
+The internal ownership resolver looks up the configured remote database name through the management client before choosing a path:
+
+- `CreateOnly` selects create when no database exists and fails if the name already exists.
+- `ExistingOnly` adopts an existing compatible database and fails if the name is missing.
+- `CreateOrAdopt` adopts an existing compatible database or selects create when the name is missing.
+
+When an existing database conflicts with immutable/read-only settings the resolver can verify from provider details, such as an explicit primary region or required TLS, resolution fails before later create or reconcile steps. Mutable settings are still handled by the later reconcile task.
 
 Required values and optional string settings are represented as `UpstashRedisValue`, which can hold either a literal string or an Aspire `ParameterResource`. Literal strings convert implicitly; parameterized optional settings use `UpstashRedisValue.FromParameter(...)`. Internally, the Redis resource annotation stores a single deployment state snapshot containing required values, ownership mode, infrastructure-only management credential sources, optional settings, and explicit-setting metadata for later reconcile tasks.
 
@@ -90,6 +98,7 @@ The Upstash management capability matrix is documented in [`plans/0.2-confirm-up
 - Management authentication uses separate native Upstash account email and Management API key values.
 - Third-party marketplace Upstash accounts are not supported by the Developer API and should fail fast with a tailored error.
 - Remote lookup uses list-by-account plus explicit database-name matching, with provider id preferred after discovery when safe state is available.
+- Ownership resolution is deterministic: create-only rejects existing names, existing-only rejects missing names, and create-or-adopt creates only when the explicit name is absent.
 - Create supports database name, platform, primary region, read regions, plan, budget, and eviction.
 - Reconcile supports read regions, plan, budget, and eviction only.
 - TLS is treated as required-on/read-only for v1, not as a mutable setting.
