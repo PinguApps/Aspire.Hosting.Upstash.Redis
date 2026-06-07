@@ -152,11 +152,14 @@ public sealed class OwnershipDeploymentStepDefinitions
         Assert.Null(_exception);
         Assert.NotNull(_result);
 
-        bool created = string.Equals(path, "Create", StringComparison.Ordinal)
-            ? _client.CreateCount > _previousCreateCount
-            : _client.CreateCount == _previousCreateCount;
+        bool expectedPathUsed = path switch
+        {
+            "Create" => _client.CreateCount > _previousCreateCount,
+            "Adopt" => _client.CreateCount == _previousCreateCount,
+            _ => throw new ArgumentOutOfRangeException(nameof(path), path, "Expected ownership path to be 'Create' or 'Adopt'.")
+        };
 
-        Assert.True(created, $"Expected ownership deployment to use the '{path}' path.");
+        Assert.True(expectedPathUsed, $"Expected ownership deployment to use the '{path}' path.");
     }
 
     [Then("the Upstash ownership deployment saved remote identity database {string}")]
