@@ -95,6 +95,28 @@ public sealed class UpstashRedisScenarioContext
             });
     }
 
+    public void MarkRedisForUpstashWithTypedDomainOptions()
+    {
+        _accountEmail ??= AppBuilder.AddParameter("upstash-account-email");
+        _apiKey ??= AppBuilder.AddParameter("upstash-api-key", secret: true);
+
+        _redisBuilder = RedisBuilder.PublishToUpstash(
+            "orders-cache",
+            _accountEmail,
+            _apiKey,
+            UpstashRedisOwnershipMode.CreateOnly,
+            options =>
+            {
+                options.SetPlatform(UpstashRedisCloudPlatform.Aws);
+                options.SetPrimaryRegion(UpstashRedisRegion.AwsEuWest1);
+                options.SetReadRegions(UpstashRedisRegion.AwsEuWest2);
+                options.SetPlan(UpstashRedisPlan.PayAsYouGo);
+                options.SetBudget(360);
+                options.Eviction = true;
+                options.Tls = true;
+            });
+    }
+
     public void MarkRedisForUpstashWithExplicitNullPrimaryRegion()
     {
         _redisBuilder = RedisBuilder.PublishToUpstash(
@@ -142,6 +164,44 @@ public sealed class UpstashRedisScenarioContext
                 AppBuilder.AddParameter("upstash-account-email"),
                 AppBuilder.AddParameter("upstash-api-key", secret: true),
                 configure: options => options.Tls = false));
+    }
+
+    public void TryMarkRedisForUpstashWithUnsupportedPlatform()
+    {
+        ConfigurationException = Record.Exception(() =>
+            RedisBuilder.PublishToUpstash(
+                "orders-cache",
+                AppBuilder.AddParameter("upstash-account-email"),
+                AppBuilder.AddParameter("upstash-api-key", secret: true),
+                configure: options => options.Platform = "azure"));
+    }
+
+    public void TryMarkRedisForUpstashWithMismatchedPlatformAndPrimaryRegion()
+    {
+        ConfigurationException = Record.Exception(() =>
+            RedisBuilder.PublishToUpstash(
+                "orders-cache",
+                AppBuilder.AddParameter("upstash-account-email"),
+                AppBuilder.AddParameter("upstash-api-key", secret: true),
+                configure: options =>
+                {
+                    options.SetPlatform(UpstashRedisCloudPlatform.Aws);
+                    options.SetPrimaryRegion(UpstashRedisRegion.GcpUsCentral1);
+                }));
+    }
+
+    public void TryMarkRedisForUpstashWithBudgetOnFixedPlan()
+    {
+        ConfigurationException = Record.Exception(() =>
+            RedisBuilder.PublishToUpstash(
+                "orders-cache",
+                AppBuilder.AddParameter("upstash-account-email"),
+                AppBuilder.AddParameter("upstash-api-key", secret: true),
+                configure: options =>
+                {
+                    options.SetPlan(UpstashRedisPlan.Fixed1Gb);
+                    options.SetBudget(360);
+                }));
     }
 
     public void AddConsumingContainerReference()

@@ -39,6 +39,12 @@ public sealed class PublishToUpstashStepDefinitions
         _context.MarkRedisForUpstashWithParameterBasedInputs();
     }
 
+    [When("the Redis resource is marked for Upstash with typed domain options")]
+    public void WhenTheRedisResourceIsMarkedForUpstashWithTypedDomainOptions()
+    {
+        _context.MarkRedisForUpstashWithTypedDomainOptions();
+    }
+
     [When("the Redis resource is marked for Upstash with an explicitly unset primary region")]
     public void WhenTheRedisResourceIsMarkedForUpstashWithAnExplicitlyUnsetPrimaryRegion()
     {
@@ -67,6 +73,24 @@ public sealed class PublishToUpstashStepDefinitions
     public void WhenTheRedisResourceIsMarkedForUpstashWithDisabledTls()
     {
         _context.TryMarkRedisForUpstashWithDisabledTls();
+    }
+
+    [When("the Redis resource is marked for Upstash with unsupported platform")]
+    public void WhenTheRedisResourceIsMarkedForUpstashWithUnsupportedPlatform()
+    {
+        _context.TryMarkRedisForUpstashWithUnsupportedPlatform();
+    }
+
+    [When("the Redis resource is marked for Upstash with mismatched platform and primary region")]
+    public void WhenTheRedisResourceIsMarkedForUpstashWithMismatchedPlatformAndPrimaryRegion()
+    {
+        _context.TryMarkRedisForUpstashWithMismatchedPlatformAndPrimaryRegion();
+    }
+
+    [When("the Redis resource is marked for Upstash with a fixed plan budget")]
+    public void WhenTheRedisResourceIsMarkedForUpstashWithAFixedPlanBudget()
+    {
+        _context.TryMarkRedisForUpstashWithBudgetOnFixedPlan();
     }
 
     [When("a consuming container references the Redis resource")]
@@ -139,6 +163,54 @@ public sealed class PublishToUpstashStepDefinitions
         Assert.DoesNotContain(nameof(UpstashRedisDeploymentOptions.Plan), state.Options.ExplicitSettings);
     }
 
+    [Then("the provider domain maps the typed options to Upstash payload values")]
+    public void ThenTheProviderDomainMapsTheTypedOptionsToUpstashPayloadValues()
+    {
+        UpstashRedisDeploymentState state = AspireModelInspector.GetUpstashState(_context.RedisBuilder.Resource);
+        UpstashRedisProviderDeploymentOptions providerOptions = state.Options.ToProviderOptions();
+
+        Assert.Equal(UpstashRedisOwnershipMode.CreateOnly, state.OwnershipMode);
+        Assert.Equal("aws", providerOptions.Platform?.LiteralValue);
+        Assert.Equal("eu-west-1", providerOptions.PrimaryRegion?.LiteralValue);
+        UpstashRedisProviderValue readRegion = Assert.Single(providerOptions.ReadRegions ?? []);
+        Assert.Equal("eu-west-2", readRegion.LiteralValue);
+        Assert.Equal("payg", providerOptions.Plan?.LiteralValue);
+        Assert.Equal(360, providerOptions.Budget?.LiteralValue);
+        Assert.Equal(true, providerOptions.Eviction?.LiteralValue);
+        Assert.Equal("true", providerOptions.Eviction?.Source.LiteralValue);
+        Assert.Equal(true, providerOptions.Tls?.LiteralValue);
+        Assert.Equal("true", providerOptions.Tls?.Source.LiteralValue);
+    }
+
+    [Then("the provider domain preserves explicit settings for reconcile")]
+    public void ThenTheProviderDomainPreservesExplicitSettingsForReconcile()
+    {
+        UpstashRedisDeploymentState state = AspireModelInspector.GetUpstashState(_context.RedisBuilder.Resource);
+        UpstashRedisProviderDeploymentOptions providerOptions = state.Options.ToProviderOptions();
+
+        Assert.Contains(nameof(UpstashRedisDeploymentOptions.Platform), providerOptions.ExplicitSettings);
+        Assert.Contains(nameof(UpstashRedisDeploymentOptions.PrimaryRegion), providerOptions.ExplicitSettings);
+        Assert.Contains(nameof(UpstashRedisDeploymentOptions.ReadRegions), providerOptions.ExplicitSettings);
+        Assert.Contains(nameof(UpstashRedisDeploymentOptions.Plan), providerOptions.ExplicitSettings);
+        Assert.Contains(nameof(UpstashRedisDeploymentOptions.Budget), providerOptions.ExplicitSettings);
+        Assert.Contains(nameof(UpstashRedisDeploymentOptions.Eviction), providerOptions.ExplicitSettings);
+        Assert.Contains(nameof(UpstashRedisDeploymentOptions.Tls), providerOptions.ExplicitSettings);
+    }
+
+    [Then("the provider domain preserves parameter-backed option sources")]
+    public void ThenTheProviderDomainPreservesParameterBackedOptionSources()
+    {
+        UpstashRedisDeploymentState state = AspireModelInspector.GetUpstashState(_context.RedisBuilder.Resource);
+        UpstashRedisProviderDeploymentOptions providerOptions = state.Options.ToProviderOptions();
+
+        Assert.True(providerOptions.PrimaryRegion?.IsParameter);
+        Assert.Null(providerOptions.PrimaryRegion?.LiteralValue);
+        UpstashRedisProviderValue readRegion = Assert.Single(providerOptions.ReadRegions ?? []);
+        Assert.True(readRegion.IsParameter);
+        Assert.Null(readRegion.LiteralValue);
+        Assert.Equal("payg", providerOptions.Plan?.LiteralValue);
+    }
+
     [Then("the Upstash configuration fails with {string}")]
     public void ThenTheUpstashConfigurationFailsWith(string exceptionTypeName)
     {
@@ -146,6 +218,15 @@ public sealed class PublishToUpstashStepDefinitions
             _context.ConfigurationException ?? throw new InvalidOperationException("The Upstash configuration did not fail.");
 
         Assert.Equal(exceptionTypeName, configurationException.GetType().Name);
+    }
+
+    [Then("the Upstash configuration failure message contains {string}")]
+    public void ThenTheUpstashConfigurationFailureMessageContains(string expectedMessage)
+    {
+        Exception configurationException =
+            _context.ConfigurationException ?? throw new InvalidOperationException("The Upstash configuration did not fail.");
+
+        Assert.Contains(expectedMessage, configurationException.Message, StringComparison.Ordinal);
     }
 
     [Then("mutating captured callback options cannot mutate deployment metadata")]

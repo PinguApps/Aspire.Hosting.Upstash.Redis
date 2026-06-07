@@ -112,7 +112,7 @@ public static class UpstashRedisBuilderExtensions
 
             UpstashRedisDeploymentOptions options = new();
             configure?.Invoke(options);
-            options.Validate();
+            options.ToProviderOptions();
 
             RemoveExistingUpstashPipelineStep(builder.Resource);
 

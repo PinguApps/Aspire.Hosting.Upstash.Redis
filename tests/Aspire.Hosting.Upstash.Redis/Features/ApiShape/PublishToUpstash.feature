@@ -33,6 +33,13 @@ Feature: Publish Redis to Upstash
     When the Redis resource is marked for Upstash with parameter-based inputs
     Then the resource stores parameter references for the required Upstash inputs
     And the resource stores parameter references for optional Upstash inputs
+    And the provider domain preserves parameter-backed option sources
+
+  Scenario: Marking a Redis resource for Upstash maps typed domain values to provider payload values
+    Given a standard Aspire Redis resource named "cache"
+    When the Redis resource is marked for Upstash with typed domain options
+    Then the provider domain maps the typed options to Upstash payload values
+    And the provider domain preserves explicit settings for reconcile
 
   Scenario: Marking a Redis resource for Upstash preserves explicit option intent
     Given a standard Aspire Redis resource named "cache"
@@ -58,3 +65,22 @@ Feature: Publish Redis to Upstash
     Given a standard Aspire Redis resource named "cache"
     When the Redis resource is marked for Upstash with disabled TLS
     Then the Upstash configuration fails with "InvalidOperationException"
+    And the Upstash configuration failure message contains "requires TLS"
+
+  Scenario: Marking a Redis resource for Upstash rejects an unsupported platform
+    Given a standard Aspire Redis resource named "cache"
+    When the Redis resource is marked for Upstash with unsupported platform
+    Then the Upstash configuration fails with "InvalidOperationException"
+    And the Upstash configuration failure message contains "platform 'azure' is not supported"
+
+  Scenario: Marking a Redis resource for Upstash rejects mismatched platform and primary region
+    Given a standard Aspire Redis resource named "cache"
+    When the Redis resource is marked for Upstash with mismatched platform and primary region
+    Then the Upstash configuration fails with "InvalidOperationException"
+    And the Upstash configuration failure message contains "primary region 'us-central1' is a gcp region and cannot be used with platform 'aws'"
+
+  Scenario: Marking a Redis resource for Upstash rejects budget on fixed plans
+    Given a standard Aspire Redis resource named "cache"
+    When the Redis resource is marked for Upstash with a fixed plan budget
+    Then the Upstash configuration fails with "InvalidOperationException"
+    And the Upstash configuration failure message contains "budget can only be configured with the pay-as-you-go plan"
