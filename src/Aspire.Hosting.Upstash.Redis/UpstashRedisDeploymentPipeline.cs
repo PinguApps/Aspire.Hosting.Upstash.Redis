@@ -52,13 +52,15 @@ internal static class UpstashRedisDeploymentPipeline
             deployment,
             client,
             cachedIdentity,
-            identityState => identityStore.SaveAsync(resource.Name, identityState, context.CancellationToken),
             progressReporter,
             resource.Name,
             context.CancellationToken)
             .ConfigureAwait(false);
 
+        resource.ApplyUpstashRedisConnectionOutput(result.Database);
         resource.TryGetUpstashRedisOutputs()?.Populate(result.Database);
+
+        await identityStore.SaveAsync(resource.Name, result.RemoteIdentity, context.CancellationToken).ConfigureAwait(false);
     }
 
     internal static async Task<UpstashRedisDatabaseDetails?> ExecuteAsync(
@@ -71,7 +73,6 @@ internal static class UpstashRedisDeploymentPipeline
             deployment,
             client,
             cachedIdentity: null,
-            saveIdentityStateAsync: null,
             progressReporter: null,
             resourceName: null,
             cancellationToken).ConfigureAwait(false);
@@ -88,14 +89,20 @@ internal static class UpstashRedisDeploymentPipeline
         Func<UpstashRedisRemoteIdentityState, Task>? saveIdentityStateAsync,
         CancellationToken cancellationToken)
     {
-        return await ExecuteAsync(
+        UpstashRedisCreateFlowResult result = await ExecuteCoreAsync(
             deployment,
             client,
             cachedIdentity,
-            saveIdentityStateAsync,
             progressReporter: null,
             resourceName: null,
             cancellationToken).ConfigureAwait(false);
+
+        if (saveIdentityStateAsync is not null)
+        {
+            await saveIdentityStateAsync(result.RemoteIdentity).ConfigureAwait(false);
+        }
+
+        return result.Database;
     }
 
     internal static async Task<UpstashRedisDatabaseDetails?> ExecuteAsync(
@@ -111,10 +118,14 @@ internal static class UpstashRedisDeploymentPipeline
             deployment,
             client,
             cachedIdentity,
-            saveIdentityStateAsync,
             progressReporter,
             resourceName,
             cancellationToken).ConfigureAwait(false);
+
+        if (saveIdentityStateAsync is not null)
+        {
+            await saveIdentityStateAsync(result.RemoteIdentity).ConfigureAwait(false);
+        }
 
         return result.Database;
     }
@@ -123,7 +134,6 @@ internal static class UpstashRedisDeploymentPipeline
         UpstashRedisResolvedDeployment deployment,
         IUpstashRedisManagementClient client,
         UpstashRedisRemoteIdentityState? cachedIdentity,
-        Func<UpstashRedisRemoteIdentityState, Task>? saveIdentityStateAsync,
         IUpstashRedisDeploymentProgressReporter? progressReporter,
         string? resourceName,
         CancellationToken cancellationToken)
@@ -225,11 +235,6 @@ internal static class UpstashRedisDeploymentPipeline
             reconciledDatabase);
 
         UpstashRedisCreateFlowResult result = new(reconciledDatabase, createResult.Created);
-
-        if (saveIdentityStateAsync is not null)
-        {
-            await saveIdentityStateAsync(result.RemoteIdentity).ConfigureAwait(false);
-        }
 
         return result;
     }
