@@ -80,6 +80,7 @@ Feature: Reconcile mutable Upstash Redis settings
     When the Upstash Redis deployment pipeline runs for existing-only with only plan "payg"
     Then Upstash Redis deployment fails with provider kind "ProviderContract"
     And the Upstash Redis reconciliation failure message contains "without credentials"
+    And the Upstash reconcile provider did not attempt reset-password
     And the Upstash reconcile provider recorded no mutation calls
 
   Scenario: Deployment pipeline refuses cached remote identity drift before adoption

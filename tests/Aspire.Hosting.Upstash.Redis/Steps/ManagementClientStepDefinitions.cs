@@ -355,6 +355,12 @@ public sealed class ManagementClientStepDefinitions : IDisposable
         Assert.DoesNotContain(value, exception.Message, StringComparison.Ordinal);
     }
 
+    [Then("the Upstash management client did not request reset-password")]
+    public void ThenTheUpstashManagementClientDidNotRequestResetPassword()
+    {
+        Assert.DoesNotContain(_handler.Requests, request => request.PathAndQuery.Contains("reset-password", StringComparison.Ordinal));
+    }
+
     [Then("the Upstash management client operation is cancelled")]
     public void ThenTheUpstashManagementClientOperationIsCancelled()
     {

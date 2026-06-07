@@ -176,6 +176,12 @@ public sealed class ReconcileMutableSettingsStepDefinitions
         Assert.Empty(_client.Mutations);
     }
 
+    [Then("the Upstash reconcile provider did not attempt reset-password")]
+    public void ThenTheUpstashReconcileProviderDidNotAttemptResetPassword()
+    {
+        Assert.DoesNotContain(_client.Operations, operation => operation.Contains("reset-password", StringComparison.Ordinal));
+    }
+
     [Then("the Upstash reconcile provider recorded mutation calls in order:")]
     public void ThenTheUpstashReconcileProviderRecordedMutationCallsInOrder(DataTable table)
     {
@@ -427,8 +433,12 @@ public sealed class ReconcileMutableSettingsStepDefinitions
 
         public List<string> Mutations { get; } = [];
 
+        public List<string> Operations { get; } = [];
+
         public Task<UpstashRedisDatabaseDetails> GetDatabaseAsync(string databaseId, CancellationToken cancellationToken)
         {
+            Operations.Add($"GET /redis/database/{databaseId}");
+
             UpstashRedisDatabaseDetails database = GetDatabase(databaseId);
 
             return Task.FromResult(Clone(database));
@@ -464,11 +474,15 @@ public sealed class ReconcileMutableSettingsStepDefinitions
 
         public Task<IReadOnlyList<UpstashRedisDatabaseSummary>> ListDatabasesAsync(CancellationToken cancellationToken)
         {
+            Operations.Add("GET /redis/databases");
+
             throw new NotSupportedException();
         }
 
         public Task<UpstashRedisDatabaseDetails?> FindDatabaseByNameAsync(string databaseName, CancellationToken cancellationToken)
         {
+            Operations.Add($"GET /redis/databases?name={databaseName}");
+
             UpstashRedisDatabaseDetails? database = GetDatabases()
                 .SingleOrDefault(database => database.DatabaseName == databaseName);
 
@@ -479,6 +493,8 @@ public sealed class ReconcileMutableSettingsStepDefinitions
 
         public Task<UpstashRedisDatabaseDetails> CreateDatabaseAsync(UpstashRedisCreateDatabaseRequest request, CancellationToken cancellationToken)
         {
+            Operations.Add("POST /redis/database");
+
             throw new NotSupportedException();
         }
 
@@ -487,6 +503,8 @@ public sealed class ReconcileMutableSettingsStepDefinitions
             UpstashRedisReadinessPollingOptions pollingOptions,
             CancellationToken cancellationToken)
         {
+            Operations.Add($"WAIT /redis/database/{databaseId}");
+
             UpstashRedisDatabaseDetails database = GetDatabase(databaseId);
 
             return Task.FromResult(Clone(database));
@@ -494,6 +512,7 @@ public sealed class ReconcileMutableSettingsStepDefinitions
 
         private void Mutate(string databaseId, string mutation, Action<UpstashRedisDatabaseDetails> apply)
         {
+            Operations.Add($"MUTATE {mutation} /redis/database/{databaseId}");
             Mutations.Add(mutation);
 
             if (FailingMutation == mutation)

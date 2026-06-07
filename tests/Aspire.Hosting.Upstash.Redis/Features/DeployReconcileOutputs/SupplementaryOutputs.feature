@@ -22,3 +22,4 @@ Feature: Supplementary Upstash Redis outputs
     When the Upstash deployment pipeline attempts to populate supplementary outputs
     Then supplementary Upstash Redis output population fails with provider kind "ProviderContract"
     And the supplementary Upstash Redis output failure message contains "without credentials"
+    And the Upstash supplementary output provider did not attempt reset-password

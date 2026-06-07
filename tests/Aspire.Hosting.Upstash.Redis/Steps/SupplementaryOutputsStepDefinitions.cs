@@ -181,6 +181,12 @@ public sealed class SupplementaryOutputsStepDefinitions
         Assert.Contains(expectedText, exception.Message, StringComparison.Ordinal);
     }
 
+    [Then("the Upstash supplementary output provider did not attempt reset-password")]
+    public void ThenTheUpstashSupplementaryOutputProviderDidNotAttemptResetPassword()
+    {
+        Assert.DoesNotContain(GetClient().Operations, operation => operation.Contains("reset-password", StringComparison.Ordinal));
+    }
+
     private IReadOnlyDictionary<string, UpstashRedisOutputReference> GetOutputReferences()
     {
         return GetOutputs().Properties.ToDictionary(
@@ -237,9 +243,12 @@ public sealed class SupplementaryOutputsStepDefinitions
             _database = database;
         }
 
+        public List<string> Operations { get; } = [];
+
         public Task<IReadOnlyList<UpstashRedisDatabaseSummary>> ListDatabasesAsync(CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            Operations.Add("GET /redis/databases");
 
             return Task.FromResult<IReadOnlyList<UpstashRedisDatabaseSummary>>([]);
         }
@@ -247,6 +256,7 @@ public sealed class SupplementaryOutputsStepDefinitions
         public Task<UpstashRedisDatabaseDetails?> FindDatabaseByNameAsync(string databaseName, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            Operations.Add($"GET /redis/databases?name={databaseName}");
 
             return Task.FromResult<UpstashRedisDatabaseDetails?>(null);
         }
@@ -256,6 +266,7 @@ public sealed class SupplementaryOutputsStepDefinitions
             CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            Operations.Add("POST /redis/database");
 
             return Task.FromResult(new UpstashRedisDatabaseDetails
             {
@@ -270,6 +281,7 @@ public sealed class SupplementaryOutputsStepDefinitions
             CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            Operations.Add($"WAIT /redis/database/{databaseId}");
 
             Assert.Equal(_database.DatabaseId, databaseId);
             return Task.FromResult(_database);
@@ -278,6 +290,7 @@ public sealed class SupplementaryOutputsStepDefinitions
         public Task<UpstashRedisDatabaseDetails> GetDatabaseAsync(string databaseId, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            Operations.Add($"GET /redis/database/{databaseId}");
 
             if (!string.Equals(databaseId, _database.DatabaseId, StringComparison.Ordinal))
             {
