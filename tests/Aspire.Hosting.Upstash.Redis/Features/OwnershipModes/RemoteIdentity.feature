@@ -5,6 +5,7 @@ Feature: Upstash Redis remote identity
     And the Upstash identity API returns details for database "orders-cache" with id "db-orders"
     When the Upstash remote identity resolver resolves configured database "orders-cache"
     Then the Upstash remote identity resolver returns database "orders-cache" with id "db-orders"
+    And the Upstash remote identity was not resolved from the cached identity
     And the Upstash remote identity cache is database "orders-cache" with id "db-orders"
     And the Upstash identity request sequence is:
       | Method | Path                        |
@@ -27,6 +28,7 @@ Feature: Upstash Redis remote identity
     And the Upstash identity API returns details for database "orders-cache" with id "db-orders"
     When the Upstash remote identity resolver resolves configured database "orders-cache"
     Then the Upstash remote identity resolver returns database "orders-cache" with id "db-orders"
+    And the Upstash remote identity was resolved from the cached identity
     And the Upstash remote identity cache is database "orders-cache" with id "db-orders"
     And the Upstash identity request sequence is:
       | Method | Path                        |

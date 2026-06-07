@@ -12,6 +12,7 @@ public sealed class OwnershipResolutionStepDefinitions
     private readonly FakeOwnershipManagementClient _client = new();
     private UpstashRedisOwnershipResolutionResult? _result;
     private Exception? _exception;
+    private bool _existingDatabaseIsManagedIdentity;
 
     [Given("the Upstash ownership resolver finds no database named {string}")]
     public void GivenTheUpstashOwnershipResolverFindsNoDatabaseNamed(string databaseName)
@@ -30,6 +31,12 @@ public sealed class OwnershipResolutionStepDefinitions
     public void GivenTheUpstashOwnershipResolverFindsDatabaseInRegionWithTlsDisabled(string databaseName, string primaryRegion)
     {
         SetExistingDatabase(databaseName, primaryRegion, tls: false);
+    }
+
+    [Given("the existing Upstash database is the cached managed remote identity")]
+    public void GivenTheExistingUpstashDatabaseIsTheCachedManagedRemoteIdentity()
+    {
+        _existingDatabaseIsManagedIdentity = true;
     }
 
     [When("ownership is resolved for database {string} with mode {string}")]
@@ -123,7 +130,8 @@ public sealed class OwnershipResolutionStepDefinitions
         UpstashRedisOwnershipResolutionRequest request = new(
             databaseName,
             Enum.Parse<UpstashRedisOwnershipMode>(ownershipMode),
-            options.ToProviderOptions());
+            options.ToProviderOptions(),
+            _existingDatabaseIsManagedIdentity);
 
         _exception = await Record.ExceptionAsync(async () =>
             _result = await UpstashRedisOwnershipResolver

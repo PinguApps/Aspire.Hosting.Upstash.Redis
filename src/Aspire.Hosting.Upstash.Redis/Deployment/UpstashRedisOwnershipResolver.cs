@@ -18,10 +18,19 @@ internal static class UpstashRedisOwnershipResolver
             .FindDatabaseByNameAsync(request.DatabaseName, cancellationToken)
             .ConfigureAwait(false);
 
+        return Resolve(request, existingDatabase);
+    }
+
+    public static UpstashRedisOwnershipResolutionResult Resolve(
+        UpstashRedisOwnershipResolutionRequest request,
+        UpstashRedisDatabaseDetails? existingDatabase)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
         switch (request.OwnershipMode)
         {
             case UpstashRedisOwnershipMode.CreateOnly:
-                return ResolveCreateOnly(request.DatabaseName, existingDatabase);
+                return ResolveCreateOnly(request, existingDatabase);
             case UpstashRedisOwnershipMode.ExistingOnly:
                 return ResolveExistingOnly(request, existingDatabase);
             case UpstashRedisOwnershipMode.CreateOrAdopt:
@@ -35,14 +44,24 @@ internal static class UpstashRedisOwnershipResolver
     }
 
     private static UpstashRedisOwnershipResolutionResult ResolveCreateOnly(
-        string databaseName,
+        UpstashRedisOwnershipResolutionRequest request,
         UpstashRedisDatabaseDetails? existingDatabase)
     {
-        return existingDatabase is not null
-            ? throw new UpstashRedisOwnershipResolutionException(
-                UpstashRedisOwnershipResolutionFailureReason.CreateOnlyDatabaseAlreadyExists,
-                $"Upstash Redis database '{databaseName}' already exists, but ownership mode is create-only. Choose a different database name, delete the existing database outside Aspire, or use create-or-adopt/existing-only if this deployment should manage it.")
-            : UpstashRedisOwnershipResolutionResult.Create();
+        if (existingDatabase is null)
+        {
+            return UpstashRedisOwnershipResolutionResult.Create();
+        }
+
+        if (request.ExistingDatabaseIsManagedIdentity)
+        {
+            ValidateExistingDatabaseCompatibility(request, existingDatabase);
+
+            return UpstashRedisOwnershipResolutionResult.Adopt(existingDatabase);
+        }
+
+        throw new UpstashRedisOwnershipResolutionException(
+            UpstashRedisOwnershipResolutionFailureReason.CreateOnlyDatabaseAlreadyExists,
+            $"Upstash Redis database '{request.DatabaseName}' already exists, but ownership mode is create-only. Choose a different database name, delete the existing database outside Aspire, or use create-or-adopt/existing-only if this deployment should manage it.");
     }
 
     private static UpstashRedisOwnershipResolutionResult ResolveExistingOnly(

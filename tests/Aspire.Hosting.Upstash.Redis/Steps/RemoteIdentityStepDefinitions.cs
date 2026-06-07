@@ -166,6 +166,24 @@ public sealed class RemoteIdentityStepDefinitions : IDisposable
         Assert.Null(resolution.IdentityState);
     }
 
+    [Then("the Upstash remote identity was resolved from the cached identity")]
+    public void ThenTheUpstashRemoteIdentityWasResolvedFromTheCachedIdentity()
+    {
+        UpstashRedisRemoteIdentityResolution resolution =
+            _lastResolution ?? throw new InvalidOperationException("No remote identity resolution was captured.");
+
+        Assert.True(resolution.ResolvedFromCachedIdentity);
+    }
+
+    [Then("the Upstash remote identity was not resolved from the cached identity")]
+    public void ThenTheUpstashRemoteIdentityWasNotResolvedFromTheCachedIdentity()
+    {
+        UpstashRedisRemoteIdentityResolution resolution =
+            _lastResolution ?? throw new InvalidOperationException("No remote identity resolution was captured.");
+
+        Assert.False(resolution.ResolvedFromCachedIdentity);
+    }
+
     [Then("the Upstash remote identity cache for Redis resource {string} loads database {string} with id {string}")]
     public async Task ThenTheUpstashRemoteIdentityCacheForRedisResourceLoadsDatabaseWithId(
         string resourceName,

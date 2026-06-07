@@ -12,6 +12,13 @@ Feature: Upstash Redis ownership resolution
     Then ownership resolution fails because "CreateOnlyDatabaseAlreadyExists"
     And the ownership failure message contains "already exists, but ownership mode is create-only"
 
+  Scenario: Create-only adopts the managed remote identity on repeated deploy
+    Given the Upstash ownership resolver finds database "orders-cache" in region "eu-west-1" with TLS enabled
+    And the existing Upstash database is the cached managed remote identity
+    When ownership is resolved for database "orders-cache" with mode "CreateOnly"
+    Then the ownership resolver selects the "Adopt" path
+    And the ownership resolver selected database "orders-cache"
+
   Scenario: Existing-only adopts when the named database exists
     Given the Upstash ownership resolver finds database "orders-cache" in region "eu-west-1" with TLS enabled
     When ownership is resolved for database "orders-cache" with mode "ExistingOnly"

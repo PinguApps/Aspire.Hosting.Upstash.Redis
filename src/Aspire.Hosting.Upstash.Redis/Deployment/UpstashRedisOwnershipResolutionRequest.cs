@@ -8,6 +8,7 @@ internal sealed class UpstashRedisOwnershipResolutionRequest
         string databaseName,
         UpstashRedisOwnershipMode ownershipMode,
         UpstashRedisProviderDeploymentOptions options,
+        bool existingDatabaseIsManagedIdentity = false,
         UpstashRedisDatabaseDetails? existingDatabase = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(databaseName);
@@ -21,6 +22,7 @@ internal sealed class UpstashRedisOwnershipResolutionRequest
         DatabaseName = databaseName;
         OwnershipMode = ownershipMode;
         Options = options;
+        ExistingDatabaseIsManagedIdentity = existingDatabaseIsManagedIdentity;
         ExistingDatabase = existingDatabase;
     }
 
@@ -29,6 +31,8 @@ internal sealed class UpstashRedisOwnershipResolutionRequest
     public UpstashRedisOwnershipMode OwnershipMode { get; }
 
     public UpstashRedisProviderDeploymentOptions Options { get; }
+
+    public bool ExistingDatabaseIsManagedIdentity { get; }
 
     public UpstashRedisDatabaseDetails? ExistingDatabase { get; }
 }

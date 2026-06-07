@@ -30,7 +30,7 @@ Only the groups needed by the current skeleton have feature files today. Future 
 - `3.1`: covered in `Features/DeployReconcileOutputs` for deploy-time parameter resolution, missing required values, secret boundaries, and local model construction without deploy-only credentials.
 - `3.2`: covered by `Features/OwnershipModes/OwnershipResolution.feature` for create-only, existing-only, create-or-adopt branching, lookup-by-name behavior, and ownership failure wording.
 - `3.3`: covered in `Features/OwnershipModes/RemoteIdentity.feature` for first lookup, cached provider-id reuse, configured-name changes, duplicate names, detail/name drift, unsafe cached-id collisions, and Aspire deployment-state cache persistence.
-- `4.1`: extends `Features/DeployReconcileOutputs` for create.
+- `4.1`: covered by `Features/DeployReconcileOutputs/CreateFlow.feature` for create-path request mapping, credential-bearing ready details, readiness polling, create failure wording, missing connection-field provider-contract failures for create/adopt, and adopt no-op behavior.
 - `4.2`: covered in `Features/DeployReconcileOutputs/ReconcileMutableSettings.feature` for no-op reconcile, fixed-plan equivalence, deterministic read-regions/plan/budget/eviction update order, explicit-setting-only enforcement, provider mutation failures, and convergence failures.
 - `4.3`: covered in `Features/DeployReconcileOutputs/ImmutableDrift.feature` for database-name identity, detectable platform, explicit primary-region, TLS-disabled failures, actionable wording, and mutable settings staying out of immutable drift.
 - `5.1`, `5.2`, and `5.3`: extend `Features/DeployReconcileOutputs` for Redis outputs, supplementary outputs, progress, and diagnostics.
