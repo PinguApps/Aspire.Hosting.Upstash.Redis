@@ -1,9 +1,11 @@
 #pragma warning disable ASPIREPIPELINES001
+#pragma warning disable ASPIREPIPELINES002
 
 using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Pipelines;
 using Aspire.Hosting.Upstash.Redis.Deployment;
 using Aspire.Hosting.Upstash.Redis.Management;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Aspire.Hosting.Upstash.Redis;
 
@@ -23,7 +25,17 @@ internal static class UpstashRedisDeploymentPipeline
         using HttpClient httpClient = new();
         UpstashRedisManagementClient client = new(httpClient, deployment.ManagementCredentials);
 
-        _ = await ExecuteAsync(deployment, client, context.CancellationToken).ConfigureAwait(false);
+        UpstashRedisRemoteIdentityDeploymentStateStore identityStateStore = new(
+            context.Services.GetRequiredService<IDeploymentStateManager>());
+        UpstashRedisRemoteIdentityState? cachedIdentity =
+            await identityStateStore.LoadAsync(resource.Name, context.CancellationToken).ConfigureAwait(false);
+
+        _ = await ExecuteAsync(
+            deployment,
+            client,
+            cachedIdentity,
+            identityState => identityStateStore.SaveAsync(resource.Name, identityState, context.CancellationToken),
+            context.CancellationToken).ConfigureAwait(false);
     }
 
     internal static async Task<UpstashRedisDatabaseDetails?> ExecuteAsync(
@@ -31,15 +43,35 @@ internal static class UpstashRedisDeploymentPipeline
         IUpstashRedisManagementClient client,
         CancellationToken cancellationToken)
     {
+        return await ExecuteAsync(
+            deployment,
+            client,
+            cachedIdentity: null,
+            saveIdentityStateAsync: null,
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    internal static async Task<UpstashRedisDatabaseDetails?> ExecuteAsync(
+        UpstashRedisResolvedDeployment deployment,
+        IUpstashRedisManagementClient client,
+        UpstashRedisRemoteIdentityState? cachedIdentity,
+        Func<UpstashRedisRemoteIdentityState, Task>? saveIdentityStateAsync,
+        CancellationToken cancellationToken)
+    {
         ArgumentNullException.ThrowIfNull(deployment);
         ArgumentNullException.ThrowIfNull(client);
+
+        UpstashRedisRemoteIdentityResolution identity = await new UpstashRedisRemoteIdentityResolver(client)
+            .ResolveAsync(deployment.DatabaseName, cachedIdentity, cancellationToken)
+            .ConfigureAwait(false);
 
         UpstashRedisOwnershipResolutionResult ownership = await UpstashRedisOwnershipResolver
             .ResolveAsync(
                 new UpstashRedisOwnershipResolutionRequest(
                     deployment.DatabaseName,
                     deployment.OwnershipMode,
-                    deployment.Options),
+                    deployment.Options,
+                    identity.Database),
                 client,
                 cancellationToken)
             .ConfigureAwait(false);
@@ -52,8 +84,15 @@ internal static class UpstashRedisDeploymentPipeline
         UpstashRedisDatabaseDetails database = ownership.Database
             ?? throw new InvalidOperationException($"Upstash Redis ownership resolution selected adoption for database '{deployment.DatabaseName}' without returning provider details.");
 
-        return await new UpstashRedisReconciler(client)
+        UpstashRedisDatabaseDetails reconciledDatabase = await new UpstashRedisReconciler(client)
             .ReconcileAsync(database, deployment.Options, cancellationToken)
             .ConfigureAwait(false);
+
+        if (identity.IdentityState is not null && saveIdentityStateAsync is not null)
+        {
+            await saveIdentityStateAsync(identity.IdentityState).ConfigureAwait(false);
+        }
+
+        return reconciledDatabase;
     }
 }

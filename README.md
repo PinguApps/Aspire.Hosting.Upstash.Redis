@@ -2,7 +2,7 @@
 
 This package is an Aspire hosting integration for publishing a standard Aspire Redis resource to Upstash Redis during deployment.
 
-Current state: the Aspire integration shape, public API shape, internal resource state model, Upstash Redis management client layer, Upstash Redis option/domain model, deploy-time parameter resolution, ownership-resolution decision engine, remote identity resolver, and mutable-setting reconciler are implemented. The package extends the built-in Redis resource returned by `builder.AddRedis("cache")`, attaches internal Upstash deployment state with `.PublishToUpstash(...)`, resolves the configured deployment values from the Aspire deploy pipeline step, can resolve the intended remote identity by explicit database name, and can reconcile supported mutable settings on an adopted database. Later implementation tasks still own creation and deployed connection outputs.
+Current state: the Aspire integration shape, public API shape, internal resource state model, Upstash Redis management client layer, Upstash Redis option/domain model, deploy-time parameter resolution, ownership-resolution decision engine, remote identity resolver, and mutable-setting reconciler are implemented. The package extends the built-in Redis resource returned by `builder.AddRedis("cache")`, attaches internal Upstash deployment state with `.PublishToUpstash(...)`, resolves the configured deployment values from the Aspire deploy pipeline step, loads/saves cached remote identity state before ownership resolution, and can reconcile supported mutable settings on an adopted database. Later implementation tasks still own creation and deployed connection outputs.
 
 ```csharp
 var databaseName = builder.AddParameter("upstash-database-name");

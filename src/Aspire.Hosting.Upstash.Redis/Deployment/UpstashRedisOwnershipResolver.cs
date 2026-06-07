@@ -12,7 +12,9 @@ internal static class UpstashRedisOwnershipResolver
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(client);
 
-        UpstashRedisDatabaseDetails? existingDatabase = await client
+        UpstashRedisDatabaseDetails? existingDatabase = request.ExistingDatabase;
+
+        existingDatabase ??= await client
             .FindDatabaseByNameAsync(request.DatabaseName, cancellationToken)
             .ConfigureAwait(false);
 

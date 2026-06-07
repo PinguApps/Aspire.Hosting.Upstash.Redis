@@ -35,6 +35,17 @@ Feature: Reconcile mutable Upstash Redis settings
       | mutation |
       | plan     |
     And the Upstash reconcile target database has read regions "eu-west-1", plan "payg", budget 100, and eviction disabled
+    And the Upstash Redis deployment saved remote identity database "orders-cache" with id "db-orders-cache"
+
+  Scenario: Deployment pipeline refuses cached remote identity drift before adoption
+    Given the Upstash reconcile target database has read regions "eu-west-1", plan "free", budget 100, and eviction disabled
+    And cached Upstash remote identity for deployment is database "orders-cache" with id "db-orders-cache"
+    And the Upstash reconcile target database provider name is "renamed-cache"
+    And the Upstash reconcile provider has database "orders-cache" with id "db-other"
+    When the Upstash Redis deployment pipeline runs for existing-only with only plan "payg"
+    Then Upstash Redis deployment fails with provider kind "ProviderContract"
+    And the Upstash Redis reconciliation failure message contains "Refusing to adopt a different database"
+    And the Upstash reconcile provider recorded no mutation calls
 
   Scenario: Provider mutation failures are reported with the setting name
     Given the Upstash reconcile target database has read regions "eu-west-1", plan "free", budget 100, and eviction disabled

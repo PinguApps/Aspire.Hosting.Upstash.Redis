@@ -12,6 +12,8 @@ public sealed class ReconcileMutableSettingsStepDefinitions
     private readonly FakeReconcileManagementClient _client = new();
     private UpstashRedisDatabaseDetails? _database;
     private UpstashRedisDatabaseDetails? _result;
+    private UpstashRedisRemoteIdentityState? _cachedIdentity;
+    private UpstashRedisRemoteIdentityState? _savedIdentity;
     private Exception? _exception;
 
     [Given("the Upstash reconcile target database has read regions {string}, plan {string}, budget {int}, and eviction enabled")]
@@ -42,6 +44,27 @@ public sealed class ReconcileMutableSettingsStepDefinitions
     public void GivenTheUpstashReconcileProviderDoesNotPersistBudgetMutations()
     {
         _client.IgnoredMutation = "budget";
+    }
+
+    [Given("cached Upstash remote identity for deployment is database {string} with id {string}")]
+    public void GivenCachedUpstashRemoteIdentityForDeploymentIsDatabaseWithId(string databaseName, string databaseId)
+    {
+        _cachedIdentity = new UpstashRedisRemoteIdentityState(databaseName, databaseId);
+    }
+
+    [Given("the Upstash reconcile provider has database {string} with id {string}")]
+    public void GivenTheUpstashReconcileProviderHasDatabaseWithId(string databaseName, string databaseId)
+    {
+        _client.Databases.Add(CreateDatabase(databaseName, databaseId, "eu-west-1", "payg", 100, eviction: false));
+    }
+
+    [Given("the Upstash reconcile target database provider name is {string}")]
+    public void GivenTheUpstashReconcileTargetDatabaseProviderNameIs(string databaseName)
+    {
+        UpstashRedisDatabaseDetails database =
+            _database ?? throw new InvalidOperationException("The reconcile target database has not been configured.");
+
+        database.DatabaseName = databaseName;
     }
 
     [When("Upstash Redis reconciliation runs with read regions {string}, plan {string}, budget {int}, and eviction enabled")]
@@ -152,6 +175,14 @@ public sealed class ReconcileMutableSettingsStepDefinitions
         Assert.Equal(Enum.Parse<UpstashRedisProviderFailureKind>(failureKind), exception.FailureKind);
     }
 
+    [Then("Upstash Redis deployment fails with provider kind {string}")]
+    public void ThenUpstashRedisDeploymentFailsWithProviderKind(string failureKind)
+    {
+        UpstashRedisProviderException exception = Assert.IsType<UpstashRedisProviderException>(_exception);
+
+        Assert.Equal(Enum.Parse<UpstashRedisProviderFailureKind>(failureKind), exception.FailureKind);
+    }
+
     [Then("the Upstash Redis reconciliation failure message contains {string}")]
     public void ThenTheUpstashRedisReconciliationFailureMessageContains(string expectedText)
     {
@@ -159,23 +190,17 @@ public sealed class ReconcileMutableSettingsStepDefinitions
         Assert.Contains(expectedText, _exception.Message, StringComparison.Ordinal);
     }
 
+    [Then("the Upstash Redis deployment saved remote identity database {string} with id {string}")]
+    public void ThenTheUpstashRedisDeploymentSavedRemoteIdentityDatabaseWithId(string databaseName, string databaseId)
+    {
+        Assert.NotNull(_savedIdentity);
+        Assert.Equal(databaseName, _savedIdentity.DatabaseName);
+        Assert.Equal(databaseId, _savedIdentity.ProviderDatabaseId);
+    }
+
     private void SetDatabase(string readRegions, string plan, int budget, bool eviction)
     {
-        _database = new UpstashRedisDatabaseDetails
-        {
-            DatabaseId = "db-orders-cache",
-            DatabaseName = "orders-cache",
-            Endpoint = "global-apt-1.upstash.io",
-            Port = 6379,
-            Password = "test-password",
-            Tls = true,
-            State = "active",
-            PrimaryRegion = "eu-west-1",
-            ReadRegions = ParseRegionNames(readRegions),
-            Type = plan,
-            Budget = budget,
-            Eviction = eviction,
-        };
+        _database = CreateDatabase("orders-cache", "db-orders-cache", readRegions, plan, budget, eviction);
 
         _client.Database = _database;
     }
@@ -232,6 +257,12 @@ public sealed class ReconcileMutableSettingsStepDefinitions
                     new UpstashRedisManagementCredentials("owner@example.com", "management-secret"),
                     options.ToProviderOptions()),
                 _client,
+                _cachedIdentity,
+                identityState =>
+                {
+                    _savedIdentity = identityState;
+                    return Task.CompletedTask;
+                },
                 CancellationToken.None)
             .ConfigureAwait(false);
     }
@@ -257,9 +288,36 @@ public sealed class ReconcileMutableSettingsStepDefinitions
         return [.. readRegions.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)];
     }
 
+    private static UpstashRedisDatabaseDetails CreateDatabase(
+        string databaseName,
+        string databaseId,
+        string readRegions,
+        string plan,
+        int budget,
+        bool eviction)
+    {
+        return new UpstashRedisDatabaseDetails
+        {
+            DatabaseId = databaseId,
+            DatabaseName = databaseName,
+            Endpoint = "global-apt-1.upstash.io",
+            Port = 6379,
+            Password = "test-password",
+            Tls = true,
+            State = "active",
+            PrimaryRegion = "eu-west-1",
+            ReadRegions = ParseRegionNames(readRegions),
+            Type = plan,
+            Budget = budget,
+            Eviction = eviction,
+        };
+    }
+
     private sealed class FakeReconcileManagementClient : IUpstashRedisManagementClient
     {
         public UpstashRedisDatabaseDetails? Database { get; set; }
+
+        public List<UpstashRedisDatabaseDetails> Databases { get; } = [];
 
         public string? FailingMutation { get; set; }
 
@@ -309,9 +367,10 @@ public sealed class ReconcileMutableSettingsStepDefinitions
 
         public Task<UpstashRedisDatabaseDetails?> FindDatabaseByNameAsync(string databaseName, CancellationToken cancellationToken)
         {
-            UpstashRedisDatabaseDetails? database = Database;
+            UpstashRedisDatabaseDetails? database = GetDatabases()
+                .SingleOrDefault(database => database.DatabaseName == databaseName);
 
-            return Task.FromResult(database is not null && database.DatabaseName == databaseName
+            return Task.FromResult(database is not null
                 ? Clone(database)
                 : null);
         }
@@ -353,12 +412,25 @@ public sealed class ReconcileMutableSettingsStepDefinitions
 
         private UpstashRedisDatabaseDetails GetDatabase(string databaseId)
         {
-            UpstashRedisDatabaseDetails database =
-                Database ?? throw new InvalidOperationException("No fake database is configured.");
+            UpstashRedisDatabaseDetails? database = GetDatabases()
+                .SingleOrDefault(database => database.DatabaseId == databaseId);
 
-            Assert.Equal(database.DatabaseId, databaseId);
+            Assert.NotNull(database);
 
             return database;
+        }
+
+        private IEnumerable<UpstashRedisDatabaseDetails> GetDatabases()
+        {
+            if (Database is not null)
+            {
+                yield return Database;
+            }
+
+            foreach (UpstashRedisDatabaseDetails database in Databases)
+            {
+                yield return database;
+            }
         }
 
         private static UpstashRedisDatabaseDetails Clone(UpstashRedisDatabaseDetails database)
