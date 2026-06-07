@@ -1,5 +1,6 @@
 #pragma warning disable ASPIREPIPELINES002
 
+using System.Text.Json.Nodes;
 using Aspire.Hosting.Pipelines;
 
 namespace Aspire.Hosting.Upstash.Redis;
@@ -24,11 +25,11 @@ internal sealed class UpstashRedisRemoteIdentityDeploymentStateStore
         DeploymentStateSection section =
             await _stateManager.AcquireSectionAsync(BuildSectionName(resourceName), cancellationToken).ConfigureAwait(false);
 
-        string? databaseName = section.Data.ContainsKey(DatabaseNameKey)
-            ? (string?)section.Data[DatabaseNameKey]
+        string? databaseName = section.Data.TryGetPropertyValue(DatabaseNameKey, out JsonNode? databaseNameValue)
+            ? (string?)databaseNameValue
             : null;
-        string? providerDatabaseId = section.Data.ContainsKey(ProviderDatabaseIdKey)
-            ? (string?)section.Data[ProviderDatabaseIdKey]
+        string? providerDatabaseId = section.Data.TryGetPropertyValue(ProviderDatabaseIdKey, out JsonNode? providerDatabaseIdValue)
+            ? (string?)providerDatabaseIdValue
             : null;
 
         return string.IsNullOrWhiteSpace(databaseName) || string.IsNullOrWhiteSpace(providerDatabaseId)

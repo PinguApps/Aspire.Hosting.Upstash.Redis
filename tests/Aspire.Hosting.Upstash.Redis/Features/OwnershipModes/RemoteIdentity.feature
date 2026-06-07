@@ -66,5 +66,5 @@ Feature: Upstash Redis remote identity
     When the Upstash remote identity cache for Redis resource "cache" is saved as database "orders-cache" with id "db-orders"
     Then the Upstash remote identity cache for Redis resource "cache" loads database "orders-cache" with id "db-orders"
 
-  Scenario: Empty deployment state has no cached remote identity
+  Scenario: Missing remote identity state loads as empty cache
     Then the Upstash remote identity cache for Redis resource "cache" is empty
