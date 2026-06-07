@@ -125,6 +125,10 @@ public static class UpstashRedisBuilderExtensions
                     options),
                 ResourceAnnotationMutationBehavior.Replace);
 
+            builder.WithAnnotation(
+                new UpstashRedisOutputsAnnotation(new UpstashRedisOutputs(builder.Resource.Name)),
+                ResourceAnnotationMutationBehavior.Replace);
+
             RedisResource resource = builder.Resource;
 
             return builder.WithPipelineStepFactory(
@@ -148,10 +152,15 @@ public static class UpstashRedisBuilderExtensions
 
             int pipelineStepAnnotationIndex = annotationIndex + 1;
 
-            if (pipelineStepAnnotationIndex < resource.Annotations.Count
-                && resource.Annotations[pipelineStepAnnotationIndex] is PipelineStepAnnotation)
+            while (pipelineStepAnnotationIndex < resource.Annotations.Count)
             {
-                resource.Annotations.RemoveAt(pipelineStepAnnotationIndex);
+                if (resource.Annotations[pipelineStepAnnotationIndex] is PipelineStepAnnotation)
+                {
+                    resource.Annotations.RemoveAt(pipelineStepAnnotationIndex);
+                    break;
+                }
+
+                pipelineStepAnnotationIndex++;
             }
 
             return;

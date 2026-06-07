@@ -2,7 +2,7 @@
 
 This package is an Aspire hosting integration for publishing a standard Aspire Redis resource to Upstash Redis during deployment.
 
-Current state: the Aspire integration shape, public API shape, internal resource state model, Upstash Redis management client layer, Upstash Redis option/domain model, deploy-time parameter resolution, ownership-resolution decision engine, remote identity resolver, create flow, mutable-setting reconciler, and immutable drift detector are implemented. The package extends the built-in Redis resource returned by `builder.AddRedis("cache")`, attaches internal Upstash deployment state with `.PublishToUpstash(...)`, resolves the configured deployment values from the Aspire deploy pipeline step, verifies and persists remote identity state, resolves ownership by explicit database name, can create a missing Upstash Redis database when ownership selects the create path, can fail fast when an adopted database conflicts with create-time-only or unsafe settings, and can reconcile supported mutable settings on an adopted database. Later implementation tasks still own deployed connection outputs.
+Current state: the Aspire integration shape, public API shape, internal resource state model, Upstash Redis management client layer, Upstash Redis option/domain model, deploy-time parameter resolution, ownership-resolution decision engine, remote identity resolver, create flow, mutable-setting reconciler, immutable drift detector, and supplementary app-facing outputs are implemented. The package extends the built-in Redis resource returned by `builder.AddRedis("cache")`, attaches internal Upstash deployment state with `.PublishToUpstash(...)`, resolves the configured deployment values from the Aspire deploy pipeline step, verifies and persists remote identity state, resolves ownership by explicit database name, can create a missing Upstash Redis database when ownership selects the create path, can fail fast when an adopted database conflicts with create-time-only or unsafe settings, can reconcile supported mutable settings on an adopted database, and can populate supplementary outputs from the deployed database detail response. Later implementation tasks still own the standard deployed Redis connection-string output.
 
 ```csharp
 var databaseName = builder.AddParameter("upstash-database-name");
@@ -65,7 +65,21 @@ var accountEmail = builder.AddParameter("upstash-account-email");
 var apiKey = builder.AddParameter("upstash-api-key", secret: true);
 ```
 
-Aspire can resolve those parameters from its normal parameter sources during deployment, including cached prompted values and configuration-backed parameters such as `builder.AddParameterFromConfiguration(...)`. The Upstash Management API key is resolved only by the internal deploy pipeline path and is kept in infrastructure-only management credentials; it is not added to Redis connection properties or application references.
+Aspire can resolve those parameters from its normal parameter sources during deployment, including cached prompted values and configuration-backed parameters such as `builder.AddParameterFromConfiguration(...)`. The Upstash Management API key is resolved only by the internal deploy pipeline path and is kept in infrastructure-only management credentials; it is not added to Redis connection properties, supplementary outputs, or application references.
+
+Advanced consumers can access supplementary app-facing outputs from the Redis resource after it is marked for Upstash publishing:
+
+```csharp
+var outputs = cache.Resource.GetUpstashRedisOutputs();
+
+var endpoint = outputs.Endpoint;
+var port = outputs.Port;
+var password = outputs.Password;
+var tls = outputs.Tls;
+var databaseName = outputs.DatabaseName;
+```
+
+The stable supplementary output names are `Endpoint`, `Port`, `Password`, `Tls`, and `DatabaseName`. `Password` is the only supplementary output classified as secret. These values are populated from the credential-bearing Upstash database detail response after deployment create/adopt/reconcile work succeeds; the Upstash Management API key, REST tokens, provider id, customer id, and billing/security metadata are not application outputs.
 
 Optional provider-domain settings can be configured with typed helpers when values are known at AppHost configuration time:
 
