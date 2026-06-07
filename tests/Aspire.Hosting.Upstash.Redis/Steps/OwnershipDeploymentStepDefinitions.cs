@@ -537,7 +537,11 @@ public sealed class OwnershipDeploymentStepDefinitions
 
         private UpstashRedisDatabaseDetails GetMutableDatabase(string databaseId)
         {
-            return _databases.Single(database => database.DatabaseId == databaseId);
+            return _databases.SingleOrDefault(database => database.DatabaseId == databaseId)
+                ?? throw new UpstashRedisProviderException(
+                    UpstashRedisProviderFailureKind.NotFound,
+                    HttpStatusCode.NotFound,
+                    $"Database '{databaseId}' was not found.");
         }
     }
 
