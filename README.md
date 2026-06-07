@@ -2,7 +2,7 @@
 
 This package is an Aspire hosting integration for publishing a standard Aspire Redis resource to Upstash Redis during deployment.
 
-Current state: the Aspire integration shape, public API shape, internal resource state model, Upstash Redis management client layer, Upstash Redis option/domain model, deploy-time parameter resolution, ownership-resolution decision engine, remote identity resolver, and create flow are implemented. The package extends the built-in Redis resource returned by `builder.AddRedis("cache")`, attaches internal Upstash deployment state with `.PublishToUpstash(...)`, resolves the configured deployment values from the Aspire deploy pipeline step, verifies and persists remote identity state, resolves ownership by explicit database name, and can create a missing Upstash Redis database when ownership selects the create path. Later implementation tasks still own reconciliation and deployed connection outputs.
+Current state: the Aspire integration shape, public API shape, internal resource state model, Upstash Redis management client layer, Upstash Redis option/domain model, deploy-time parameter resolution, ownership-resolution decision engine, remote identity resolver, create flow, and immutable drift detector are implemented. The package extends the built-in Redis resource returned by `builder.AddRedis("cache")`, attaches internal Upstash deployment state with `.PublishToUpstash(...)`, resolves the configured deployment values from the Aspire deploy pipeline step, verifies and persists remote identity state, resolves ownership by explicit database name, can create a missing Upstash Redis database when ownership selects the create path, and can fail fast when an adopted database conflicts with create-time-only or unsafe settings. Later implementation tasks still own mutable reconciliation and deployed connection outputs.
 
 ```csharp
 var databaseName = builder.AddParameter("upstash-database-name");
@@ -51,7 +51,7 @@ The internal ownership resolver looks up the configured remote database name thr
 - `ExistingOnly` adopts an existing compatible database and fails if the name is missing.
 - `CreateOrAdopt` adopts an existing compatible database or selects create when the name is missing.
 
-When an existing database conflicts with immutable/read-only settings the resolver can verify from provider details, such as an explicit primary region or required TLS, resolution fails before later create or reconcile steps. Mutable settings are still handled by the later reconcile task.
+When an existing database conflicts with immutable/read-only settings the detector can verify from provider details, deployment fails before later create or reconcile steps. The enforced v1 immutable/unsafe set is database name identity, platform where the provider primary region reveals it, explicit primary region, and TLS disabled state. Mutable settings, currently read regions, plan, budget, and eviction, are intentionally left for the later reconcile task.
 
 When ownership selects create, the deploy flow builds the Upstash `POST /redis/database` payload from the resolved v1 surface: database name, platform, primary region, read regions, plan, budget, eviction, and TLS. `platform` and `primary_region` must be explicitly configured before creating a new remote database because Upstash requires them and the package does not invent provider defaults. TLS is sent as `true`; `false` remains rejected. After create, deployment polls `GET /redis/database/{id}` until the provider reports `state == active` and an empty `modifying_state`. The ready detail response must include endpoint, port, TLS state, and password for later app-facing outputs; if any required connection field is missing or unusable, deployment fails with a provider-contract error and never calls `reset-password`. Pipeline logs are high-level and secret-safe: they report resolution start and whether the database was created or reused, but do not log passwords or management credentials.
 
@@ -105,6 +105,7 @@ The Upstash management capability matrix is documented in [`plans/0.2-confirm-up
 - Ownership resolution is deterministic: create-only rejects unmanaged existing names but preserves this deployment's verified cached remote identity on repeated deploys, existing-only rejects missing names, and create-or-adopt creates only when the explicit name is absent.
 - Create supports database name, platform, primary region, read regions, plan, budget, eviction, and required-on TLS.
 - Reconcile supports read regions, plan, budget, and eviction only.
+- Immutable drift detection fails for database name identity mismatch, detectable platform mismatch, explicit primary-region mismatch, and remote TLS disabled state; these settings are not renamed, moved, replaced, or repaired automatically in v1.
 - TLS is treated as required-on/read-only for v1, not as a mutable setting.
 - Password reset, rename, delete, team move, backups, autoscaling, prod pack, ACL, and private networking are intentionally out of scope for v1.
 - App-facing outputs come from credential-bearing database detail responses and must never expose the Upstash Management API key.

@@ -96,32 +96,16 @@ internal static class UpstashRedisOwnershipResolver
         UpstashRedisOwnershipResolutionRequest request,
         UpstashRedisDatabaseDetails existingDatabase)
     {
-        if (request.Options.PrimaryRegion?.LiteralValue is string requestedPrimaryRegion
-            && !StringComparer.Ordinal.Equals(requestedPrimaryRegion, existingDatabase.PrimaryRegion))
-        {
-            throw CreateIncompatibleDatabaseException(
-                request.DatabaseName,
-                "primary region",
-                requestedPrimaryRegion,
-                existingDatabase.PrimaryRegion ?? "<unset>");
-        }
+        UpstashRedisImmutableDrift? drift = UpstashRedisImmutableDriftDetector.Detect(
+            request.DatabaseName,
+            request.Options,
+            existingDatabase);
 
-        if (!existingDatabase.Tls)
+        if (drift is not null)
         {
             throw new UpstashRedisOwnershipResolutionException(
                 UpstashRedisOwnershipResolutionFailureReason.ExistingDatabaseIncompatible,
-                $"Upstash Redis database '{request.DatabaseName}' already exists but is incompatible with the package TLS requirement. TLS is required-on/read-only for v1, found 'disabled'.");
+                drift.Message);
         }
-    }
-
-    private static UpstashRedisOwnershipResolutionException CreateIncompatibleDatabaseException(
-        string databaseName,
-        string settingName,
-        string requestedValue,
-        string actualValue)
-    {
-        return new UpstashRedisOwnershipResolutionException(
-            UpstashRedisOwnershipResolutionFailureReason.ExistingDatabaseIncompatible,
-            $"Upstash Redis database '{databaseName}' already exists but is incompatible with the requested explicit {settingName}. Requested '{requestedValue}', found '{actualValue}'. The package will not replace or mutate this setting automatically in v1.");
     }
 }
