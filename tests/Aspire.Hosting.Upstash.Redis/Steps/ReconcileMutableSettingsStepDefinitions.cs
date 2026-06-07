@@ -34,6 +34,21 @@ public sealed class ReconcileMutableSettingsStepDefinitions
         SetDatabase(readRegions, plan, budget, eviction: false);
     }
 
+    [Given("the Upstash reconcile target database has read regions {string}, coarse plan {string}, fixed plan {string}, budget {int}, and eviction disabled")]
+    public void GivenTheUpstashReconcileTargetDatabaseHasFixedPlanWithEvictionDisabled(
+        string readRegions,
+        string coarsePlan,
+        string fixedPlan,
+        int budget)
+    {
+        SetDatabase(readRegions, coarsePlan, budget, eviction: false);
+
+        UpstashRedisDatabaseDetails database =
+            _database ?? throw new InvalidOperationException("The reconcile target database has not been configured.");
+
+        database.DbDiskThreshold = GetFixedPlanBytes(fixedPlan);
+    }
+
     [Given("the Upstash reconcile provider fails plan mutations")]
     public void GivenTheUpstashReconcileProviderFailsPlanMutations()
     {
@@ -308,9 +323,36 @@ public sealed class ReconcileMutableSettingsStepDefinitions
             PrimaryRegion = "eu-west-1",
             ReadRegions = ParseRegionNames(readRegions),
             Type = plan,
+            DbDiskThreshold = plan == "payg" ? 100L * 1024L * 1024L * 1024L : null,
             Budget = budget,
             Eviction = eviction,
         };
+    }
+
+    private static long GetFixedPlanBytes(string fixedPlan)
+    {
+        const long mebibyte = 1024L * 1024L;
+        const long gibibyte = 1024L * mebibyte;
+
+        switch (fixedPlan)
+        {
+            case "fixed_250mb":
+                return 250L * mebibyte;
+            case "fixed_1gb":
+                return 1L * gibibyte;
+            case "fixed_5gb":
+                return 5L * gibibyte;
+            case "fixed_10gb":
+                return 10L * gibibyte;
+            case "fixed_50gb":
+                return 50L * gibibyte;
+            case "fixed_100gb":
+                return 100L * gibibyte;
+            case "fixed_500gb":
+                return 500L * gibibyte;
+            default:
+                throw new InvalidOperationException($"Unknown fixed plan '{fixedPlan}'.");
+        }
     }
 
     private sealed class FakeReconcileManagementClient : IUpstashRedisManagementClient
@@ -448,6 +490,7 @@ public sealed class ReconcileMutableSettingsStepDefinitions
                 PrimaryRegion = database.PrimaryRegion,
                 ReadRegions = database.ReadRegions is null ? null : [.. database.ReadRegions],
                 Type = database.Type,
+                DbDiskThreshold = database.DbDiskThreshold,
                 Budget = database.Budget,
                 Eviction = database.Eviction,
                 CustomerId = database.CustomerId,

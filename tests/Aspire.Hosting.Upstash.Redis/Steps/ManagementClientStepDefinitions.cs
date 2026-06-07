@@ -300,6 +300,7 @@ public sealed class ManagementClientStepDefinitions : IDisposable
         Assert.Equal("eu-west-1", database.PrimaryRegion);
         Assert.Equal(["eu-west-2"], database.ReadRegions);
         Assert.Equal("payg", database.Type);
+        Assert.Equal(107374182400, database.DbDiskThreshold);
         Assert.Equal(50, database.Budget);
         Assert.True(database.Eviction);
         Assert.Equal("cust-1", database.CustomerId);
@@ -397,6 +398,7 @@ public sealed class ManagementClientStepDefinitions : IDisposable
           "primary_region": "eu-west-1",
           "read_regions": ["eu-west-2"],
           "type": "payg",
+          "db_disk_threshold": 107374182400,
           "budget": 50,
           "eviction": true,
           "customer_id": "cust-1"

@@ -85,7 +85,7 @@ internal sealed class UpstashRedisReconciler
 
         string desiredPlan = GetRequiredStringLiteral(options.Plan);
 
-        if (StringComparer.Ordinal.Equals(desiredPlan, current.Type))
+        if (PlanMatches(desiredPlan, current))
         {
             return current;
         }
@@ -198,9 +198,9 @@ internal sealed class UpstashRedisReconciler
         {
             string desiredPlan = GetRequiredStringLiteral(options.Plan);
 
-            if (!StringComparer.Ordinal.Equals(desiredPlan, current.Type))
+            if (!PlanMatches(desiredPlan, current))
             {
-                throw CreateVerificationException(current, "plan", desiredPlan, current.Type ?? "<unset>");
+                throw CreateVerificationException(current, "plan", desiredPlan, FormatPlan(current));
             }
         }
 
@@ -267,6 +267,51 @@ internal sealed class UpstashRedisReconciler
         }
 
         return eviction.Value ? "enabled" : "disabled";
+    }
+
+    private static string FormatPlan(UpstashRedisDatabaseDetails current)
+    {
+        return current.DbDiskThreshold is null
+            ? current.Type ?? "<unset>"
+            : $"{current.Type ?? "<unset>"} ({current.DbDiskThreshold.Value} bytes)";
+    }
+
+    private static bool PlanMatches(string desiredPlan, UpstashRedisDatabaseDetails current)
+    {
+        long? desiredFixedPlanBytes = GetFixedPlanBytes(desiredPlan);
+
+        if (desiredFixedPlanBytes is not null)
+        {
+            return current.DbDiskThreshold == desiredFixedPlanBytes;
+        }
+
+        return StringComparer.Ordinal.Equals(desiredPlan, current.Type);
+    }
+
+    private static long? GetFixedPlanBytes(string desiredPlan)
+    {
+        const long mebibyte = 1024L * 1024L;
+        const long gibibyte = 1024L * mebibyte;
+
+        switch (desiredPlan)
+        {
+            case "fixed_250mb":
+                return 250L * mebibyte;
+            case "fixed_1gb":
+                return 1L * gibibyte;
+            case "fixed_5gb":
+                return 5L * gibibyte;
+            case "fixed_10gb":
+                return 10L * gibibyte;
+            case "fixed_50gb":
+                return 50L * gibibyte;
+            case "fixed_100gb":
+                return 100L * gibibyte;
+            case "fixed_500gb":
+                return 500L * gibibyte;
+            default:
+                return null;
+        }
     }
 
     private static bool ReadRegionsMatch(IReadOnlyList<string> desiredReadRegions, IReadOnlyList<string>? actualReadRegions)
