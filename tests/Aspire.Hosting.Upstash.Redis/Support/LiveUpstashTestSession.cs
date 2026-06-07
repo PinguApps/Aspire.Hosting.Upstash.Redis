@@ -3,13 +3,17 @@ using Aspire.Hosting.Upstash.Redis.Management;
 
 namespace PinguApps.Aspire.Hosting.Upstash.Redis.Tests.Support;
 
-internal sealed class LiveUpstashTestSession
+internal sealed class LiveUpstashTestSession : IDisposable
 {
     private const int MaxDatabaseNameLength = 40;
     private const int UniqueSuffixLength = 8;
     private const int PrefixLength = MaxDatabaseNameLength - UniqueSuffixLength - 1;
 
     private readonly Stack<Func<Task>> _cleanupActions = [];
+    private readonly HttpClient _managementHttpClient = new()
+    {
+        BaseAddress = new Uri("https://api.upstash.com/v2/"),
+    };
 
     public string? AccountEmail => Environment.GetEnvironmentVariable("UPSTASH_EMAIL");
 
@@ -29,7 +33,7 @@ internal sealed class LiveUpstashTestSession
     public UpstashRedisManagementClient CreateManagementClient()
     {
         return new UpstashRedisManagementClient(
-            new HttpClient { BaseAddress = new Uri("https://api.upstash.com/v2/") },
+            _managementHttpClient,
             CreateCredentials());
     }
 
@@ -41,6 +45,11 @@ internal sealed class LiveUpstashTestSession
         string uniqueSuffix = $"{Guid.NewGuid():N}"[..UniqueSuffixLength];
 
         return $"{truncatedPrefix}-{uniqueSuffix}";
+    }
+
+    public void Dispose()
+    {
+        _managementHttpClient.Dispose();
     }
 
     public Task RegisterDatabaseDeletionByNameAsync(string databaseName)
@@ -56,16 +65,23 @@ internal sealed class LiveUpstashTestSession
     {
         List<Exception>? failures = null;
 
-        while (_cleanupActions.TryPop(out Func<Task>? cleanup))
+        try
         {
-            try
+            while (_cleanupActions.TryPop(out Func<Task>? cleanup))
             {
-                await cleanup().ConfigureAwait(false);
+                try
+                {
+                    await cleanup().ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    (failures ??= []).Add(ex);
+                }
             }
-            catch (Exception ex)
-            {
-                (failures ??= []).Add(ex);
-            }
+        }
+        finally
+        {
+            Dispose();
         }
 
         if (failures is null)
@@ -101,16 +117,12 @@ internal sealed class LiveUpstashTestSession
             return;
         }
 
-        using HttpClient httpClient = new()
-        {
-            BaseAddress = new Uri("https://api.upstash.com/v2/"),
-        };
         using HttpRequestMessage request = new(
             HttpMethod.Delete,
             $"redis/database/{Uri.EscapeDataString(database.DatabaseId)}");
         request.Headers.Authorization = CreateCredentials().CreateAuthorizationHeader();
 
-        using HttpResponseMessage response = await httpClient
+        using HttpResponseMessage response = await _managementHttpClient
             .SendAsync(request, CancellationToken.None)
             .ConfigureAwait(false);
 
