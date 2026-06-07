@@ -29,11 +29,6 @@ public sealed class AppHostSnippetsStepDefinitions
 
         _sampleMethodNames = snippets
             .Select(snippet => snippet.Method.Name)
-            .Concat(typeof(UpstashRedisAppHostSnippets)
-            .GetMethods()
-            .Where(method => method.DeclaringType == typeof(UpstashRedisAppHostSnippets))
-            .Select(method => method.Name))
-            .Distinct(StringComparer.Ordinal)
             .ToArray();
     }
 
