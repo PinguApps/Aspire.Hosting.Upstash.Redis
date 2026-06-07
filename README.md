@@ -81,7 +81,7 @@ var tls = outputs.Tls;
 var databaseName = outputs.DatabaseName;
 ```
 
-The stable supplementary output names are `Endpoint`, `Port`, `Password`, `Tls`, and `DatabaseName`. `Password` is the only supplementary output classified as secret. These values are populated from the credential-bearing Upstash database detail response after deployment create/adopt/reconcile work succeeds; the Upstash Management API key, REST tokens, provider id, customer id, and billing/security metadata are not application outputs.
+The stable supplementary output names are `Endpoint`, `Port`, `Password`, `Tls`, and `DatabaseName`. Each accessor returns an `UpstashRedisOutputReference` with public `Name`, `ValueExpression`, and `Secret` metadata; `Password` is the only supplementary output whose `Secret` flag is true. These values are populated from the credential-bearing Upstash database detail response after deployment create/adopt/reconcile work succeeds; the Upstash Management API key, REST tokens, provider id, customer id, and billing/security metadata are not application outputs.
 
 Optional provider-domain settings can be configured with typed helpers when values are known at AppHost configuration time:
 

@@ -78,11 +78,11 @@ public sealed class SupplementaryOutputsStepDefinitions
     [Then("the supplementary Upstash Redis outputs are:")]
     public async Task ThenTheSupplementaryUpstashRedisOutputsAre(DataTable table)
     {
-        IReadOnlyDictionary<string, ReferenceExpression> outputs = GetOutputReferences();
+        IReadOnlyDictionary<string, UpstashRedisOutputReference> outputs = GetOutputReferences();
 
         foreach (DataTableRow row in table.Rows)
         {
-            ReferenceExpression output = Assert.Contains(row["Name"], outputs);
+            UpstashRedisOutputReference output = Assert.Contains(row["Name"], outputs);
             string? value = await output.GetValueAsync(CancellationToken.None).ConfigureAwait(false);
 
             Assert.Equal(row["Value"], value);
@@ -94,22 +94,29 @@ public sealed class SupplementaryOutputsStepDefinitions
     {
         UpstashRedisOutputs outputs = GetOutputs();
 
-        foreach (string name in outputs.Properties.Select(property => property.Key))
+        foreach (UpstashRedisOutputReference output in outputs.Properties)
         {
             Assert.Equal(
-                string.Equals(name, UpstashRedisOutputNames.Password, StringComparison.Ordinal),
-                UpstashRedisOutputs.IsSecret(name));
+                string.Equals(output.Name, UpstashRedisOutputNames.Password, StringComparison.Ordinal),
+                output.Secret);
+            Assert.Equal(output.Secret, UpstashRedisOutputs.IsSecret(output.Name));
         }
+
+        ReferenceExpression passwordExpression = outputs.Password.AsReferenceExpression();
+        UpstashRedisOutputReference passwordProvider =
+            Assert.IsType<UpstashRedisOutputReference>(Assert.Single(passwordExpression.ValueProviders));
+
+        Assert.True(passwordProvider.Secret);
     }
 
     [Then("the Upstash management API key is not surfaced as a supplementary output")]
     public async Task ThenTheUpstashManagementApiKeyIsNotSurfacedAsASupplementaryOutput()
     {
-        foreach (KeyValuePair<string, ReferenceExpression> output in GetOutputs().Properties)
+        foreach (UpstashRedisOutputReference output in GetOutputs().Properties)
         {
-            string? value = await output.Value.GetValueAsync(CancellationToken.None).ConfigureAwait(false);
+            string? value = await output.GetValueAsync(CancellationToken.None).ConfigureAwait(false);
 
-            Assert.DoesNotContain(ManagementApiKey, output.Key, StringComparison.Ordinal);
+            Assert.DoesNotContain(ManagementApiKey, output.Name, StringComparison.Ordinal);
             Assert.DoesNotContain(ManagementApiKey, value, StringComparison.Ordinal);
         }
     }
@@ -125,7 +132,7 @@ public sealed class SupplementaryOutputsStepDefinitions
                 UpstashRedisOutputNames.Tls,
                 UpstashRedisOutputNames.DatabaseName,
             ],
-            GetOutputs().Properties.Select(property => property.Key));
+            GetOutputs().Properties.Select(property => property.Name));
     }
 
     [Then("each supplementary Upstash Redis output references the Redis resource")]
@@ -133,7 +140,7 @@ public sealed class SupplementaryOutputsStepDefinitions
     {
         RedisResource resource = GetResource();
 
-        foreach (ReferenceExpression output in GetOutputs().Properties.Select(property => property.Value))
+        foreach (ReferenceExpression output in GetOutputs().Properties.Select(property => property.AsReferenceExpression()))
         {
             IValueProvider valueProvider = Assert.Single(output.ValueProviders);
             IValueWithReferences valueWithReferences = Assert.IsAssignableFrom<IValueWithReferences>(valueProvider);
@@ -141,11 +148,10 @@ public sealed class SupplementaryOutputsStepDefinitions
         }
     }
 
-    private IReadOnlyDictionary<string, ReferenceExpression> GetOutputReferences()
+    private IReadOnlyDictionary<string, UpstashRedisOutputReference> GetOutputReferences()
     {
         return GetOutputs().Properties.ToDictionary(
-            property => property.Key,
-            property => property.Value,
+            property => property.Name,
             StringComparer.Ordinal);
     }
 
