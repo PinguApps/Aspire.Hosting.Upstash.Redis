@@ -65,3 +65,6 @@ Feature: Upstash Redis remote identity
   Scenario: Remote identity state can be persisted in Aspire deployment state
     When the Upstash remote identity cache for Redis resource "cache" is saved as database "orders-cache" with id "db-orders"
     Then the Upstash remote identity cache for Redis resource "cache" loads database "orders-cache" with id "db-orders"
+
+  Scenario: Empty deployment state has no cached remote identity
+    Then the Upstash remote identity cache for Redis resource "cache" is empty

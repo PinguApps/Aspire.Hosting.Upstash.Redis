@@ -181,6 +181,16 @@ public sealed class RemoteIdentityStepDefinitions : IDisposable
         Assert.Equal(databaseId, state.ProviderDatabaseId);
     }
 
+    [Then("the Upstash remote identity cache for Redis resource {string} is empty")]
+    public async Task ThenTheUpstashRemoteIdentityCacheForRedisResourceIsEmpty(string resourceName)
+    {
+        UpstashRedisRemoteIdentityDeploymentStateStore store = new(_deploymentStateManager);
+        UpstashRedisRemoteIdentityState? state = await store.LoadAsync(resourceName, CancellationToken.None)
+            .ConfigureAwait(false);
+
+        Assert.Null(state);
+    }
+
     [Then("the Upstash remote identity resolver fails with provider kind {string}")]
     public void ThenTheUpstashRemoteIdentityResolverFailsWithProviderKind(string failureKind)
     {

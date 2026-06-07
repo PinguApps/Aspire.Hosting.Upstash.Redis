@@ -24,8 +24,12 @@ internal sealed class UpstashRedisRemoteIdentityDeploymentStateStore
         DeploymentStateSection section =
             await _stateManager.AcquireSectionAsync(BuildSectionName(resourceName), cancellationToken).ConfigureAwait(false);
 
-        string? databaseName = (string?)section.Data[DatabaseNameKey];
-        string? providerDatabaseId = (string?)section.Data[ProviderDatabaseIdKey];
+        string? databaseName = section.Data.ContainsKey(DatabaseNameKey)
+            ? (string?)section.Data[DatabaseNameKey]
+            : null;
+        string? providerDatabaseId = section.Data.ContainsKey(ProviderDatabaseIdKey)
+            ? (string?)section.Data[ProviderDatabaseIdKey]
+            : null;
 
         return string.IsNullOrWhiteSpace(databaseName) || string.IsNullOrWhiteSpace(providerDatabaseId)
             ? null
