@@ -17,12 +17,17 @@ internal sealed class UpstashRedisImmutableDriftException : InvalidOperationExce
     }
 
     public UpstashRedisImmutableDriftException(UpstashRedisImmutableDrift drift)
-        : base(drift.Message)
+        : base(GetMessage(drift))
     {
-        ArgumentNullException.ThrowIfNull(drift);
-
         Drift = drift;
     }
 
     public UpstashRedisImmutableDrift? Drift { get; }
+
+    private static string GetMessage(UpstashRedisImmutableDrift drift)
+    {
+        ArgumentNullException.ThrowIfNull(drift);
+
+        return drift.Message;
+    }
 }

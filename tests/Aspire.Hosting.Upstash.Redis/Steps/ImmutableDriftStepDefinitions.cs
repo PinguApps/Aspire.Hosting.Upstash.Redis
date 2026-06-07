@@ -12,6 +12,7 @@ public sealed class ImmutableDriftStepDefinitions
     private UpstashRedisDatabaseDetails? _existingDatabase;
     private UpstashRedisImmutableDrift? _drift;
     private Exception? _exception;
+    private readonly List<string> _unsafeProviderMutations = [];
 
     [Given("an existing Upstash Redis database detail named {string} in region {string} with TLS enabled")]
     public void GivenAnExistingUpstashRedisDatabaseDetailNamedInRegionWithTlsEnabled(string databaseName, string primaryRegion)
@@ -57,6 +58,12 @@ public sealed class ImmutableDriftStepDefinitions
             });
     }
 
+    [When("immutable drift exception is created without drift details")]
+    public void WhenImmutableDriftExceptionIsCreatedWithoutDriftDetails()
+    {
+        _exception = Record.Exception(() => new UpstashRedisImmutableDriftException((UpstashRedisImmutableDrift)null!));
+    }
+
     [Then("immutable drift detection succeeds")]
     public void ThenImmutableDriftDetectionSucceeds()
     {
@@ -82,6 +89,21 @@ public sealed class ImmutableDriftStepDefinitions
             _exception ?? throw new InvalidOperationException("Immutable drift detection did not fail.");
 
         Assert.Contains(expectedText, exception.Message, StringComparison.Ordinal);
+    }
+
+    [Then("immutable drift exception construction fails with {string}")]
+    public void ThenImmutableDriftExceptionConstructionFailsWith(string exceptionTypeName)
+    {
+        Exception exception =
+            _exception ?? throw new InvalidOperationException("Immutable drift exception construction did not fail.");
+
+        Assert.Equal(exceptionTypeName, exception.GetType().Name);
+    }
+
+    [Then("no unsafe provider mutation is attempted")]
+    public void ThenNoUnsafeProviderMutationIsAttempted()
+    {
+        Assert.Empty(_unsafeProviderMutations);
     }
 
     private void SetExistingDatabase(string databaseName, string primaryRegion, bool tls)
