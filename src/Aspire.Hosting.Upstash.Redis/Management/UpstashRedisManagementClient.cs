@@ -90,9 +90,19 @@ internal sealed class UpstashRedisManagementClient : IUpstashRedisManagementClie
 
         UpstashRedisDatabaseSummary? match = matches.SingleOrDefault();
 
-        return match is null
-            ? null
-            : await GetDatabaseAsync(match.DatabaseId, cancellationToken).ConfigureAwait(false);
+        if (match is null)
+        {
+            return null;
+        }
+
+        UpstashRedisDatabaseDetails database = await GetDatabaseAsync(match.DatabaseId, cancellationToken).ConfigureAwait(false);
+
+        return database.DatabaseName == databaseName
+            ? database
+            : throw new UpstashRedisProviderException(
+                UpstashRedisProviderFailureKind.ProviderContract,
+                statusCode: null,
+                $"Upstash Redis database '{match.DatabaseId}' was listed as '{databaseName}' but detail lookup returned '{database.DatabaseName}'.");
     }
 
     public async Task<UpstashRedisDatabaseDetails> CreateDatabaseAsync(
