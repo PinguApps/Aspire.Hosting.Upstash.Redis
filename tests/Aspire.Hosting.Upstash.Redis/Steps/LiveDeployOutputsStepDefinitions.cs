@@ -26,7 +26,7 @@ public sealed class LiveDeployOutputsStepDefinitions
     {
         _context.AddRedis("cache");
 
-        _databaseName = $"{prefix}-{Guid.NewGuid():N}"[..Math.Min(prefix.Length + 9, 40)];
+        _databaseName = LiveUpstashTestSession.CreateDisposableDatabaseName(prefix);
         _context.MarkRedisForUpstash(_databaseName, UpstashRedisOwnershipMode.CreateOrAdopt);
 
         await _context.LiveUpstash.RegisterDatabaseDeletionByNameAsync(_databaseName).ConfigureAwait(false);

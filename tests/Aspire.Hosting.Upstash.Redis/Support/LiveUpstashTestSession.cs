@@ -5,6 +5,10 @@ namespace PinguApps.Aspire.Hosting.Upstash.Redis.Tests.Support;
 
 internal sealed class LiveUpstashTestSession
 {
+    private const int MaxDatabaseNameLength = 40;
+    private const int UniqueSuffixLength = 8;
+    private const int PrefixLength = MaxDatabaseNameLength - UniqueSuffixLength - 1;
+
     private readonly Stack<Func<Task>> _cleanupActions = [];
 
     public string? AccountEmail => Environment.GetEnvironmentVariable("UPSTASH_EMAIL");
@@ -27,6 +31,16 @@ internal sealed class LiveUpstashTestSession
         return new UpstashRedisManagementClient(
             new HttpClient { BaseAddress = new Uri("https://api.upstash.com/v2/") },
             CreateCredentials());
+    }
+
+    public static string CreateDisposableDatabaseName(string prefix)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(prefix);
+
+        string truncatedPrefix = prefix[..Math.Min(prefix.Length, PrefixLength)];
+        string uniqueSuffix = $"{Guid.NewGuid():N}"[..UniqueSuffixLength];
+
+        return $"{truncatedPrefix}-{uniqueSuffix}";
     }
 
     public Task RegisterDatabaseDeletionByNameAsync(string databaseName)
