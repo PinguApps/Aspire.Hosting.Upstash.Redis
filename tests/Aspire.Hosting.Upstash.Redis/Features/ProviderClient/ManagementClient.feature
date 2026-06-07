@@ -66,6 +66,7 @@ Feature: Upstash Redis management client
     Given the Upstash management API returns database details without a password
     When the Upstash management client gets database "db-orders"
     Then the Upstash management client fails with provider kind "ProviderContract"
+    And the Upstash management client did not request reset-password
 
   Scenario: Provider validation errors are classified and sanitized
     Given the Upstash management API returns status 400 with error "invalid secret-key setting"
