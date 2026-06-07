@@ -27,6 +27,15 @@ Feature: Reconcile mutable Upstash Redis settings
       | plan     |
     And the Upstash reconcile target database has read regions "eu-west-1", plan "payg", budget 100, and eviction disabled
 
+  Scenario: Deployment pipeline reconciles adopted databases
+    Given the Upstash reconcile target database has read regions "eu-west-1", plan "free", budget 100, and eviction disabled
+    When the Upstash Redis deployment pipeline runs for existing-only with only plan "payg"
+    Then Upstash Redis reconciliation succeeds
+    And the Upstash reconcile provider recorded mutation calls in order:
+      | mutation |
+      | plan     |
+    And the Upstash reconcile target database has read regions "eu-west-1", plan "payg", budget 100, and eviction disabled
+
   Scenario: Provider mutation failures are reported with the setting name
     Given the Upstash reconcile target database has read regions "eu-west-1", plan "free", budget 100, and eviction disabled
     And the Upstash reconcile provider fails plan mutations

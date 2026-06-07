@@ -65,6 +65,14 @@ public sealed class ReconcileMutableSettingsStepDefinitions
         await ReconcileAsync(options => options.Plan = plan).ConfigureAwait(false);
     }
 
+    [When("the Upstash Redis deployment pipeline runs for existing-only with only plan {string}")]
+    public async Task WhenTheUpstashRedisDeploymentPipelineRunsForExistingOnlyWithOnlyPlan(string plan)
+    {
+        await TryRunDeploymentPipelineAsync(
+            UpstashRedisOwnershipMode.ExistingOnly,
+            options => options.Plan = plan).ConfigureAwait(false);
+    }
+
     [When("Upstash Redis reconciliation is attempted with only plan {string}")]
     public async Task WhenUpstashRedisReconciliationIsAttemptedWithOnlyPlan(string plan)
     {
@@ -200,6 +208,34 @@ public sealed class ReconcileMutableSettingsStepDefinitions
             .ConfigureAwait(false);
     }
 
+    private async Task TryRunDeploymentPipelineAsync(
+        UpstashRedisOwnershipMode ownershipMode,
+        Action<UpstashRedisDeploymentOptions> configure)
+    {
+        _exception = await Record.ExceptionAsync(() => RunDeploymentPipelineAsync(ownershipMode, configure)).ConfigureAwait(false);
+    }
+
+    private async Task RunDeploymentPipelineAsync(
+        UpstashRedisOwnershipMode ownershipMode,
+        Action<UpstashRedisDeploymentOptions> configure)
+    {
+        UpstashRedisDeploymentOptions options = new();
+        configure(options);
+
+        _ = _database ?? throw new InvalidOperationException("The reconcile target database has not been configured.");
+
+        _result = await UpstashRedisDeploymentPipeline
+            .ExecuteAsync(
+                new UpstashRedisResolvedDeployment(
+                    "orders-cache",
+                    ownershipMode,
+                    new UpstashRedisManagementCredentials("owner@example.com", "management-secret"),
+                    options.ToProviderOptions()),
+                _client,
+                CancellationToken.None)
+            .ConfigureAwait(false);
+    }
+
     private void AssertDatabase(string readRegions, string plan, int budget, bool eviction)
     {
         UpstashRedisDatabaseDetails database =
@@ -273,7 +309,11 @@ public sealed class ReconcileMutableSettingsStepDefinitions
 
         public Task<UpstashRedisDatabaseDetails?> FindDatabaseByNameAsync(string databaseName, CancellationToken cancellationToken)
         {
-            throw new NotSupportedException();
+            UpstashRedisDatabaseDetails? database = Database;
+
+            return Task.FromResult(database is not null && database.DatabaseName == databaseName
+                ? Clone(database)
+                : null);
         }
 
         public Task<UpstashRedisDatabaseDetails> CreateDatabaseAsync(UpstashRedisCreateDatabaseRequest request, CancellationToken cancellationToken)
