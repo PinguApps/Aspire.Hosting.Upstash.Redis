@@ -56,6 +56,11 @@ internal sealed class UpstashRedisRemoteIdentityResolver
                     cancellationToken).ConfigureAwait(false);
             }
 
+            await VerifyConfiguredNameResolvesToCachedIdentityAsync(
+                configuredDatabaseName,
+                cachedIdentity.ProviderDatabaseId,
+                cancellationToken).ConfigureAwait(false);
+
             return resolution;
         }
         catch (UpstashRedisProviderException exception) when (exception.FailureKind == UpstashRedisProviderFailureKind.NotFound)
@@ -122,6 +127,27 @@ internal sealed class UpstashRedisRemoteIdentityResolver
             UpstashRedisProviderFailureKind.ProviderContract,
             statusCode: null,
             $"Cached Upstash Redis database '{cachedIdentity.ProviderDatabaseId}' is now named '{currentCachedDatabaseName}', not configured name '{configuredDatabaseName}'. Refusing to reconcile a drifted remote identity.");
+    }
+
+    private async Task VerifyConfiguredNameResolvesToCachedIdentityAsync(
+        string configuredDatabaseName,
+        string cachedProviderDatabaseId,
+        CancellationToken cancellationToken)
+    {
+        UpstashRedisDatabaseDetails database =
+            await _client.FindDatabaseByNameAsync(configuredDatabaseName, cancellationToken).ConfigureAwait(false)
+            ?? throw new UpstashRedisProviderException(
+                UpstashRedisProviderFailureKind.ProviderContract,
+                statusCode: null,
+                $"Cached Upstash Redis database '{cachedProviderDatabaseId}' still reports configured name '{configuredDatabaseName}', but the configured name lookup returned no database. Refusing to reconcile an unverifiable cached remote identity.");
+
+        if (database.DatabaseId != cachedProviderDatabaseId)
+        {
+            throw CreateUnsafeIdentityException(
+                configuredDatabaseName,
+                cachedProviderDatabaseId,
+                database.DatabaseId);
+        }
     }
 
     private static UpstashRedisProviderException CreateUnsafeIdentityException(

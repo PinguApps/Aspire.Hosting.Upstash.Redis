@@ -23,12 +23,23 @@ Feature: Upstash Redis remote identity
   Scenario: Repeated deployment reuses the cached provider id when the name still matches
     Given cached Upstash remote identity is database "orders-cache" with id "db-orders"
     And the Upstash identity API returns details for database "orders-cache" with id "db-orders"
+    And the Upstash identity API returns a list containing database "orders-cache" with id "db-orders"
+    And the Upstash identity API returns details for database "orders-cache" with id "db-orders"
     When the Upstash remote identity resolver resolves configured database "orders-cache"
     Then the Upstash remote identity resolver returns database "orders-cache" with id "db-orders"
     And the Upstash remote identity cache is database "orders-cache" with id "db-orders"
     And the Upstash identity request sequence is:
       | Method | Path                        |
       | GET    | /v2/redis/database/db-orders |
+      | GET    | /v2/redis/databases         |
+      | GET    | /v2/redis/database/db-orders |
+
+  Scenario: Cached identity still checks duplicate configured names before reuse
+    Given cached Upstash remote identity is database "orders-cache" with id "db-orders"
+    And the Upstash identity API returns details for database "orders-cache" with id "db-orders"
+    And the Upstash identity API returns duplicate databases named "orders-cache"
+    When the Upstash remote identity resolver resolves configured database "orders-cache"
+    Then the Upstash remote identity resolver fails with provider kind "ProviderContract"
 
   Scenario: Cached identity refuses a detail response with a different provider id
     Given cached Upstash remote identity is database "orders-cache" with id "db-orders"
