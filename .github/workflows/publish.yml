@@ -41,7 +41,7 @@ jobs:
         run: dotnet pack Aspire.Hosting.Upstash.Redis.slnx -c Release --no-build -p:Version=${{ env.PACKAGE_VERSION }} -o artifacts/packages
 
       - name: Upload package artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: packages
           path: artifacts/packages/*
