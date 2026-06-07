@@ -2,7 +2,7 @@
 
 This package is an Aspire hosting integration for publishing a standard Aspire Redis resource to Upstash Redis during deployment.
 
-Current state: the Aspire integration shape, public API shape, internal resource state model, Upstash Redis management client layer, Upstash Redis option/domain model, deploy-time parameter resolution, ownership-resolution decision engine, remote identity resolver, and mutable-setting reconciler are implemented. The package extends the built-in Redis resource returned by `builder.AddRedis("cache")`, attaches internal Upstash deployment state with `.PublishToUpstash(...)`, resolves the configured deployment values from the Aspire deploy pipeline step, loads/saves cached remote identity state before ownership resolution, and can reconcile supported mutable settings on an adopted database. Later implementation tasks still own creation and deployed connection outputs.
+Current state: the Aspire integration shape, public API shape, internal resource state model, Upstash Redis management client layer, Upstash Redis option/domain model, deploy-time parameter resolution, ownership-resolution decision engine, remote identity resolver, mutable-setting reconciler, and immutable drift detector are implemented. The package extends the built-in Redis resource returned by `builder.AddRedis("cache")`, attaches internal Upstash deployment state with `.PublishToUpstash(...)`, resolves the configured deployment values from the Aspire deploy pipeline step, loads/saves cached remote identity state before ownership resolution, can fail fast when an adopted database conflicts with create-time-only or unsafe settings, and can reconcile supported mutable settings on an adopted database. Later implementation tasks still own creation and deployed connection outputs.
 
 ```csharp
 var databaseName = builder.AddParameter("upstash-database-name");
@@ -51,9 +51,9 @@ The internal ownership resolver looks up the configured remote database name thr
 - `ExistingOnly` adopts an existing compatible database and fails if the name is missing.
 - `CreateOrAdopt` adopts an existing compatible database or selects create when the name is missing.
 
-When an existing database conflicts with immutable/read-only settings the resolver can verify from provider details, such as an explicit primary region or required TLS, resolution fails before later create or reconcile steps. The mutable reconciler then enforces only explicit desired read regions, plan, budget, and eviction settings.
+When an existing database conflicts with immutable/read-only settings the detector can verify from provider details, deployment fails before later create or reconcile steps. The enforced v1 immutable/unsafe set is database name identity, platform where the provider primary region reveals it, explicit primary region, and TLS disabled state. The mutable reconciler then enforces only explicit desired read regions, plan, budget, and eviction settings.
 
-Required values and optional string settings are represented as `UpstashRedisValue`, which can hold either a literal string or an Aspire `ParameterResource`. Literal strings convert implicitly; parameterized optional settings use `UpstashRedisValue.FromParameter(...)`. Internally, the Redis resource annotation stores a single deployment state snapshot containing required values, ownership mode, infrastructure-only management credential sources, optional settings, and explicit-setting metadata for later reconcile tasks.
+Required values and optional string settings are represented as `UpstashRedisValue`, which can hold either a literal string or an Aspire `ParameterResource`. Literal strings convert implicitly; parameterized optional settings use `UpstashRedisValue.FromParameter(...)`. Internally, the Redis resource annotation stores a single deployment state snapshot containing required values, ownership mode, infrastructure-only management credential sources, optional settings, and explicit-setting metadata for deploy reconciliation.
 
 Use Aspire parameters for secrets and deploy-specific values:
 
@@ -105,6 +105,7 @@ The Upstash management capability matrix is documented in [`plans/0.2-confirm-up
 - Ownership resolution is deterministic: create-only rejects existing names, existing-only rejects missing names, and create-or-adopt creates only when the explicit name is absent.
 - Create supports database name, platform, primary region, read regions, plan, budget, and eviction.
 - Reconcile supports read regions, plan, budget, and eviction only.
+- Immutable drift detection fails for database name identity mismatch, detectable platform mismatch, explicit primary-region mismatch, and remote TLS disabled state; these settings are not renamed, moved, replaced, or repaired automatically in v1.
 - TLS is treated as required-on/read-only for v1, not as a mutable setting.
 - Password reset, rename, delete, team move, backups, autoscaling, prod pack, ACL, and private networking are intentionally out of scope for v1.
 - App-facing outputs come from credential-bearing database detail responses and must never expose the Upstash Management API key.
