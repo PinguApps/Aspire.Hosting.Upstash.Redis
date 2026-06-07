@@ -23,23 +23,25 @@ public sealed class OwnershipResolutionStepDefinitions
     [Given("the Upstash ownership resolver finds database {string} in region {string} with TLS enabled")]
     public void GivenTheUpstashOwnershipResolverFindsDatabaseInRegionWithTlsEnabled(string databaseName, string primaryRegion)
     {
-        _client.DatabaseName = databaseName;
-        _client.Database = new UpstashRedisDatabaseDetails
-        {
-            DatabaseId = $"db-{databaseName}",
-            DatabaseName = databaseName,
-            Endpoint = "global-apt-1.upstash.io",
-            Port = 6379,
-            Password = "test-password",
-            PrimaryRegion = primaryRegion,
-            Tls = true,
-        };
+        ConfigureFoundDatabase(databaseName, primaryRegion, tls: true);
+    }
+
+    [Given("the Upstash ownership resolver finds database {string} in region {string} with TLS disabled")]
+    public void GivenTheUpstashOwnershipResolverFindsDatabaseInRegionWithTlsDisabled(string databaseName, string primaryRegion)
+    {
+        ConfigureFoundDatabase(databaseName, primaryRegion, tls: false);
     }
 
     [When("ownership is resolved for database {string} with mode {string}")]
     public async Task WhenOwnershipIsResolvedForDatabaseWithMode(string databaseName, string ownershipMode)
     {
         await ResolveAsync(databaseName, ownershipMode, options => options.Tls = true).ConfigureAwait(false);
+    }
+
+    [When("ownership is resolved for database {string} with mode {string} and TLS unset")]
+    public async Task WhenOwnershipIsResolvedForDatabaseWithModeAndTlsUnset(string databaseName, string ownershipMode)
+    {
+        await ResolveAsync(databaseName, ownershipMode, _ => { }).ConfigureAwait(false);
     }
 
     [When("ownership is resolved for database {string} with mode {string} and primary region {string}")]
@@ -93,6 +95,21 @@ public sealed class OwnershipResolutionStepDefinitions
     {
         Assert.NotNull(_exception);
         Assert.Contains(expectedText, _exception.Message, StringComparison.Ordinal);
+    }
+
+    private void ConfigureFoundDatabase(string databaseName, string primaryRegion, bool tls)
+    {
+        _client.DatabaseName = databaseName;
+        _client.Database = new UpstashRedisDatabaseDetails
+        {
+            DatabaseId = $"db-{databaseName}",
+            DatabaseName = databaseName,
+            Endpoint = "global-apt-1.upstash.io",
+            Port = 6379,
+            Password = "test-password",
+            PrimaryRegion = primaryRegion,
+            Tls = tls,
+        };
     }
 
     private async Task ResolveAsync(

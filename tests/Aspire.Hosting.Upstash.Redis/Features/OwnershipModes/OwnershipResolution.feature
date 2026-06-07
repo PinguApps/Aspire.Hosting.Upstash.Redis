@@ -42,3 +42,9 @@ Feature: Upstash Redis ownership resolution
     When ownership is resolved for database "orders-cache" with mode "CreateOrAdopt" and primary region "eu-west-1"
     Then ownership resolution fails because "ExistingDatabaseIncompatible"
     And the ownership failure message contains "already exists but is incompatible with the requested explicit primary region"
+
+  Scenario: Existing database with TLS disabled fails when TLS is unset
+    Given the Upstash ownership resolver finds database "orders-cache" in region "eu-west-1" with TLS disabled
+    When ownership is resolved for database "orders-cache" with mode "ExistingOnly" and TLS unset
+    Then ownership resolution fails because "ExistingDatabaseIncompatible"
+    And the ownership failure message contains "already exists but has TLS disabled"

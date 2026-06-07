@@ -51,7 +51,7 @@ The internal ownership resolver looks up the configured remote database name thr
 - `ExistingOnly` adopts an existing compatible database and fails if the name is missing.
 - `CreateOrAdopt` adopts an existing compatible database or selects create when the name is missing.
 
-When an existing database conflicts with explicit immutable/read-only settings the resolver can verify from provider details, such as primary region or TLS, resolution fails before later create or reconcile steps. Mutable settings are still handled by the later reconcile task.
+When an existing database conflicts with immutable/read-only settings the resolver can verify from provider details, such as an explicit primary region or required TLS, resolution fails before later create or reconcile steps. Mutable settings are still handled by the later reconcile task.
 
 Required values and optional string settings are represented as `UpstashRedisValue`, which can hold either a literal string or an Aspire `ParameterResource`. Literal strings convert implicitly; parameterized optional settings use `UpstashRedisValue.FromParameter(...)`. Internally, the Redis resource annotation stores a single deployment state snapshot containing required values, ownership mode, infrastructure-only management credential sources, optional settings, and explicit-setting metadata for later reconcile tasks.
 

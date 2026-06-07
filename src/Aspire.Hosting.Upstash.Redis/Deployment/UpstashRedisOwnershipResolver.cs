@@ -83,13 +83,11 @@ internal static class UpstashRedisOwnershipResolver
                 existingDatabase.PrimaryRegion ?? "<unset>");
         }
 
-        if (request.Options.Tls?.LiteralValue is true && !existingDatabase.Tls)
+        if (!existingDatabase.Tls)
         {
-            throw CreateIncompatibleDatabaseException(
-                request.DatabaseName,
-                "TLS",
-                "enabled",
-                "disabled");
+            throw new UpstashRedisOwnershipResolutionException(
+                UpstashRedisOwnershipResolutionFailureReason.ExistingDatabaseIncompatible,
+                $"Upstash Redis database '{request.DatabaseName}' already exists but has TLS disabled. Upstash Redis requires TLS for v1 deployments, and the package will not replace or mutate this setting automatically in v1.");
         }
     }
 
