@@ -26,6 +26,7 @@ Feature: Deploy-time Upstash create flow
     And the Upstash readiness API returns active database "orders-cache" with id "db-orders"
     When the Upstash create flow executes
     Then the Upstash create flow waits for database "db-orders"
+    And the Upstash create flow returns remote identity database "orders-cache" with id "db-orders"
 
   Scenario: Create failure surfaces a clear deploy error
     Given an Upstash create flow deployment for database "orders-cache"
@@ -52,3 +53,4 @@ Feature: Deploy-time Upstash create flow
     When the Upstash create flow executes
     Then the Upstash create flow does not create the database
     And the Upstash create flow returns Redis credentials for database "orders-cache"
+    And the Upstash create flow returns remote identity database "orders-cache" with id "db-orders"

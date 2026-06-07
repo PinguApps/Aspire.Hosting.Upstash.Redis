@@ -1,9 +1,11 @@
 #pragma warning disable ASPIREPIPELINES001
+#pragma warning disable ASPIREPIPELINES002
 
 using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Pipelines;
 using Aspire.Hosting.Upstash.Redis.Deployment;
 using Aspire.Hosting.Upstash.Redis.Management;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Aspire.Hosting.Upstash.Redis;
@@ -47,17 +49,28 @@ internal static class UpstashRedisDeploymentPipeline
         _resolvingDatabase(context.Logger, deployment.DatabaseName, resource.Name, null);
 
         IUpstashRedisManagementClient client = new UpstashRedisManagementClient(_managementHttpClient, deployment.ManagementCredentials);
+        UpstashRedisRemoteIdentityDeploymentStateStore identityStore = new(
+            context.Services.GetRequiredService<IDeploymentStateManager>());
+        UpstashRedisRemoteIdentityState? cachedIdentity =
+            await identityStore.LoadAsync(resource.Name, context.CancellationToken).ConfigureAwait(false);
+        UpstashRedisRemoteIdentityResolution remoteIdentity =
+            await new UpstashRedisRemoteIdentityResolver(client)
+                .ResolveAsync(deployment.DatabaseName, cachedIdentity, context.CancellationToken)
+                .ConfigureAwait(false);
         UpstashRedisOwnershipResolutionRequest ownershipRequest = new(
             deployment.DatabaseName,
             deployment.OwnershipMode,
             deployment.Options);
-        UpstashRedisOwnershipResolutionResult ownership =
-            await UpstashRedisOwnershipResolver.ResolveAsync(ownershipRequest, client, context.CancellationToken)
-                .ConfigureAwait(false);
+        UpstashRedisOwnershipResolutionResult ownership = UpstashRedisOwnershipResolver.Resolve(
+            ownershipRequest,
+            remoteIdentity.Database);
 
         UpstashRedisCreateFlow createFlow = new(client);
         UpstashRedisCreateFlowResult createResult =
             await createFlow.ExecuteAsync(deployment, ownership, context.CancellationToken).ConfigureAwait(false);
+
+        await identityStore.SaveAsync(resource.Name, createResult.RemoteIdentity, context.CancellationToken)
+            .ConfigureAwait(false);
 
         if (createResult.Created)
         {

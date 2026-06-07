@@ -15,4 +15,7 @@ internal sealed class UpstashRedisCreateFlowResult
     public UpstashRedisDatabaseDetails Database { get; }
 
     public bool Created { get; }
+
+    public UpstashRedisRemoteIdentityState RemoteIdentity =>
+        new(Database.DatabaseName, Database.DatabaseId);
 }

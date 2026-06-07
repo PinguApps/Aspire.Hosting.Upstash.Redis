@@ -16,6 +16,15 @@ internal static class UpstashRedisOwnershipResolver
             .FindDatabaseByNameAsync(request.DatabaseName, cancellationToken)
             .ConfigureAwait(false);
 
+        return Resolve(request, existingDatabase);
+    }
+
+    public static UpstashRedisOwnershipResolutionResult Resolve(
+        UpstashRedisOwnershipResolutionRequest request,
+        UpstashRedisDatabaseDetails? existingDatabase)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
         switch (request.OwnershipMode)
         {
             case UpstashRedisOwnershipMode.CreateOnly:

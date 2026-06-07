@@ -160,6 +160,15 @@ public sealed class CreateFlowStepDefinitions
         Assert.Equal(databaseId, waitedDatabaseId);
     }
 
+    [Then("the Upstash create flow returns remote identity database {string} with id {string}")]
+    public void ThenTheUpstashCreateFlowReturnsRemoteIdentityDatabaseWithId(string databaseName, string databaseId)
+    {
+        UpstashRedisRemoteIdentityState remoteIdentity = GetResult().RemoteIdentity;
+
+        Assert.Equal(databaseName, remoteIdentity.DatabaseName);
+        Assert.Equal(databaseId, remoteIdentity.ProviderDatabaseId);
+    }
+
     [Then("the Upstash create flow fails with {string}")]
     public void ThenTheUpstashCreateFlowFailsWith(string exceptionTypeName)
     {
