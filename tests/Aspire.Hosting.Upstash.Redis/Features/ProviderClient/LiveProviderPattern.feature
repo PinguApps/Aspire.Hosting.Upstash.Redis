@@ -16,3 +16,9 @@ Feature: Live Upstash provider pattern
     When live Upstash cleanup runs
     Then every live Upstash cleanup action has run
     And live Upstash cleanup reports 2 failures
+
+  Scenario: Live disposable database names keep a suffix for long prefixes
+    When live disposable database names are generated with prefix "pin-171-feedback-prefix-with-more-than-thirty-one-chars"
+    Then each live disposable database name is at most 40 characters
+    And each live disposable database name ends with an 8 character GUID suffix
+    And the live disposable database names are unique

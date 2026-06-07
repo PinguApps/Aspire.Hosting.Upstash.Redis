@@ -1,5 +1,6 @@
 using PinguApps.Aspire.Hosting.Upstash.Redis.Tests.Support;
 using Reqnroll;
+using System.Text.RegularExpressions;
 using Xunit;
 
 namespace PinguApps.Aspire.Hosting.Upstash.Redis.Tests.Steps;
@@ -10,6 +11,7 @@ public sealed class LiveProviderStepDefinitions
     private readonly UpstashRedisScenarioContext _context;
     private bool _olderCleanupActionRan;
     private Exception? _cleanupFailure;
+    private List<string> _generatedDatabaseNames = [];
 
     public LiveProviderStepDefinitions(UpstashRedisScenarioContext context)
     {
@@ -81,6 +83,16 @@ public sealed class LiveProviderStepDefinitions
         _context.LastCleanupException = _cleanupFailure;
     }
 
+    [When("live disposable database names are generated with prefix {string}")]
+    public void WhenLiveDisposableDatabaseNamesAreGeneratedWithPrefix(string prefix)
+    {
+        _generatedDatabaseNames =
+        [
+            LiveUpstashTestSession.CreateDisposableDatabaseName(prefix),
+            LiveUpstashTestSession.CreateDisposableDatabaseName(prefix),
+        ];
+    }
+
     [Then("the older live Upstash cleanup action ran")]
     public void ThenTheOlderLiveUpstashCleanupActionRan()
     {
@@ -114,5 +126,25 @@ public sealed class LiveProviderStepDefinitions
         AggregateException exception = Assert.IsType<AggregateException>(_context.LastCleanupException);
 
         Assert.Equal(failureCount, exception.InnerExceptions.Count);
+    }
+
+    [Then("each live disposable database name is at most {int} characters")]
+    public void ThenEachLiveDisposableDatabaseNameIsAtMostCharacters(int maxLength)
+    {
+        Assert.All(_generatedDatabaseNames, databaseName => Assert.True(databaseName.Length <= maxLength));
+    }
+
+    [Then("each live disposable database name ends with an {int} character GUID suffix")]
+    public void ThenEachLiveDisposableDatabaseNameEndsWithAnCharacterGuidSuffix(int suffixLength)
+    {
+        Regex suffixPattern = new($"-[0-9a-f]{{{suffixLength}}}$");
+
+        Assert.All(_generatedDatabaseNames, databaseName => Assert.Matches(suffixPattern, databaseName));
+    }
+
+    [Then("the live disposable database names are unique")]
+    public void ThenTheLiveDisposableDatabaseNamesAreUnique()
+    {
+        Assert.Equal(_generatedDatabaseNames.Count, _generatedDatabaseNames.Distinct().Count());
     }
 }

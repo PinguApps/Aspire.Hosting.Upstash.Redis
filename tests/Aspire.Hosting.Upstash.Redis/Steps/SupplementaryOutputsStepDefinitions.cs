@@ -17,6 +17,7 @@ public sealed class SupplementaryOutputsStepDefinitions
     private RedisResource? _resource;
     private UpstashRedisResolvedDeployment? _deployment;
     private FakeSupplementaryOutputsManagementClient? _client;
+    private Exception? _exception;
 
     [Given("an Upstash Redis resource with supplementary outputs")]
     public void GivenAnUpstashRedisResourceWithSupplementaryOutputs()
@@ -65,6 +66,15 @@ public sealed class SupplementaryOutputsStepDefinitions
         _client = new FakeSupplementaryOutputsManagementClient(CreateDatabase(databaseName, databaseId));
     }
 
+    [Given("the Upstash deployment provider will create database {string} with id {string} without a password")]
+    public void GivenTheUpstashDeploymentProviderWillCreateDatabaseWithIdWithoutAPassword(string databaseName, string databaseId)
+    {
+        UpstashRedisDatabaseDetails database = CreateDatabase(databaseName, databaseId);
+        database.Password = null;
+
+        _client = new FakeSupplementaryOutputsManagementClient(database);
+    }
+
     [When("the Upstash deployment pipeline populates supplementary outputs")]
     public async Task WhenTheUpstashDeploymentPipelinePopulatesSupplementaryOutputs()
     {
@@ -73,6 +83,12 @@ public sealed class SupplementaryOutputsStepDefinitions
             GetClient(),
             GetOutputs(),
             CancellationToken.None).ConfigureAwait(false);
+    }
+
+    [When("the Upstash deployment pipeline attempts to populate supplementary outputs")]
+    public async Task WhenTheUpstashDeploymentPipelineAttemptsToPopulateSupplementaryOutputs()
+    {
+        _exception = await Record.ExceptionAsync(WhenTheUpstashDeploymentPipelinePopulatesSupplementaryOutputs).ConfigureAwait(false);
     }
 
     [Then("the supplementary Upstash Redis outputs are:")]
@@ -148,6 +164,29 @@ public sealed class SupplementaryOutputsStepDefinitions
         }
     }
 
+    [Then("supplementary Upstash Redis output population fails with provider kind {string}")]
+    public void ThenSupplementaryUpstashRedisOutputPopulationFailsWithProviderKind(string failureKind)
+    {
+        UpstashRedisProviderException exception = Assert.IsType<UpstashRedisProviderException>(_exception);
+
+        Assert.Equal(Enum.Parse<UpstashRedisProviderFailureKind>(failureKind), exception.FailureKind);
+    }
+
+    [Then("the supplementary Upstash Redis output failure message contains {string}")]
+    public void ThenTheSupplementaryUpstashRedisOutputFailureMessageContains(string expectedText)
+    {
+        Exception exception =
+            _exception ?? throw new InvalidOperationException("Supplementary output population did not fail.");
+
+        Assert.Contains(expectedText, exception.Message, StringComparison.Ordinal);
+    }
+
+    [Then("the Upstash supplementary output provider did not attempt reset-password")]
+    public void ThenTheUpstashSupplementaryOutputProviderDidNotAttemptResetPassword()
+    {
+        Assert.DoesNotContain(GetClient().Operations, operation => operation.Contains("reset-password", StringComparison.Ordinal));
+    }
+
     private IReadOnlyDictionary<string, UpstashRedisOutputReference> GetOutputReferences()
     {
         return GetOutputs().Properties.ToDictionary(
@@ -204,9 +243,12 @@ public sealed class SupplementaryOutputsStepDefinitions
             _database = database;
         }
 
+        public List<string> Operations { get; } = [];
+
         public Task<IReadOnlyList<UpstashRedisDatabaseSummary>> ListDatabasesAsync(CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            Operations.Add("GET /redis/databases");
 
             return Task.FromResult<IReadOnlyList<UpstashRedisDatabaseSummary>>([]);
         }
@@ -214,6 +256,7 @@ public sealed class SupplementaryOutputsStepDefinitions
         public Task<UpstashRedisDatabaseDetails?> FindDatabaseByNameAsync(string databaseName, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            Operations.Add($"GET /redis/databases?name={databaseName}");
 
             return Task.FromResult<UpstashRedisDatabaseDetails?>(null);
         }
@@ -223,6 +266,7 @@ public sealed class SupplementaryOutputsStepDefinitions
             CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            Operations.Add("POST /redis/database");
 
             return Task.FromResult(new UpstashRedisDatabaseDetails
             {
@@ -237,6 +281,7 @@ public sealed class SupplementaryOutputsStepDefinitions
             CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            Operations.Add($"WAIT /redis/database/{databaseId}");
 
             Assert.Equal(_database.DatabaseId, databaseId);
             return Task.FromResult(_database);
@@ -245,6 +290,7 @@ public sealed class SupplementaryOutputsStepDefinitions
         public Task<UpstashRedisDatabaseDetails> GetDatabaseAsync(string databaseId, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            Operations.Add($"GET /redis/database/{databaseId}");
 
             if (!string.Equals(databaseId, _database.DatabaseId, StringComparison.Ordinal))
             {

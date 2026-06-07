@@ -83,6 +83,15 @@ public sealed class ReconcileMutableSettingsStepDefinitions
         database.DatabaseName = databaseName;
     }
 
+    [Given("the Upstash reconcile target database has no password")]
+    public void GivenTheUpstashReconcileTargetDatabaseHasNoPassword()
+    {
+        UpstashRedisDatabaseDetails database =
+            _database ?? throw new InvalidOperationException("The reconcile target database has not been configured.");
+
+        database.Password = null;
+    }
+
     [When("Upstash Redis reconciliation runs with read regions {string}, plan {string}, budget {int}, and eviction enabled")]
     public async Task WhenUpstashRedisReconciliationRunsWithSettingsAndEvictionEnabled(
         string readRegions,
@@ -102,6 +111,24 @@ public sealed class ReconcileMutableSettingsStepDefinitions
     public async Task WhenUpstashRedisReconciliationRunsWithOnlyPlan(string plan)
     {
         await ReconcileAsync(options => options.Plan = plan).ConfigureAwait(false);
+    }
+
+    [When("Upstash Redis reconciliation runs with only {word} set to {string}")]
+    public async Task WhenUpstashRedisReconciliationRunsWithOnlySettingSetTo(string settingName, string value)
+    {
+        await ReconcileAsync(options => ApplySetting(options, settingName, value)).ConfigureAwait(false);
+    }
+
+    [When("Upstash Redis reconciliation runs with only read regions set to {string}")]
+    public async Task WhenUpstashRedisReconciliationRunsWithOnlyReadRegionsSetTo(string value)
+    {
+        await ReconcileAsync(options => ApplySetting(options, "read regions", value)).ConfigureAwait(false);
+    }
+
+    [When("Upstash Redis reconciliation runs with only TLS enabled")]
+    public async Task WhenUpstashRedisReconciliationRunsWithOnlyTlsEnabled()
+    {
+        await ReconcileAsync(options => options.Tls = true).ConfigureAwait(false);
     }
 
     [When("the Upstash Redis deployment pipeline runs for existing-only with only plan {string}")]
@@ -147,6 +174,12 @@ public sealed class ReconcileMutableSettingsStepDefinitions
     public void ThenTheUpstashReconcileProviderRecordedNoMutationCalls()
     {
         Assert.Empty(_client.Mutations);
+    }
+
+    [Then("the Upstash reconcile provider did not attempt reset-password")]
+    public void ThenTheUpstashReconcileProviderDidNotAttemptResetPassword()
+    {
+        Assert.DoesNotContain(_client.Operations, operation => operation.Contains("reset-password", StringComparison.Ordinal));
     }
 
     [Then("the Upstash reconcile provider recorded mutation calls in order:")]
@@ -304,6 +337,30 @@ public sealed class ReconcileMutableSettingsStepDefinitions
         return [.. readRegions.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)];
     }
 
+    private static void ApplySetting(
+        UpstashRedisDeploymentOptions options,
+        string settingName,
+        string value)
+    {
+        switch (settingName)
+        {
+            case "read regions":
+                options.ReadRegions = ParseReadRegions(value);
+                break;
+            case "plan":
+                options.Plan = value;
+                break;
+            case "budget":
+                options.SetBudget(int.Parse(value, System.Globalization.CultureInfo.InvariantCulture));
+                break;
+            case "eviction":
+                options.Eviction = bool.Parse(value);
+                break;
+            default:
+                throw new InvalidOperationException($"Unknown setting '{settingName}'.");
+        }
+    }
+
     private static UpstashRedisDatabaseDetails CreateDatabase(
         string databaseName,
         string databaseId,
@@ -376,8 +433,12 @@ public sealed class ReconcileMutableSettingsStepDefinitions
 
         public List<string> Mutations { get; } = [];
 
+        public List<string> Operations { get; } = [];
+
         public Task<UpstashRedisDatabaseDetails> GetDatabaseAsync(string databaseId, CancellationToken cancellationToken)
         {
+            Operations.Add($"GET /redis/database/{databaseId}");
+
             UpstashRedisDatabaseDetails database = GetDatabase(databaseId);
 
             return Task.FromResult(Clone(database));
@@ -413,11 +474,15 @@ public sealed class ReconcileMutableSettingsStepDefinitions
 
         public Task<IReadOnlyList<UpstashRedisDatabaseSummary>> ListDatabasesAsync(CancellationToken cancellationToken)
         {
+            Operations.Add("GET /redis/databases");
+
             throw new NotSupportedException();
         }
 
         public Task<UpstashRedisDatabaseDetails?> FindDatabaseByNameAsync(string databaseName, CancellationToken cancellationToken)
         {
+            Operations.Add($"GET /redis/databases?name={databaseName}");
+
             UpstashRedisDatabaseDetails? database = GetDatabases()
                 .SingleOrDefault(database => database.DatabaseName == databaseName);
 
@@ -428,6 +493,8 @@ public sealed class ReconcileMutableSettingsStepDefinitions
 
         public Task<UpstashRedisDatabaseDetails> CreateDatabaseAsync(UpstashRedisCreateDatabaseRequest request, CancellationToken cancellationToken)
         {
+            Operations.Add("POST /redis/database");
+
             throw new NotSupportedException();
         }
 
@@ -436,6 +503,8 @@ public sealed class ReconcileMutableSettingsStepDefinitions
             UpstashRedisReadinessPollingOptions pollingOptions,
             CancellationToken cancellationToken)
         {
+            Operations.Add($"WAIT /redis/database/{databaseId}");
+
             UpstashRedisDatabaseDetails database = GetDatabase(databaseId);
 
             return Task.FromResult(Clone(database));
@@ -443,6 +512,7 @@ public sealed class ReconcileMutableSettingsStepDefinitions
 
         private void Mutate(string databaseId, string mutation, Action<UpstashRedisDatabaseDetails> apply)
         {
+            Operations.Add($"MUTATE {mutation} /redis/database/{databaseId}");
             Mutations.Add(mutation);
 
             if (FailingMutation == mutation)
