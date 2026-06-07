@@ -33,7 +33,8 @@ Only the groups needed by the current skeleton have feature files today. Future 
 - `4.1`: covered by `Features/DeployReconcileOutputs/CreateFlow.feature` for create-path request mapping, credential-bearing ready details, readiness polling, create failure wording, missing connection-field provider-contract failures for create/adopt, and adopt no-op behavior.
 - `4.2`: covered in `Features/DeployReconcileOutputs/ReconcileMutableSettings.feature` for no-op reconcile, fixed-plan equivalence, deterministic read-regions/plan/budget/eviction update order, explicit-setting-only enforcement, provider mutation failures, and convergence failures.
 - `4.3`: covered in `Features/DeployReconcileOutputs/ImmutableDrift.feature` for database-name identity, detectable platform, explicit primary-region, TLS-disabled failures, actionable wording, and mutable settings staying out of immutable drift.
-- `5.1` and `5.3`: extend `Features/DeployReconcileOutputs` for Redis connection-string outputs, progress, and diagnostics.
+- `5.3`: covered in `Features/DeployReconcileOutputs/DeploymentDiagnostics.feature` for deploy progress phase order, actionable failure context, secret redaction, and provider id visibility.
+- `5.1`: extend `Features/DeployReconcileOutputs` for Redis connection-string outputs.
 - `5.2`: covered in `Features/DeployReconcileOutputs/SupplementaryOutputs.feature` for deployed supplementary output values, stable names, secret classification, and management-key exclusion.
 - `6.1`, `6.2`, and `6.3`: harden the already populated groups rather than duplicating shallow coverage elsewhere.
 - `7.1` and `7.2`: add `Features/DocsSamples` scenarios for README and sample snippets where practical.
