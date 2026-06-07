@@ -136,7 +136,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
   - database name
 
 ### Current Repository State
-- The repository currently contains the package project, the test project, shared build settings, planning artifacts, decision records, the Aspire integration skeleton from task `0.1`, the locked public API shape from task `1.1`, the internal resource annotation/state model from task `2.1`, the typed Upstash Redis management client layer from task `2.2`, and the Upstash Redis option/domain model from task `2.3`.
+- The repository currently contains the package project, the test project, shared build settings, planning artifacts, decision records, the Aspire integration skeleton from task `0.1`, the locked public API shape from task `1.1`, the internal resource annotation/state model from task `2.1`, the typed Upstash Redis management client layer from task `2.2`, the Upstash Redis option/domain model from task `2.3`, and the ownership-resolution decision engine from task `3.2`.
 - `src/Aspire.Hosting.Upstash.Redis/Aspire.Hosting.Upstash.Redis.csproj` is the main package project to implement.
 - `tests/Aspire.Hosting.Upstash.Redis/` is the single test project and should remain the home for the package test suite.
 - The test project now has a Reqnroll feature taxonomy and shared support layer from task `1.2`; read `tests/Aspire.Hosting.Upstash.Redis/README.md` before adding scenarios.
@@ -150,6 +150,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - Plan `2.1` is complete; `.PublishToUpstash(...)` attaches an internal `UpstashRedisDeploymentState` snapshot to the built-in `RedisResource` through an internal annotation, preserving required inputs, ownership mode, management credential value sources, optional settings, and explicit-setting metadata without changing local Redis behavior.
 - Plan `2.2` is complete; `src/Aspire.Hosting.Upstash.Redis/Management/` contains the narrow internal client for the supported Upstash Redis Developer API endpoints, typed DTOs, Basic-auth helper, readiness polling helper, and typed provider failure classification.
 - Plan `2.3` is complete; public typed helpers now cover Upstash Redis cloud platforms, regions, plans, and budgets while internal provider-domain mapping validates literal values and preserves parameter-backed sources for deploy-time resolution.
+- Plan `3.2` is complete; `src/Aspire.Hosting.Upstash.Redis/Deployment/` contains the internal ownership resolver that looks up the explicit remote database name through the management client, selects create or adopt for the three ownership modes, and raises stable ownership-resolution failures for create-only collisions, existing-only misses, and incompatible existing databases.
 - Task agents can now receive Upstash management credentials through environment variables `UPSTASH_EMAIL` and `UPSTASH_API_KEY`.
 
 ### Technical Baseline
