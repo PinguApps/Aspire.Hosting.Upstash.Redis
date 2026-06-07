@@ -17,36 +17,30 @@ internal static class UpstashRedisDeploymentPipeline
         BaseAddress = new Uri("https://api.upstash.com/v2/"),
     };
 
-    private static readonly Action<ILogger, string, string, Exception?> _resolvingDatabase =
-        LoggerMessage.Define<string, string>(
+    private static readonly Action<ILogger, string, string?, string?, string?, Exception?> _deploymentProgress =
+        LoggerMessage.Define<string, string?, string?, string?>(
             LogLevel.Information,
-            new EventId(1, "ResolvingDatabase"),
-            "Resolving Upstash Redis database '{DatabaseName}' for Redis resource '{ResourceName}'.");
-
-    private static readonly Action<ILogger, string, string, Exception?> _createdDatabase =
-        LoggerMessage.Define<string, string>(
-            LogLevel.Information,
-            new EventId(2, "CreatedDatabase"),
-            "Created Upstash Redis database '{DatabaseName}' for Redis resource '{ResourceName}'.");
-
-    private static readonly Action<ILogger, string, string, Exception?> _usingExistingDatabase =
-        LoggerMessage.Define<string, string>(
-            LogLevel.Information,
-            new EventId(3, "UsingExistingDatabase"),
-            "Using existing Upstash Redis database '{DatabaseName}' for Redis resource '{ResourceName}'.");
+            new EventId(1, "UpstashRedisDeploymentProgress"),
+            "{Message} Resource='{ResourceName}' Database='{DatabaseName}' ProviderDatabaseId='{ProviderDatabaseId}'.");
 
     public static async Task ExecuteAsync(RedisResource resource, PipelineStepContext context)
     {
         ArgumentNullException.ThrowIfNull(resource);
         ArgumentNullException.ThrowIfNull(context);
 
+        LoggerUpstashRedisDeploymentProgressReporter progressReporter = new(context.Logger, resource.Name);
+        progressReporter.Report(UpstashRedisDeploymentDiagnostics.CreateProgress(
+            UpstashRedisDeploymentPhase.ResolvingConfiguration,
+            $"Resolving Upstash Redis deployment configuration for Redis resource '{resource.Name}'.",
+            resource.Name,
+            databaseName: null,
+            providerDatabaseId: null));
+
         UpstashRedisDeploymentState state = resource.GetUpstashRedisDeploymentState()
             ?? throw new InvalidOperationException($"Redis resource '{resource.Name}' is missing Upstash deployment state.");
 
         UpstashRedisResolvedDeployment deployment =
             await UpstashRedisDeployTimeResolver.ResolveAsync(state, resource, context).ConfigureAwait(false);
-
-        _resolvingDatabase(context.Logger, deployment.DatabaseName, resource.Name, null);
 
         IUpstashRedisManagementClient client = new UpstashRedisManagementClient(_managementHttpClient, deployment.ManagementCredentials);
         UpstashRedisRemoteIdentityDeploymentStateStore identityStore = new(
@@ -59,17 +53,10 @@ internal static class UpstashRedisDeploymentPipeline
             client,
             cachedIdentity,
             identityState => identityStore.SaveAsync(resource.Name, identityState, context.CancellationToken),
+            progressReporter,
+            resource.Name,
             context.CancellationToken)
             .ConfigureAwait(false);
-
-        if (result.Created)
-        {
-            _createdDatabase(context.Logger, deployment.DatabaseName, resource.Name, null);
-        }
-        else
-        {
-            _usingExistingDatabase(context.Logger, deployment.DatabaseName, resource.Name, null);
-        }
     }
 
     internal static async Task<UpstashRedisDatabaseDetails?> ExecuteAsync(
@@ -82,6 +69,8 @@ internal static class UpstashRedisDeploymentPipeline
             client,
             cachedIdentity: null,
             saveIdentityStateAsync: null,
+            progressReporter: null,
+            resourceName: null,
             cancellationToken).ConfigureAwait(false);
 
         return result.Database;
@@ -94,11 +83,32 @@ internal static class UpstashRedisDeploymentPipeline
         Func<UpstashRedisRemoteIdentityState, Task>? saveIdentityStateAsync,
         CancellationToken cancellationToken)
     {
+        return await ExecuteAsync(
+            deployment,
+            client,
+            cachedIdentity,
+            saveIdentityStateAsync,
+            progressReporter: null,
+            resourceName: null,
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    internal static async Task<UpstashRedisDatabaseDetails?> ExecuteAsync(
+        UpstashRedisResolvedDeployment deployment,
+        IUpstashRedisManagementClient client,
+        UpstashRedisRemoteIdentityState? cachedIdentity,
+        Func<UpstashRedisRemoteIdentityState, Task>? saveIdentityStateAsync,
+        IUpstashRedisDeploymentProgressReporter? progressReporter,
+        string? resourceName,
+        CancellationToken cancellationToken)
+    {
         UpstashRedisCreateFlowResult result = await ExecuteCoreAsync(
             deployment,
             client,
             cachedIdentity,
             saveIdentityStateAsync,
+            progressReporter,
+            resourceName,
             cancellationToken).ConfigureAwait(false);
 
         return result.Database;
@@ -109,15 +119,62 @@ internal static class UpstashRedisDeploymentPipeline
         IUpstashRedisManagementClient client,
         UpstashRedisRemoteIdentityState? cachedIdentity,
         Func<UpstashRedisRemoteIdentityState, Task>? saveIdentityStateAsync,
+        IUpstashRedisDeploymentProgressReporter? progressReporter,
+        string? resourceName,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(deployment);
         ArgumentNullException.ThrowIfNull(client);
 
+        Report(
+            progressReporter,
+            UpstashRedisDeploymentPhase.ResolvingConfiguration,
+            $"Resolved Upstash Redis deployment configuration for database '{deployment.DatabaseName}'.",
+            resourceName,
+            deployment.DatabaseName,
+            providerDatabaseId: null,
+            deployment,
+            database: null);
+
+        Report(
+            progressReporter,
+            UpstashRedisDeploymentPhase.LocatingDatabase,
+            $"Locating Upstash Redis database '{deployment.DatabaseName}' by configured name.",
+            resourceName,
+            deployment.DatabaseName,
+            providerDatabaseId: null,
+            deployment,
+            database: null);
+
         UpstashRedisRemoteIdentityResolution remoteIdentity =
             await new UpstashRedisRemoteIdentityResolver(client)
                 .ResolveAsync(deployment.DatabaseName, cachedIdentity, cancellationToken)
                 .ConfigureAwait(false);
+
+        string? locatedProviderDatabaseId = remoteIdentity.Database?.DatabaseId;
+        string locatedMessage = remoteIdentity.Database is null
+            ? $"No Upstash Redis database named '{deployment.DatabaseName}' was found."
+            : $"Located Upstash Redis database '{deployment.DatabaseName}' with provider id '{UpstashRedisDeploymentDiagnostics.FormatProviderDatabaseId(locatedProviderDatabaseId)}'.";
+
+        Report(
+            progressReporter,
+            UpstashRedisDeploymentPhase.LocatingDatabase,
+            locatedMessage,
+            resourceName,
+            deployment.DatabaseName,
+            locatedProviderDatabaseId,
+            deployment,
+            remoteIdentity.Database);
+
+        Report(
+            progressReporter,
+            UpstashRedisDeploymentPhase.ValidatingImmutableDrift,
+            $"Validating immutable Upstash Redis settings for database '{deployment.DatabaseName}'.",
+            resourceName,
+            deployment.DatabaseName,
+            locatedProviderDatabaseId,
+            deployment,
+            remoteIdentity.Database);
 
         UpstashRedisOwnershipResolutionRequest ownershipRequest = new(
             deployment.DatabaseName,
@@ -129,14 +186,38 @@ internal static class UpstashRedisDeploymentPipeline
             ownershipRequest,
             remoteIdentity.Database);
 
+        ReportOwnership(progressReporter, resourceName, deployment, ownership);
+
         UpstashRedisCreateFlowResult createResult =
             await new UpstashRedisCreateFlow(client)
                 .ExecuteAsync(deployment, ownership, cancellationToken)
                 .ConfigureAwait(false);
 
+        ReportCreatedOrAdopted(progressReporter, resourceName, deployment, createResult);
+
+        Report(
+            progressReporter,
+            UpstashRedisDeploymentPhase.ReconcilingMutableSettings,
+            $"Reconciling explicit mutable Upstash Redis settings for database '{deployment.DatabaseName}'.",
+            resourceName,
+            deployment.DatabaseName,
+            createResult.Database.DatabaseId,
+            deployment,
+            createResult.Database);
+
         UpstashRedisDatabaseDetails reconciledDatabase = await new UpstashRedisReconciler(client)
             .ReconcileAsync(createResult.Database, deployment.Options, cancellationToken)
             .ConfigureAwait(false);
+
+        Report(
+            progressReporter,
+            UpstashRedisDeploymentPhase.RetrievingOutputs,
+            $"Retrieved Redis connection outputs for Upstash Redis database '{deployment.DatabaseName}' with provider id '{UpstashRedisDeploymentDiagnostics.FormatProviderDatabaseId(reconciledDatabase.DatabaseId)}'.",
+            resourceName,
+            deployment.DatabaseName,
+            reconciledDatabase.DatabaseId,
+            deployment,
+            reconciledDatabase);
 
         UpstashRedisCreateFlowResult result = new(reconciledDatabase, createResult.Created);
 
@@ -146,5 +227,92 @@ internal static class UpstashRedisDeploymentPipeline
         }
 
         return result;
+    }
+
+    private static void ReportOwnership(
+        IUpstashRedisDeploymentProgressReporter? progressReporter,
+        string? resourceName,
+        UpstashRedisResolvedDeployment deployment,
+        UpstashRedisOwnershipResolutionResult ownership)
+    {
+        if (ownership.Action == UpstashRedisOwnershipResolutionAction.Create)
+        {
+            Report(
+                progressReporter,
+                UpstashRedisDeploymentPhase.CreatingDatabase,
+                $"Creating Upstash Redis database '{deployment.DatabaseName}'.",
+                resourceName,
+                deployment.DatabaseName,
+                providerDatabaseId: null,
+                deployment,
+                database: null);
+        }
+    }
+
+    private static void ReportCreatedOrAdopted(
+        IUpstashRedisDeploymentProgressReporter? progressReporter,
+        string? resourceName,
+        UpstashRedisResolvedDeployment deployment,
+        UpstashRedisCreateFlowResult createResult)
+    {
+        string action = createResult.Created ? "Created" : "Using existing";
+
+        Report(
+            progressReporter,
+            createResult.Created ? UpstashRedisDeploymentPhase.CreatingDatabase : UpstashRedisDeploymentPhase.ValidatingImmutableDrift,
+            $"{action} Upstash Redis database '{deployment.DatabaseName}' with provider id '{UpstashRedisDeploymentDiagnostics.FormatProviderDatabaseId(createResult.Database.DatabaseId)}'.",
+            resourceName,
+            deployment.DatabaseName,
+            createResult.Database.DatabaseId,
+            deployment,
+            createResult.Database);
+    }
+
+    private static void Report(
+        IUpstashRedisDeploymentProgressReporter? progressReporter,
+        UpstashRedisDeploymentPhase phase,
+        string message,
+        string? resourceName,
+        string? databaseName,
+        string? providerDatabaseId,
+        UpstashRedisResolvedDeployment deployment,
+        UpstashRedisDatabaseDetails? database)
+    {
+        progressReporter?.Report(UpstashRedisDeploymentDiagnostics.CreateProgress(
+            phase,
+            message,
+            resourceName,
+            databaseName,
+            providerDatabaseId,
+            deployment,
+            database));
+    }
+
+    private sealed class LoggerUpstashRedisDeploymentProgressReporter : IUpstashRedisDeploymentProgressReporter
+    {
+        private readonly ILogger _logger;
+        private readonly string _resourceName;
+
+        public LoggerUpstashRedisDeploymentProgressReporter(ILogger logger, string resourceName)
+        {
+            ArgumentNullException.ThrowIfNull(logger);
+            ArgumentException.ThrowIfNullOrWhiteSpace(resourceName);
+
+            _logger = logger;
+            _resourceName = resourceName;
+        }
+
+        public void Report(UpstashRedisDeploymentProgress progress)
+        {
+            ArgumentNullException.ThrowIfNull(progress);
+
+            _deploymentProgress(
+                _logger,
+                progress.Message,
+                progress.ResourceName ?? _resourceName,
+                progress.DatabaseName,
+                progress.ProviderDatabaseId,
+                null);
+        }
     }
 }
