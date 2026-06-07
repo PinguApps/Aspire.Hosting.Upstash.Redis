@@ -48,7 +48,7 @@ internal static class UpstashRedisDeploymentPipeline
         UpstashRedisRemoteIdentityState? cachedIdentity =
             await identityStore.LoadAsync(resource.Name, context.CancellationToken).ConfigureAwait(false);
 
-        UpstashRedisCreateFlowResult result = await ExecuteCoreAsync(
+        await ExecuteCoreAsync(
             deployment,
             client,
             cachedIdentity,
