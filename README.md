@@ -115,6 +115,7 @@ Use `UpstashRedisValue.FromParameter(...)` when an optional setting must be supp
 
 ```csharp
 var primaryRegion = builder.AddParameter("upstash-primary-region");
+var platform = builder.AddParameter("upstash-platform");
 var readRegion = builder.AddParameter("upstash-read-region");
 var budget = builder.AddParameter("upstash-budget");
 
@@ -126,6 +127,7 @@ builder.AddRedis("cache")
         UpstashRedisOwnershipMode.CreateOrAdopt,
         options =>
         {
+            options.Platform = UpstashRedisValue.FromParameter(platform);
             options.PrimaryRegion = UpstashRedisValue.FromParameter(primaryRegion);
             options.ReadRegions = [UpstashRedisValue.FromParameter(readRegion)];
             options.Plan = "payg";
