@@ -85,15 +85,20 @@ internal sealed class UpstashRedisRemoteIdentityResolver
         UpstashRedisDatabaseDetails? database =
             await _client.FindDatabaseByNameAsync(configuredDatabaseName, cancellationToken).ConfigureAwait(false);
 
-        return database switch
+        if (database is null)
         {
-            null => UpstashRedisRemoteIdentityResolution.NotFound(),
-            { DatabaseId: var databaseId } when databaseId != cachedIdentity.ProviderDatabaseId => throw CreateUnsafeIdentityException(
+            return UpstashRedisRemoteIdentityResolution.NotFound();
+        }
+
+        if (database.DatabaseId != cachedIdentity.ProviderDatabaseId)
+        {
+            throw CreateUnsafeIdentityException(
                 configuredDatabaseName,
                 cachedIdentity.ProviderDatabaseId,
-                database.DatabaseId),
-            _ => UpstashRedisRemoteIdentityResolution.FoundDatabase(database)
-        };
+                database.DatabaseId);
+        }
+
+        return UpstashRedisRemoteIdentityResolution.FoundDatabase(database);
     }
 
     private async Task<UpstashRedisRemoteIdentityResolution> ResolveDriftedCachedIdentityAsync(

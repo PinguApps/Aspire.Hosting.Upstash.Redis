@@ -27,12 +27,15 @@ internal static class UpstashRedisProviderDomain
 
     public static string MapCloudPlatform(UpstashRedisCloudPlatform platform)
     {
-        return platform switch
+        switch (platform)
         {
-            UpstashRedisCloudPlatform.Aws => "aws",
-            UpstashRedisCloudPlatform.Gcp => "gcp",
-            _ => throw new ArgumentOutOfRangeException(nameof(platform), platform, "The Upstash Redis cloud platform is not supported.")
-        };
+            case UpstashRedisCloudPlatform.Aws:
+                return "aws";
+            case UpstashRedisCloudPlatform.Gcp:
+                return "gcp";
+            default:
+                throw new ArgumentOutOfRangeException(nameof(platform), platform, "The Upstash Redis cloud platform is not supported.");
+        }
     }
 
     public static string MapRegion(UpstashRedisRegion region)
@@ -42,30 +45,43 @@ internal static class UpstashRedisProviderDomain
 
     public static string MapPlan(UpstashRedisPlan plan)
     {
-        return plan switch
+        switch (plan)
         {
-            UpstashRedisPlan.Free => "free",
-            UpstashRedisPlan.PayAsYouGo => "payg",
-            UpstashRedisPlan.Fixed250Mb => "fixed_250mb",
-            UpstashRedisPlan.Fixed1Gb => "fixed_1gb",
-            UpstashRedisPlan.Fixed5Gb => "fixed_5gb",
-            UpstashRedisPlan.Fixed10Gb => "fixed_10gb",
-            UpstashRedisPlan.Fixed50Gb => "fixed_50gb",
-            UpstashRedisPlan.Fixed100Gb => "fixed_100gb",
-            UpstashRedisPlan.Fixed500Gb => "fixed_500gb",
-            _ => throw new ArgumentOutOfRangeException(nameof(plan), plan, "The Upstash Redis plan is not supported.")
-        };
+            case UpstashRedisPlan.Free:
+                return "free";
+            case UpstashRedisPlan.PayAsYouGo:
+                return "payg";
+            case UpstashRedisPlan.Fixed250Mb:
+                return "fixed_250mb";
+            case UpstashRedisPlan.Fixed1Gb:
+                return "fixed_1gb";
+            case UpstashRedisPlan.Fixed5Gb:
+                return "fixed_5gb";
+            case UpstashRedisPlan.Fixed10Gb:
+                return "fixed_10gb";
+            case UpstashRedisPlan.Fixed50Gb:
+                return "fixed_50gb";
+            case UpstashRedisPlan.Fixed100Gb:
+                return "fixed_100gb";
+            case UpstashRedisPlan.Fixed500Gb:
+                return "fixed_500gb";
+            default:
+                throw new ArgumentOutOfRangeException(nameof(plan), plan, "The Upstash Redis plan is not supported.");
+        }
     }
 
     public static UpstashRedisCloudPlatform ParseCloudPlatform(string value, string settingName)
     {
-        return Normalize(value) switch
+        switch (Normalize(value))
         {
-            "aws" => UpstashRedisCloudPlatform.Aws,
-            "gcp" => UpstashRedisCloudPlatform.Gcp,
-            _ => throw new InvalidOperationException(
-                $"Upstash Redis {settingName} '{value}' is not supported. Supported values: aws, gcp.")
-        };
+            case "aws":
+                return UpstashRedisCloudPlatform.Aws;
+            case "gcp":
+                return UpstashRedisCloudPlatform.Gcp;
+            default:
+                throw new InvalidOperationException(
+                    $"Upstash Redis {settingName} '{value}' is not supported. Supported values: aws, gcp.");
+        }
     }
 
     public static UpstashRedisRegion ParsePrimaryRegion(string value, string settingName)
@@ -97,20 +113,30 @@ internal static class UpstashRedisProviderDomain
 
     public static UpstashRedisPlan ParsePlan(string value, string settingName)
     {
-        return Normalize(value) switch
+        switch (Normalize(value))
         {
-            "free" => UpstashRedisPlan.Free,
-            "payg" => UpstashRedisPlan.PayAsYouGo,
-            "fixed_250mb" => UpstashRedisPlan.Fixed250Mb,
-            "fixed_1gb" => UpstashRedisPlan.Fixed1Gb,
-            "fixed_5gb" => UpstashRedisPlan.Fixed5Gb,
-            "fixed_10gb" => UpstashRedisPlan.Fixed10Gb,
-            "fixed_50gb" => UpstashRedisPlan.Fixed50Gb,
-            "fixed_100gb" => UpstashRedisPlan.Fixed100Gb,
-            "fixed_500gb" => UpstashRedisPlan.Fixed500Gb,
-            _ => throw new InvalidOperationException(
-                $"Upstash Redis {settingName} '{value}' is not supported. Supported values: free, payg, fixed_250mb, fixed_1gb, fixed_5gb, fixed_10gb, fixed_50gb, fixed_100gb, fixed_500gb.")
-        };
+            case "free":
+                return UpstashRedisPlan.Free;
+            case "payg":
+                return UpstashRedisPlan.PayAsYouGo;
+            case "fixed_250mb":
+                return UpstashRedisPlan.Fixed250Mb;
+            case "fixed_1gb":
+                return UpstashRedisPlan.Fixed1Gb;
+            case "fixed_5gb":
+                return UpstashRedisPlan.Fixed5Gb;
+            case "fixed_10gb":
+                return UpstashRedisPlan.Fixed10Gb;
+            case "fixed_50gb":
+                return UpstashRedisPlan.Fixed50Gb;
+            case "fixed_100gb":
+                return UpstashRedisPlan.Fixed100Gb;
+            case "fixed_500gb":
+                return UpstashRedisPlan.Fixed500Gb;
+            default:
+                throw new InvalidOperationException(
+                    $"Upstash Redis {settingName} '{value}' is not supported. Supported values: free, payg, fixed_250mb, fixed_1gb, fixed_5gb, fixed_10gb, fixed_50gb, fixed_100gb, fixed_500gb.");
+        }
     }
 
     public static int ParseBudget(string value, string settingName)

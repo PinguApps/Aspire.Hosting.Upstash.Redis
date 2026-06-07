@@ -136,11 +136,19 @@ public sealed class ManagementClientStepDefinitions : IDisposable
     [Given("the Upstash management API fails before responding with {string}")]
     public void GivenTheUpstashManagementApiFailsBeforeRespondingWith(string failure)
     {
-        _handler.Enqueue((_, _) => failure switch
+        _handler.Enqueue((_, _) =>
         {
-            "RequestException" => throw new HttpRequestException("The Upstash host could not be reached."),
-            "Timeout" => throw new TaskCanceledException("The Upstash request timed out."),
-            _ => throw new InvalidOperationException($"Unknown transport failure '{failure}'."),
+            if (failure == "RequestException")
+            {
+                throw new HttpRequestException("The Upstash host could not be reached.");
+            }
+
+            if (failure == "Timeout")
+            {
+                throw new TaskCanceledException("The Upstash request timed out.");
+            }
+
+            throw new InvalidOperationException($"Unknown transport failure '{failure}'.");
         });
     }
 

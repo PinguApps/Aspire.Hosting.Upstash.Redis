@@ -16,16 +16,20 @@ internal static class UpstashRedisOwnershipResolver
             .FindDatabaseByNameAsync(request.DatabaseName, cancellationToken)
             .ConfigureAwait(false);
 
-        return request.OwnershipMode switch
+        switch (request.OwnershipMode)
         {
-            UpstashRedisOwnershipMode.CreateOnly => ResolveCreateOnly(request.DatabaseName, existingDatabase),
-            UpstashRedisOwnershipMode.ExistingOnly => ResolveExistingOnly(request, existingDatabase),
-            UpstashRedisOwnershipMode.CreateOrAdopt => ResolveCreateOrAdopt(request, existingDatabase),
-            _ => throw new ArgumentOutOfRangeException(
-                nameof(request),
-                request.OwnershipMode,
-                "The Upstash Redis ownership mode is not supported.")
-        };
+            case UpstashRedisOwnershipMode.CreateOnly:
+                return ResolveCreateOnly(request.DatabaseName, existingDatabase);
+            case UpstashRedisOwnershipMode.ExistingOnly:
+                return ResolveExistingOnly(request, existingDatabase);
+            case UpstashRedisOwnershipMode.CreateOrAdopt:
+                return ResolveCreateOrAdopt(request, existingDatabase);
+            default:
+                throw new ArgumentOutOfRangeException(
+                    nameof(request),
+                    request.OwnershipMode,
+                    "The Upstash Redis ownership mode is not supported.");
+        }
     }
 
     private static UpstashRedisOwnershipResolutionResult ResolveCreateOnly(
