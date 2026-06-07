@@ -328,9 +328,10 @@ public sealed class PublishToUpstashStepDefinitions
     }
 
     [Then("the app-facing Redis outputs and references do not contain {string}")]
-    public void ThenTheAppFacingRedisOutputsAndReferencesDoNotContain(string unexpectedValue)
+    public async Task ThenTheAppFacingRedisOutputsAndReferencesDoNotContain(string unexpectedValue)
     {
         AspireModelAssertions.AssertRedisConnectionPropertiesDoNotContain(_context.RedisBuilder.Resource, unexpectedValue);
+        await AspireModelAssertions.AssertContainerEnvironmentDoesNotContainAsync(_context.ContainerBuilder.Resource, unexpectedValue);
 
         UpstashRedisOutputs outputs = _context.RedisBuilder.Resource.GetUpstashRedisOutputs();
 
