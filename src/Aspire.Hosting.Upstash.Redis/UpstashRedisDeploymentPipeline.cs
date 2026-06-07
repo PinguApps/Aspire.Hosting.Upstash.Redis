@@ -10,6 +10,11 @@ namespace Aspire.Hosting.Upstash.Redis;
 
 internal static class UpstashRedisDeploymentPipeline
 {
+    private static readonly HttpClient _managementHttpClient = new()
+    {
+        BaseAddress = new Uri("https://api.upstash.com/v2/"),
+    };
+
     private static readonly Action<ILogger, string, string, Exception?> _resolvingDatabase =
         LoggerMessage.Define<string, string>(
             LogLevel.Information,
@@ -41,8 +46,7 @@ internal static class UpstashRedisDeploymentPipeline
 
         _resolvingDatabase(context.Logger, deployment.DatabaseName, resource.Name, null);
 
-        using HttpClient httpClient = new();
-        IUpstashRedisManagementClient client = new UpstashRedisManagementClient(httpClient, deployment.ManagementCredentials);
+        IUpstashRedisManagementClient client = new UpstashRedisManagementClient(_managementHttpClient, deployment.ManagementCredentials);
         UpstashRedisOwnershipResolutionRequest ownershipRequest = new(
             deployment.DatabaseName,
             deployment.OwnershipMode,
