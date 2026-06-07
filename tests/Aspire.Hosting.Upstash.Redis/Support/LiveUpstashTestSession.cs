@@ -1,4 +1,5 @@
 using System.Runtime.ExceptionServices;
+using Aspire.Hosting.Upstash.Redis.Management;
 
 namespace PinguApps.Aspire.Hosting.Upstash.Redis.Tests.Support;
 
@@ -19,6 +20,22 @@ internal sealed class LiveUpstashTestSession
         ArgumentNullException.ThrowIfNull(cleanup);
 
         _cleanupActions.Push(cleanup);
+    }
+
+    public UpstashRedisManagementClient CreateManagementClient()
+    {
+        return new UpstashRedisManagementClient(
+            new HttpClient { BaseAddress = new Uri("https://api.upstash.com/v2/") },
+            CreateCredentials());
+    }
+
+    public Task RegisterDatabaseDeletionByNameAsync(string databaseName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(databaseName);
+
+        RegisterCleanup(() => DeleteDatabaseByNameAsync(databaseName));
+
+        return Task.CompletedTask;
     }
 
     public async Task CleanupAsync()
@@ -48,5 +65,41 @@ internal sealed class LiveUpstashTestSession
         }
 
         throw new AggregateException("One or more live Upstash cleanup actions failed.", failures);
+    }
+
+    private UpstashRedisManagementCredentials CreateCredentials()
+    {
+        return new UpstashRedisManagementCredentials(
+            AccountEmail ?? throw new InvalidOperationException("UPSTASH_EMAIL is not configured."),
+            ApiKey ?? throw new InvalidOperationException("UPSTASH_API_KEY is not configured."));
+    }
+
+    private async Task DeleteDatabaseByNameAsync(string databaseName)
+    {
+        UpstashRedisManagementClient client = CreateManagementClient();
+
+        UpstashRedisDatabaseDetails? database = await client
+            .FindDatabaseByNameAsync(databaseName, CancellationToken.None)
+            .ConfigureAwait(false);
+
+        if (database is null)
+        {
+            return;
+        }
+
+        using HttpClient httpClient = new()
+        {
+            BaseAddress = new Uri("https://api.upstash.com/v2/"),
+        };
+        using HttpRequestMessage request = new(
+            HttpMethod.Delete,
+            $"redis/database/{Uri.EscapeDataString(database.DatabaseId)}");
+        request.Headers.Authorization = CreateCredentials().CreateAuthorizationHeader();
+
+        using HttpResponseMessage response = await httpClient
+            .SendAsync(request, CancellationToken.None)
+            .ConfigureAwait(false);
+
+        response.EnsureSuccessStatusCode();
     }
 }
