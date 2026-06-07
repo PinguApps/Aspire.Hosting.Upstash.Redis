@@ -9,4 +9,8 @@
     <ProjectReference Include="..\..\src\Aspire.Hosting.Upstash.Redis\Aspire.Hosting.Upstash.Redis.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="..\..\samples\AppHostSnippets\UpstashRedisAppHostSnippets.cs" Link="Samples\UpstashRedisAppHostSnippets.cs" />
+  </ItemGroup>
+
 </Project>
