@@ -6,6 +6,12 @@ Feature: Reconcile mutable Upstash Redis settings
     Then Upstash Redis reconciliation succeeds
     And the Upstash reconcile provider recorded no mutation calls
 
+  Scenario: Pay-as-you-go provider plan aliases do not call provider mutations
+    Given the Upstash reconcile target database has read regions "eu-west-2", plan "paid", budget 360, and eviction enabled
+    When Upstash Redis reconciliation runs with only plan "payg"
+    Then Upstash Redis reconciliation succeeds
+    And the Upstash reconcile provider recorded no mutation calls
+
   Scenario: Mutable settings are reconciled in deterministic order
     Given the Upstash reconcile target database has read regions "eu-west-1", plan "free", budget 100, and eviction disabled
     When Upstash Redis reconciliation runs with read regions "eu-west-2", plan "payg", budget 360, and eviction enabled
