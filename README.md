@@ -1,77 +1,165 @@
 # Aspire.Hosting.Upstash.Redis
 
-This package is an Aspire hosting integration for publishing a standard Aspire Redis resource to Upstash Redis during deployment.
+`Aspire.Hosting.Upstash.Redis` lets an Aspire AppHost publish a normal Aspire Redis resource to Upstash Redis during `aspire deploy`.
 
-Current state: the Aspire integration shape, public API shape, internal resource state model, Upstash Redis management client layer, Upstash Redis option/domain model, deploy-time parameter resolution, ownership-resolution decision engine, remote identity resolver, create flow, mutable-setting reconciler, immutable drift detector, primary Redis connection-string output, supplementary app-facing outputs, deploy diagnostics/progress reporting, dedicated local no-op/API-shape hardening coverage, end-to-end ownership-mode deployment hardening, reconcile/output hardening coverage, and compile-validated AppHost sample snippets are implemented. The package extends the built-in Redis resource returned by `builder.AddRedis("cache")`, attaches internal Upstash deployment state with `.PublishToUpstash(...)`, resolves the configured deployment values from the Aspire deploy pipeline step, verifies and persists remote identity state, resolves ownership by explicit database name, can create a missing Upstash Redis database when ownership selects the create path, can fail fast when an adopted database conflicts with create-time-only or unsafe settings, can reconcile supported mutable settings on an adopted database, redirects the deployed Redis connection string to the final Upstash database details, can populate supplementary outputs from the deployed database detail response, reports a secret-safe deployment timeline, and includes sample AppHost snippets validated by the test project. Later implementation tasks still own release docs.
+The package is intentionally small: you still start with Aspire's built-in `builder.AddRedis("cache")`, opt that resource into Upstash publishing with `.PublishToUpstash(...)`, and keep using normal Aspire Redis references for your application.
+
+## Supported Versions
+
+- Package id: `PinguApps.Aspire.Hosting.Upstash.Redis`
+- Target framework: `.NET 10`
+- Aspire packages: `Aspire.Hosting` and `Aspire.Hosting.Redis` `13.4.2`
+- Provider scope: Upstash Redis through the native Upstash Developer API
+
+The Upstash Management API requires a native Upstash account email and Management API key. Third-party marketplace Upstash accounts are not supported by that API.
+
+## Install
+
+Add the package to your AppHost project:
+
+```bash
+dotnet add package PinguApps.Aspire.Hosting.Upstash.Redis
+```
+
+Then import the extension namespace in the AppHost:
 
 ```csharp
-var databaseName = builder.AddParameter("upstash-database-name");
-var accountEmail = builder.AddParameter("upstash-account-email");
-var apiKey = builder.AddParameter("upstash-api-key", secret: true);
+using Aspire.Hosting.Upstash.Redis;
+```
+
+## Canonical Usage
+
+Use Aspire parameters for the remote database name and management credentials. The database name is explicit because it is the stable remote identity used by repeated deployments.
+
+```csharp
+using Aspire.Hosting.Upstash.Redis;
+
+var builder = DistributedApplication.CreateBuilder(args);
+
+var upstashDatabaseName = builder.AddParameter("upstash-database-name");
+var upstashAccountEmail = builder.AddParameter("upstash-account-email");
+var upstashApiKey = builder.AddParameter("upstash-api-key", secret: true);
 
 var cache = builder.AddRedis("cache")
     .PublishToUpstash(
-        databaseName,
-        accountEmail,
-        apiKey,
-        UpstashRedisOwnershipMode.CreateOrAdopt);
+        upstashDatabaseName,
+        upstashAccountEmail,
+        upstashApiKey,
+        UpstashRedisOwnershipMode.CreateOrAdopt,
+        options =>
+        {
+            options.SetPlatform(UpstashRedisCloudPlatform.Aws);
+            options.SetPrimaryRegion(UpstashRedisRegion.AwsEuWest1);
+            options.SetPlan(UpstashRedisPlan.PayAsYouGo);
+            options.Eviction = true;
+        });
 
 builder.AddProject<Projects.Api>("api")
     .WithReference(cache);
+
+builder.Build().Run();
 ```
 
 The compile-validated source for the AppHost snippets lives in [`samples/AppHostSnippets/UpstashRedisAppHostSnippets.cs`](samples/AppHostSnippets/UpstashRedisAppHostSnippets.cs). The test project links that file into compilation and exercises each snippet against a fresh Aspire builder so README examples and future docs can use it as the source of truth.
 
-Ownership intent is explicit at the call site:
+During local development this remains standard Aspire Redis behavior. `.PublishToUpstash(...)` attaches deployment metadata and a deploy pipeline step, but it does not call Upstash during model construction or local runs and it does not replace the `RedisResource`.
+
+During deployment the package resolves the parameters, finds or creates the configured Upstash Redis database according to the ownership mode, reconciles only explicitly configured mutable settings, and redirects the standard Redis connection string output to the deployed Upstash endpoint. Your app can keep using the normal `WithReference(cache)` path.
+
+## Ownership Modes
+
+Ownership is always explicit at the call site:
 
 ```csharp
 builder.AddRedis("cache")
     .PublishToUpstash(
-        "orders-cache",
-        accountEmail,
-        apiKey,
-        UpstashRedisOwnershipMode.CreateOnly);
-
-builder.AddRedis("cache")
-    .PublishToUpstash(
-        "orders-cache",
-        accountEmail,
-        apiKey,
-        UpstashRedisOwnershipMode.ExistingOnly);
-
-builder.AddRedis("cache")
-    .PublishToUpstash(
-        "orders-cache",
-        accountEmail,
-        apiKey,
+        upstashDatabaseName,
+        upstashAccountEmail,
+        upstashApiKey,
         UpstashRedisOwnershipMode.CreateOrAdopt);
 ```
 
-The internal ownership resolver looks up the configured remote database name through the management client before choosing a path:
+- `CreateOrAdopt`: create the database when the configured name is missing, or adopt the existing compatible database with that name.
+- `CreateOnly`: create the database when the configured name is missing. If an unmanaged database with that name already exists, deployment fails. Repeated deploys may reuse this deployment's verified cached identity.
+- `ExistingOnly`: adopt an existing compatible database with the configured name. If it does not exist, deployment fails.
 
-- `CreateOnly` selects create when no database exists, adopts only this deployment's verified cached remote identity on repeated deploys, and fails if an unmanaged database with the name already exists.
-- `ExistingOnly` adopts an existing compatible database and fails if the name is missing.
-- `CreateOrAdopt` adopts an existing compatible database or selects create when the name is missing.
+Create paths require enough placement information for Upstash to create a database. In practice, configure at least `Platform` and `PrimaryRegion` when `CreateOrAdopt` or `CreateOnly` may create a new database.
 
-When an existing database conflicts with immutable/read-only settings the detector can verify from provider details, deployment fails before later create or reconcile steps. The enforced v1 immutable/unsafe set is database name identity, platform where the provider primary region reveals it, explicit primary region, and TLS disabled state. The mutable reconciler then enforces only explicit desired read regions, plan, budget, and eviction settings.
+## Parameters and Values
 
-When ownership selects create, the deploy flow builds the Upstash `POST /redis/database` payload from the resolved v1 surface: database name, platform, primary region, read regions, plan, budget, eviction, and TLS. `platform` and `primary_region` must be explicitly configured before creating a new remote database because Upstash requires them and the package does not invent provider defaults. TLS is sent as `true`; `false` remains rejected. After create, deployment polls `GET /redis/database/{id}` until the provider reports `state == active` and an empty `modifying_state`. The ready detail response must include endpoint, port, TLS state, and password for later app-facing outputs; if any required connection field is missing or unusable, deployment fails with a provider-contract error and never calls `reset-password`.
-
-The deploy pipeline reports a structured, secret-safe timeline through the Aspire pipeline logger: resolving configuration, locating the configured database, validating immutable drift, creating the database when needed, reconciling mutable settings, and retrieving Redis connection outputs. Normal messages include the Redis resource name, explicit Upstash database name, and provider database id when known. Provider ids are safe to show. The Upstash Management API key, Redis password/token values, and full `redis://`/`rediss://` connection strings are redacted before diagnostics reach logs.
-
-Required values and optional string settings are represented as `UpstashRedisValue`, which can hold either a literal string or an Aspire `ParameterResource`. Literal strings convert implicitly; parameterized optional settings use `UpstashRedisValue.FromParameter(...)`. Internally, the Redis resource annotation stores a single deployment state snapshot containing required values, ownership mode, infrastructure-only management credential sources, optional settings, and explicit-setting metadata for deploy reconciliation.
-
-Use Aspire parameters for secrets and deploy-specific values:
+The recommended pattern is:
 
 ```csharp
-var databaseName = builder.AddParameter("upstash-database-name");
-var accountEmail = builder.AddParameter("upstash-account-email");
-var apiKey = builder.AddParameter("upstash-api-key", secret: true);
+var upstashDatabaseName = builder.AddParameter("upstash-database-name");
+var upstashAccountEmail = builder.AddParameter("upstash-account-email");
+var upstashApiKey = builder.AddParameter("upstash-api-key", secret: true);
 ```
 
-Aspire can resolve those parameters from its normal parameter sources during deployment, including cached prompted values and configuration-backed parameters such as `builder.AddParameterFromConfiguration(...)`. The Upstash Management API key is resolved only by the internal deploy pipeline path and is kept in infrastructure-only management credentials; it is not added to Redis connection properties, supplementary outputs, or application references.
+`upstash-account-email` and `upstash-api-key` are infrastructure-only management credentials. They are used by the deployment pipeline to call Upstash and are not exposed to application Redis references or outputs.
 
-Advanced consumers can access supplementary app-facing outputs from the Redis resource after it is marked for Upstash publishing:
+Required values and optional string settings use `UpstashRedisValue`, which can hold either:
+
+- a literal string, including implicit string conversion
+- an Aspire `ParameterResource`, usually through `UpstashRedisValue.FromParameter(...)`
+
+Typed helpers are preferred when the value is known in code:
+
+```csharp
+options.SetPlatform(UpstashRedisCloudPlatform.Aws);
+options.SetPrimaryRegion(UpstashRedisRegion.AwsEuWest1);
+options.SetReadRegions(UpstashRedisRegion.AwsEuWest2);
+options.SetPlan(UpstashRedisPlan.PayAsYouGo);
+options.SetBudget(360);
+options.Eviction = true;
+```
+
+Use `UpstashRedisValue.FromParameter(...)` when an optional setting must be supplied at deploy time:
+
+```csharp
+var primaryRegion = builder.AddParameter("upstash-primary-region");
+var platform = builder.AddParameter("upstash-platform");
+var readRegion = builder.AddParameter("upstash-read-region");
+var budget = builder.AddParameter("upstash-budget");
+
+builder.AddRedis("cache")
+    .PublishToUpstash(
+        upstashDatabaseName,
+        upstashAccountEmail,
+        upstashApiKey,
+        UpstashRedisOwnershipMode.CreateOrAdopt,
+        options =>
+        {
+            options.Platform = UpstashRedisValue.FromParameter(platform);
+            options.PrimaryRegion = UpstashRedisValue.FromParameter(primaryRegion);
+            options.ReadRegions = [UpstashRedisValue.FromParameter(readRegion)];
+            options.Plan = "payg";
+            options.Budget = UpstashRedisValue.FromParameter(budget);
+        });
+```
+
+Literal platform, region, plan, and budget values are validated while the AppHost model is built. Parameter-backed values are validated after deployment parameter resolution.
+
+## Optional Settings
+
+The deployment options support:
+
+- `Platform`: `Aws` or `Gcp`. Required for create paths.
+- `PrimaryRegion`: the primary Upstash Redis region. Required for create paths.
+- `ReadRegions`: optional read replica regions.
+- `Plan`: `Free`, `PayAsYouGo`, or one of the fixed-size plans.
+- `Budget`: a positive monthly budget value. If `Plan` is also configured, it must be `PayAsYouGo`.
+- `Eviction`: whether eviction is enabled.
+- `Tls`: required-on/read-only for v1. Leave it unset or set it to `true`; `false` is rejected.
+
+Only read regions, plan, budget, and eviction are mutable on existing databases. Database name identity, platform, primary region, and TLS disabled state are treated as create-time or fail-fast safety checks.
+
+## App-Facing Outputs
+
+There are two output surfaces.
+
+The standard Redis connection string output is owned by Aspire Redis and is the path used by normal `WithReference(cache)` consumers. After a successful Upstash deployment, this package redirects that connection string to the deployed Upstash database using Aspire Redis's normal `host:port,password=password,ssl=true` shape.
+
+Advanced consumers can also access supplementary Upstash Redis outputs:
 
 ```csharp
 var outputs = cache.Resource.GetUpstashRedisOutputs();
@@ -83,66 +171,42 @@ var tls = outputs.Tls;
 var databaseName = outputs.DatabaseName;
 ```
 
-The stable supplementary output names are `Endpoint`, `Port`, `Password`, `Tls`, and `DatabaseName`. Each accessor returns an `UpstashRedisOutputReference` with public `Name`, `ValueExpression`, and `Secret` metadata; `Password` is the only supplementary output whose `Secret` flag is true. These values are populated from the credential-bearing Upstash database detail response after deployment create/adopt/reconcile work succeeds; the Upstash Management API key, REST tokens, provider id, customer id, and billing/security metadata are not application outputs.
+The stable supplementary output names are:
 
-Optional provider-domain settings can be configured with typed helpers when values are known at AppHost configuration time:
+- `Endpoint`
+- `Port`
+- `Password`
+- `Tls`
+- `DatabaseName`
 
-```csharp
-builder.AddRedis("cache")
-    .PublishToUpstash(
-        "orders-cache",
-        accountEmail,
-        apiKey,
-        UpstashRedisOwnershipMode.CreateOnly,
-        options =>
-        {
-            options.SetPlatform(UpstashRedisCloudPlatform.Aws);
-            options.SetPrimaryRegion(UpstashRedisRegion.AwsEuWest1);
-            options.SetReadRegions(UpstashRedisRegion.AwsEuWest2);
-            options.SetPlan(UpstashRedisPlan.PayAsYouGo);
-            options.SetBudget(360);
-            options.Eviction = true;
-        });
+Each supplementary output exposes `Name`, `ValueExpression`, and `Secret` metadata. `Password` is the only supplementary output classified as secret.
+
+These outputs come from the credential-bearing Upstash database detail response after create/adopt/reconcile succeeds. They do not expose the Upstash Management API key, REST tokens, provider id, customer id, or billing/security metadata.
+
+## Deployment Behavior
+
+Repeated deploys target the same intended remote database by explicit database name. The deployment pipeline can persist and reuse the provider id as cached identity state, but the cached id is accepted only after it still verifies against the configured name and a fresh duplicate-checked lookup.
+
+The package reconciles only settings you explicitly configure. Unspecified provider settings are left unchanged. Mutable settings are reconciled in a deterministic order: read regions, plan, budget, then eviction.
+
+If an explicitly requested setting cannot be safely reconciled, deployment fails clearly instead of replacing or taking over a different database.
+
+The package never auto-deletes Upstash Redis databases in v1. It also does not automatically rename databases, reset passwords, move teams, configure backups, configure ACLs, configure private networking, or broaden into non-Redis Upstash products.
+
+## Safety Notes
+
+- Use a native Upstash account email and Management API key.
+- Keep the Management API key in a secret Aspire parameter.
+- Do not pass the Management API key to application code; the package keeps it in infrastructure-only deployment state.
+- The consuming application receives Redis connection details, not Upstash management credentials.
+- Provider endpoints must be host names. URI-like endpoint values or single-label slugs are rejected before connection-string output is generated.
+- Deployment diagnostics redact the Management API key, Redis passwords/tokens, and full Redis connection strings.
+
+## Validation
+
+The README snippets are backed by the compile-validated sample source in `samples/AppHostSnippets/UpstashRedisAppHostSnippets.cs`, the docs sample scenarios in `tests/Aspire.Hosting.Upstash.Redis/Features/DocsSamples/`, and the Reqnroll-backed API-shape coverage in `tests/Aspire.Hosting.Upstash.Redis/`. The full validation command for this repository is:
+
+```bash
+dotnet build ./Aspire.Hosting.Upstash.Redis.slnx
+dotnet test ./Aspire.Hosting.Upstash.Redis.slnx
 ```
-
-Literal option values are validated during AppHost model construction and mapped internally to Upstash API payload values. Parameter-backed option values keep their source and are validated after deploy-time parameter resolution. Missing required deploy-time parameters fail with an explicit message naming the missing parameter. TLS remains required-on/read-only for v1: `Tls = false` is rejected and deployment logic must not try to disable TLS.
-
-Repeated deployments reconcile supported mutable settings in deterministic order: read regions, plan, budget, then eviction. Unspecified options are left untouched, matching explicit provider state is a no-op with no mutation call, provider readiness/detail state is re-fetched after each mutation, and final state is verified before later output generation. If a provider update fails or does not converge, reconciliation raises an `UpstashRedisReconciliationException` naming the setting.
-
-Local Aspire behavior is preserved: `.PublishToUpstash(...)` does not replace the Redis resource, does not call Upstash during model construction or local runs, and does not prevent normal `WithReference(cache)` usage.
-
-Remote identity uses the explicit Upstash Redis database name as the source of truth. First deployments look up the configured name through `GET /redis/databases`, require exactly one case-sensitive match, then fetch details by provider id. Repeated deployments can load the cached `UpstashRedisRemoteIdentityState` through the Aspire deployment-state-backed store and pass it back into the resolver; the resolver accepts that id only when the cached configured name still matches, the fetched database still reports both the configured name and cached provider id, and a fresh configured-name lookup resolves exactly one database with that same provider id. If the configured name changes, v1 treats it as selecting a different remote database identity and never calls the provider rename endpoint. If a cached identity for the same configured name now points at a renamed database, the name resolves to a different provider id, or duplicate configured-name matches appear, deployment logic must fail rather than take over the wrong database.
-
-After a successful create or adopt path and any mutable reconciliation, the deploy pipeline saves the resulting database name and provider id back to deployment state and applies app-facing Redis connection output to the existing Redis resource. The standard `WithReference(cache)` path receives a Redis connection string in the same format Aspire Redis uses for StackExchange.Redis-style configuration: `host:port,password=password,ssl=true`. The host, port, password, and TLS values come from the credential-bearing `GET /redis/database/{id}` detail response, not from Upstash management credentials. Provider endpoints must already be complete host names; single-label slugs and URI-like endpoint values fail as provider-contract errors rather than producing a broken connection string.
-
-The test suite is Reqnroll-first. Feature files live under behavior-focused folders in `tests/Aspire.Hosting.Upstash.Redis/Features/`, shared scenario support lives under `tests/Aspire.Hosting.Upstash.Redis/Support/`, and the scenario map for future tasks is documented in `tests/Aspire.Hosting.Upstash.Redis/README.md`. The local/API hardening coverage now explicitly protects plain `AddRedis`, local pre-deploy `.PublishToUpstash(...)`, normal Redis references, overload consistency, and management-secret separation from app-facing Redis paths. Ownership-mode hardening includes pipeline-level fake-provider coverage for create-only, existing-only, create-or-adopt, repeated deploy identity reuse, duplicate-name failures, and cached identity edge cases.
-
-Docs/sample coverage lives under `Features/DocsSamples`. The sample AppHost snippets cover create-or-adopt, create-only, existing-only, parameterized management credentials, parameterized database names, parameter-backed optional settings, standard project `WithReference(cache)` usage, and advanced supplementary output access through `cache.Resource.GetUpstashRedisOutputs()`.
-
-Contributor validation note: opt-in live Upstash validation can now use the environment variables `UPSTASH_EMAIL` and `UPSTASH_API_KEY`. Any live test must stay explicitly gated and must always tear down or restore any remote state it touches so the Upstash account is left unchanged after the run. The live ownership scenarios use isolated `pin-170-*` database names and register delete cleanup as soon as a created provider id is known. The 6.3 live scenarios validate disposable deploy, repeat-deploy, and app-facing outputs against the real provider.
-
-The Upstash management capability matrix is documented in [`plans/0.2-confirm-upstash-management-capability-matrix.md`](plans/0.2-confirm-upstash-management-capability-matrix.md). Key v1 decisions from that investigation:
-
-- Management authentication uses separate native Upstash account email and Management API key values.
-- Third-party marketplace Upstash accounts are not supported by the Developer API and should fail fast with a tailored error.
-- Remote lookup uses list-by-account plus explicit database-name matching, with provider id accepted after discovery only when cached identity state still verifies against the explicit configured name, returned provider id, and a duplicate-checked configured-name lookup.
-- Ownership resolution is deterministic: create-only rejects unmanaged existing names but preserves this deployment's verified cached remote identity on repeated deploys, existing-only rejects missing names, and create-or-adopt creates only when the explicit name is absent.
-- Create supports database name, platform, primary region, read regions, plan, budget, eviction, and required-on TLS.
-- Reconcile supports read regions, plan, budget, and eviction only.
-- Immutable drift detection fails for database name identity mismatch, detectable platform mismatch, explicit primary-region mismatch, and remote TLS disabled state; these settings are not renamed, moved, replaced, or repaired automatically in v1.
-- TLS is treated as required-on/read-only for v1, not as a mutable setting.
-- Password reset, rename, delete, team move, backups, autoscaling, prod pack, ACL, and private networking are intentionally out of scope for v1.
-- App-facing outputs come from credential-bearing database detail responses and must never expose the Upstash Management API key.
-
-The internal management client in `src/Aspire.Hosting.Upstash.Redis/Management/` implements only the v1 Redis endpoints from that matrix:
-
-- `GET /redis/databases`
-- `GET /redis/database/{id}`
-- `POST /redis/database`
-- `POST /redis/update-regions/{id}`
-- `POST /redis/{id}/change-plan`
-- `PATCH /redis/update-budget/{id}`
-- `POST /redis/enable-eviction/{id}`
-- `POST /redis/disable-eviction/{id}`
-
-Provider failures are surfaced as typed `UpstashRedisProviderException` values with a failure kind such as validation, authentication, authorization, not found, rate limited, transient, provider contract, or unexpected. The client preserves provider error text where useful and redacts the Management API key. Credential-bearing database detail fetches require `password`; if Upstash omits it, the client fails with a provider-contract error rather than guessing or rotating credentials.
