@@ -34,6 +34,13 @@ public sealed class RedisConnectionOutputStepDefinitions
             _context.RedisBuilder.Resource.ApplyUpstashRedisConnectionOutput(CreateDatabase(endpoint, 6379, "redis-password", tls: true)));
     }
 
+    [When("applying Upstash Redis connection output without an endpoint is attempted")]
+    public void WhenApplyingUpstashRedisConnectionOutputWithoutAnEndpointIsAttempted()
+    {
+        _exception = Record.Exception(() =>
+            _context.RedisBuilder.Resource.ApplyUpstashRedisConnectionOutput(CreateDatabase(endpoint: null, 6379, "redis-password", tls: true)));
+    }
+
     [Then("the Redis connection string reference resolves to {string}")]
     public async Task ThenTheRedisConnectionStringReferenceResolvesTo(string expectedConnectionString)
     {
@@ -105,7 +112,7 @@ public sealed class RedisConnectionOutputStepDefinitions
     }
 
     private static UpstashRedisDatabaseDetails CreateDatabase(
-        string endpoint,
+        string? endpoint,
         int port,
         string password,
         bool tls)
@@ -114,7 +121,7 @@ public sealed class RedisConnectionOutputStepDefinitions
         {
             DatabaseId = "db-orders-cache",
             DatabaseName = "orders-cache",
-            Endpoint = endpoint,
+            Endpoint = endpoint!,
             Port = port,
             Password = password,
             Tls = tls,

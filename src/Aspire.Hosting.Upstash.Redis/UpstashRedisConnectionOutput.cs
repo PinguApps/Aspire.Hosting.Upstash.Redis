@@ -96,17 +96,17 @@ internal sealed class UpstashRedisConnectionOutput : IResourceWithConnectionStri
         return $"{scheme}://:{escapedPassword}@{host}:{port.ToString(CultureInfo.InvariantCulture)}";
     }
 
-    private static string NormalizeHost(string databaseId, string endpoint)
+    private static string NormalizeHost(string databaseId, string? endpoint)
     {
-        string host = endpoint.Trim();
-
-        if (host.Length == 0)
+        if (string.IsNullOrWhiteSpace(endpoint))
         {
             throw new UpstashRedisProviderException(
                 UpstashRedisProviderFailureKind.ProviderContract,
                 statusCode: null,
                 $"Upstash Redis returned database '{databaseId}' without an endpoint.");
         }
+
+        string host = endpoint.Trim();
 
         if (host.Contains("://", StringComparison.Ordinal)
             || host.Contains('/', StringComparison.Ordinal)
