@@ -30,6 +30,8 @@ internal sealed class UpstashRedisCreateFlow
             UpstashRedisDatabaseDetails adoptedDatabase = ownership.Database
                 ?? throw new InvalidOperationException("Upstash Redis ownership resolution selected adopt without a database.");
 
+            ValidateConnectionDetails(deployment.DatabaseName, adoptedDatabase);
+
             return new UpstashRedisCreateFlowResult(adoptedDatabase, created: false);
         }
 
@@ -59,6 +61,7 @@ internal sealed class UpstashRedisCreateFlow
             .ConfigureAwait(false);
 
         ValidateCreatedDatabase(deployment.DatabaseName, databaseId, readyDatabase);
+        ValidateConnectionDetails(deployment.DatabaseName, readyDatabase);
 
         return new UpstashRedisCreateFlowResult(readyDatabase, created: true);
     }
@@ -106,37 +109,52 @@ internal sealed class UpstashRedisCreateFlow
                 statusCode: null,
                 $"Upstash Redis readiness lookup for created database '{createdDatabaseId}' returned database name '{readyDatabase.DatabaseName}', not configured name '{configuredDatabaseName}'.");
         }
+    }
 
-        if (string.IsNullOrWhiteSpace(readyDatabase.Password))
+    private static void ValidateConnectionDetails(
+        string configuredDatabaseName,
+        UpstashRedisDatabaseDetails database)
+    {
+        string databaseId = database.DatabaseId;
+
+        if (database.DatabaseName != configuredDatabaseName)
         {
             throw new UpstashRedisProviderException(
                 UpstashRedisProviderFailureKind.ProviderContract,
                 statusCode: null,
-                $"Upstash Redis returned database '{createdDatabaseId}' without credentials.");
+                $"Upstash Redis returned database '{databaseId}' with name '{database.DatabaseName}', not configured name '{configuredDatabaseName}'.");
         }
 
-        if (string.IsNullOrWhiteSpace(readyDatabase.Endpoint))
+        if (string.IsNullOrWhiteSpace(database.Password))
         {
             throw new UpstashRedisProviderException(
                 UpstashRedisProviderFailureKind.ProviderContract,
                 statusCode: null,
-                $"Upstash Redis returned database '{createdDatabaseId}' without an endpoint.");
+                $"Upstash Redis returned database '{databaseId}' without credentials.");
         }
 
-        if (readyDatabase.Port <= 0)
+        if (string.IsNullOrWhiteSpace(database.Endpoint))
         {
             throw new UpstashRedisProviderException(
                 UpstashRedisProviderFailureKind.ProviderContract,
                 statusCode: null,
-                $"Upstash Redis returned database '{createdDatabaseId}' without a valid port.");
+                $"Upstash Redis returned database '{databaseId}' without an endpoint.");
         }
 
-        if (!readyDatabase.Tls)
+        if (database.Port <= 0)
         {
             throw new UpstashRedisProviderException(
                 UpstashRedisProviderFailureKind.ProviderContract,
                 statusCode: null,
-                $"Upstash Redis returned database '{createdDatabaseId}' with TLS disabled.");
+                $"Upstash Redis returned database '{databaseId}' without a valid port.");
+        }
+
+        if (!database.Tls)
+        {
+            throw new UpstashRedisProviderException(
+                UpstashRedisProviderFailureKind.ProviderContract,
+                statusCode: null,
+                $"Upstash Redis returned database '{databaseId}' with TLS disabled.");
         }
     }
 

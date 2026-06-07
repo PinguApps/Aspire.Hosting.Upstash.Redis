@@ -49,6 +49,17 @@ public sealed class CreateFlowStepDefinitions
         _ownership = UpstashRedisOwnershipResolutionResult.Adopt(CreateDatabaseDetails(databaseName, databaseId, includePassword: true));
     }
 
+    [Given("ownership resolution selected adopt for database {string} with id {string} with invalid connection field {string}")]
+    public void GivenOwnershipResolutionSelectedAdoptForDatabaseWithInvalidConnectionField(
+        string databaseName,
+        string databaseId,
+        string field)
+    {
+        UpstashRedisDatabaseDetails database = CreateDatabaseDetails(databaseName, databaseId, includePassword: true);
+        InvalidateConnectionField(database, field);
+        _ownership = UpstashRedisOwnershipResolutionResult.Adopt(database);
+    }
+
     [Given("the Upstash create API returns database id {string}")]
     public void GivenTheUpstashCreateApiReturnsDatabaseId(string databaseId)
     {
@@ -85,21 +96,7 @@ public sealed class CreateFlowStepDefinitions
     public void GivenTheUpstashReadinessApiReturnsActiveDatabaseWithInvalidConnectionField(string databaseName, string databaseId, string field)
     {
         UpstashRedisDatabaseDetails database = CreateDatabaseDetails(databaseName, databaseId, includePassword: true);
-
-        switch (field)
-        {
-            case "endpoint":
-                database.Endpoint = string.Empty;
-                break;
-            case "port":
-                database.Port = 0;
-                break;
-            case "tls":
-                database.Tls = false;
-                break;
-            default:
-                throw new InvalidOperationException($"Unknown connection field '{field}'.");
-        }
+        InvalidateConnectionField(database, field);
 
         _client.ReadyResponse = database;
     }
@@ -252,6 +249,27 @@ public sealed class CreateFlowStepDefinitions
             Budget = 360,
             Eviction = true,
         };
+    }
+
+    private static void InvalidateConnectionField(UpstashRedisDatabaseDetails database, string field)
+    {
+        switch (field)
+        {
+            case "password":
+                database.Password = null;
+                break;
+            case "endpoint":
+                database.Endpoint = string.Empty;
+                break;
+            case "port":
+                database.Port = 0;
+                break;
+            case "tls":
+                database.Tls = false;
+                break;
+            default:
+                throw new InvalidOperationException($"Unknown connection field '{field}'.");
+        }
     }
 
     private sealed class FakeCreateFlowManagementClient : IUpstashRedisManagementClient
