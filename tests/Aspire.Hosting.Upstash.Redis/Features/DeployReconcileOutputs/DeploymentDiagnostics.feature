@@ -19,7 +19,17 @@ Feature: Upstash Redis deployment diagnostics
     Given an Upstash diagnostic deployment for database "orders-cache"
     And the Upstash diagnostic provider has existing database "orders-cache" with id "db-orders"
     When the Upstash diagnostic deployment pipeline runs
-    Then the Upstash diagnostic progress contains "Located Upstash Redis database 'orders-cache' with provider id 'db-orders'"
+    Then the Upstash diagnostic progress phases are:
+      | phase                     |
+      | ResolvingConfiguration    |
+      | LocatingDatabase          |
+      | LocatingDatabase          |
+      | ValidatingImmutableDrift  |
+      | LocatingDatabase          |
+      | ReconcilingMutableSettings |
+      | RetrievingOutputs         |
+    And the Upstash diagnostic progress contains "Using existing Upstash Redis database 'orders-cache' with provider id 'db-orders'"
+    And the Upstash diagnostic progress contains "Located Upstash Redis database 'orders-cache' with provider id 'db-orders'"
     And the Upstash diagnostic progress contains provider id "db-orders"
 
   Scenario: Deployment diagnostics redact secrets

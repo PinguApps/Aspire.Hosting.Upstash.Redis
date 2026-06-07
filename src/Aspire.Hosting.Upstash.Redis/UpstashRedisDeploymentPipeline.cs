@@ -259,7 +259,7 @@ internal static class UpstashRedisDeploymentPipeline
 
         Report(
             progressReporter,
-            createResult.Created ? UpstashRedisDeploymentPhase.CreatingDatabase : UpstashRedisDeploymentPhase.ValidatingImmutableDrift,
+            createResult.Created ? UpstashRedisDeploymentPhase.CreatingDatabase : UpstashRedisDeploymentPhase.LocatingDatabase,
             $"{action} Upstash Redis database '{deployment.DatabaseName}' with provider id '{UpstashRedisDeploymentDiagnostics.FormatProviderDatabaseId(createResult.Database.DatabaseId)}'.",
             resourceName,
             deployment.DatabaseName,
