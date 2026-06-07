@@ -48,7 +48,7 @@ internal static class UpstashRedisDeploymentPipeline
         UpstashRedisRemoteIdentityState? cachedIdentity =
             await identityStore.LoadAsync(resource.Name, context.CancellationToken).ConfigureAwait(false);
 
-        await ExecuteCoreAsync(
+        UpstashRedisCreateFlowResult result = await ExecuteCoreAsync(
             deployment,
             client,
             cachedIdentity,
@@ -57,11 +57,14 @@ internal static class UpstashRedisDeploymentPipeline
             resource.Name,
             context.CancellationToken)
             .ConfigureAwait(false);
+
+        resource.TryGetUpstashRedisOutputs()?.Populate(result.Database);
     }
 
     internal static async Task<UpstashRedisDatabaseDetails?> ExecuteAsync(
         UpstashRedisResolvedDeployment deployment,
         IUpstashRedisManagementClient client,
+        UpstashRedisOutputs? outputs,
         CancellationToken cancellationToken)
     {
         UpstashRedisCreateFlowResult result = await ExecuteCoreAsync(
@@ -72,6 +75,8 @@ internal static class UpstashRedisDeploymentPipeline
             progressReporter: null,
             resourceName: null,
             cancellationToken).ConfigureAwait(false);
+
+        outputs?.Populate(result.Database);
 
         return result.Database;
     }
