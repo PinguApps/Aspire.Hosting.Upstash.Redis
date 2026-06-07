@@ -90,9 +90,24 @@ internal sealed class UpstashRedisManagementClient : IUpstashRedisManagementClie
 
         UpstashRedisDatabaseSummary? match = matches.SingleOrDefault();
 
-        return match is null
-            ? null
-            : await GetDatabaseAsync(match.DatabaseId, cancellationToken).ConfigureAwait(false);
+        if (match is null)
+        {
+            return null;
+        }
+
+        UpstashRedisDatabaseDetails database = await GetDatabaseAsync(match.DatabaseId, cancellationToken).ConfigureAwait(false);
+
+        if (database.DatabaseId != match.DatabaseId)
+        {
+            throw new UpstashRedisProviderException(
+                UpstashRedisProviderFailureKind.ProviderContract,
+                statusCode: null,
+                $"Upstash Redis database '{match.DatabaseId}' was listed as '{databaseName}' but detail lookup returned provider id '{database.DatabaseId}'.");
+        }
+
+        ThrowIfDatabaseNameMismatch(database, match.DatabaseId, databaseName);
+
+        return database;
     }
 
     public async Task<UpstashRedisDatabaseDetails> CreateDatabaseAsync(
@@ -365,5 +380,21 @@ internal sealed class UpstashRedisManagementClient : IUpstashRedisManagementClie
     private string RedactSecrets(string value)
     {
         return value.Replace(_credentials.ApiKey, "[redacted]", StringComparison.Ordinal);
+    }
+
+    private static void ThrowIfDatabaseNameMismatch(
+        UpstashRedisDatabaseDetails database,
+        string listedDatabaseId,
+        string expectedDatabaseName)
+    {
+        if (database.DatabaseName == expectedDatabaseName)
+        {
+            return;
+        }
+
+        throw new UpstashRedisProviderException(
+            UpstashRedisProviderFailureKind.ProviderContract,
+            statusCode: null,
+            $"Upstash Redis database '{listedDatabaseId}' was listed as '{expectedDatabaseName}' but detail lookup returned '{database.DatabaseName}'.");
     }
 }

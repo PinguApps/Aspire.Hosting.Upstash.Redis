@@ -84,6 +84,12 @@ public sealed class ManagementClientStepDefinitions : IDisposable
         _handler.Enqueue(HttpStatusCode.OK, CreateDatabaseDetailsJson(databaseName, includePassword: true));
     }
 
+    [Given("the Upstash management API returns database details for {string} with id {string}")]
+    public void GivenTheUpstashManagementApiReturnsDatabaseDetailsForWithId(string databaseName, string databaseId)
+    {
+        _handler.Enqueue(HttpStatusCode.OK, CreateDatabaseDetailsJson(databaseName, includePassword: true, databaseId: databaseId));
+    }
+
     [Given("the Upstash management API returns database details without a password")]
     public void GivenTheUpstashManagementApiReturnsDatabaseDetailsWithoutAPassword()
     {
@@ -130,11 +136,19 @@ public sealed class ManagementClientStepDefinitions : IDisposable
     [Given("the Upstash management API fails before responding with {string}")]
     public void GivenTheUpstashManagementApiFailsBeforeRespondingWith(string failure)
     {
-        _handler.Enqueue((_, _) => failure switch
+        _handler.Enqueue((_, _) =>
         {
-            "RequestException" => throw new HttpRequestException("The Upstash host could not be reached."),
-            "Timeout" => throw new TaskCanceledException("The Upstash request timed out."),
-            _ => throw new InvalidOperationException($"Unknown transport failure '{failure}'."),
+            if (failure == "RequestException")
+            {
+                throw new HttpRequestException("The Upstash host could not be reached.");
+            }
+
+            if (failure == "Timeout")
+            {
+                throw new TaskCanceledException("The Upstash request timed out.");
+            }
+
+            throw new InvalidOperationException($"Unknown transport failure '{failure}'.");
         });
     }
 
@@ -364,14 +378,15 @@ public sealed class ManagementClientStepDefinitions : IDisposable
         string databaseName,
         bool includePassword,
         string state = "active",
-        string? modifyingState = null)
+        string? modifyingState = null,
+        string databaseId = "db-orders")
     {
         string passwordJson = includePassword ? "\"password\": \"redis-password\"," : string.Empty;
         string modifyingStateJson = modifyingState is null ? "null" : $"\"{modifyingState}\"";
 
         return $$"""
         {
-          "database_id": "db-orders",
+          "database_id": "{{databaseId}}",
           "database_name": "{{databaseName}}",
           "endpoint": "global-apt-1.upstash.io",
           "port": 6379,

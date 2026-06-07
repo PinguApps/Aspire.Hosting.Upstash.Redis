@@ -10,6 +10,7 @@ The test project uses Reqnroll feature files and step definitions for product be
 - `Features/ProviderClient`: deterministic fake-provider behaviour plus opt-in live-provider patterns.
 - `Features/DeployReconcileOutputs`: deploy auth, lookup, create, reconcile, failure, diagnostics, and app-facing outputs.
 - `Features/DocsSamples`: README and sample snippets where they can be validated without brittle text tests.
+- `Features/CodeStyle`: narrow source-style guards agreed during review.
 
 Only the groups needed by the current skeleton have feature files today. Future tasks should add scenarios under the group that matches the behaviour they implement.
 
@@ -28,7 +29,7 @@ Only the groups needed by the current skeleton have feature files today. Future 
 - `2.3`: extend `Features/ApiShape` and `Features/DeployReconcileOutputs` for option/domain validation.
 - `3.1`: covered in `Features/DeployReconcileOutputs` for deploy-time parameter resolution, missing required values, secret boundaries, and local model construction without deploy-only credentials.
 - `3.2`: covered by `Features/OwnershipModes/OwnershipResolution.feature` for create-only, existing-only, create-or-adopt branching, lookup-by-name behavior, and ownership failure wording.
-- `3.3`: extend `Features/OwnershipModes` scenarios for stable remote identity.
+- `3.3`: covered in `Features/OwnershipModes/RemoteIdentity.feature` for first lookup, cached provider-id reuse, configured-name changes, duplicate names, detail/name drift, unsafe cached-id collisions, and Aspire deployment-state cache persistence.
 - `4.1`, `4.2`, and `4.3`: extend `Features/DeployReconcileOutputs` for create, reconcile, and immutable drift failures.
 - `5.1`, `5.2`, and `5.3`: extend `Features/DeployReconcileOutputs` for Redis outputs, supplementary outputs, progress, and diagnostics.
 - `6.1`, `6.2`, and `6.3`: harden the already populated groups rather than duplicating shallow coverage elsewhere.

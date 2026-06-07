@@ -2,7 +2,7 @@
 
 This package is an Aspire hosting integration for publishing a standard Aspire Redis resource to Upstash Redis during deployment.
 
-Current state: the Aspire integration shape, public API shape, internal resource state model, Upstash Redis management client layer, Upstash Redis option/domain model, deploy-time parameter resolution, and ownership-resolution decision engine are implemented. The package extends the built-in Redis resource returned by `builder.AddRedis("cache")`, attaches internal Upstash deployment state with `.PublishToUpstash(...)`, and resolves the configured deployment values from the Aspire deploy pipeline step. Later implementation tasks still own creation, reconciliation, and deployed connection outputs.
+Current state: the Aspire integration shape, public API shape, internal resource state model, Upstash Redis management client layer, Upstash Redis option/domain model, deploy-time parameter resolution, ownership-resolution decision engine, and remote identity resolver are implemented. The package extends the built-in Redis resource returned by `builder.AddRedis("cache")`, attaches internal Upstash deployment state with `.PublishToUpstash(...)`, resolves the configured deployment values from the Aspire deploy pipeline step, and can resolve the intended remote identity by explicit database name. Later implementation tasks still own creation, reconciliation, and deployed connection outputs.
 
 ```csharp
 var databaseName = builder.AddParameter("upstash-database-name");
@@ -89,6 +89,8 @@ Literal option values are validated during AppHost model construction and mapped
 
 Local Aspire behavior is preserved: `.PublishToUpstash(...)` does not replace the Redis resource, does not call Upstash during model construction or local runs, and does not prevent normal `WithReference(cache)` usage.
 
+Remote identity uses the explicit Upstash Redis database name as the source of truth. First deployments look up the configured name through `GET /redis/databases`, require exactly one case-sensitive match, then fetch details by provider id. Repeated deployments can load the cached `UpstashRedisRemoteIdentityState` through the Aspire deployment-state-backed store and pass it back into the resolver; the resolver prefers that id only when the cached configured name still matches and the fetched database still reports both the configured name and cached provider id. If the configured name changes, v1 treats it as selecting a different remote database identity and never calls the provider rename endpoint. If a cached identity for the same configured name now points at a renamed database or the name resolves to a different provider id, deployment logic must fail rather than take over the wrong database.
+
 The test suite is Reqnroll-first. Feature files live under behavior-focused folders in `tests/Aspire.Hosting.Upstash.Redis/Features/`, shared scenario support lives under `tests/Aspire.Hosting.Upstash.Redis/Support/`, and the scenario map for future tasks is documented in `tests/Aspire.Hosting.Upstash.Redis/README.md`.
 
 Contributor validation note: opt-in live Upstash validation can now use the environment variables `UPSTASH_EMAIL` and `UPSTASH_API_KEY`. Any live test must stay explicitly gated and must always tear down or restore any remote state it touches so the Upstash account is left unchanged after the run.
@@ -97,7 +99,7 @@ The Upstash management capability matrix is documented in [`plans/0.2-confirm-up
 
 - Management authentication uses separate native Upstash account email and Management API key values.
 - Third-party marketplace Upstash accounts are not supported by the Developer API and should fail fast with a tailored error.
-- Remote lookup uses list-by-account plus explicit database-name matching, with provider id preferred after discovery when safe state is available.
+- Remote lookup uses list-by-account plus explicit database-name matching, with provider id preferred after discovery only when cached identity state still verifies against the explicit configured name and returned provider id.
 - Ownership resolution is deterministic: create-only rejects existing names, existing-only rejects missing names, and create-or-adopt creates only when the explicit name is absent.
 - Create supports database name, platform, primary region, read regions, plan, budget, and eviction.
 - Reconcile supports read regions, plan, budget, and eviction only.
