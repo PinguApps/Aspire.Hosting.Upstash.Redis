@@ -331,6 +331,14 @@ public sealed class ReconcileMutableSettingsStepDefinitions
 
     private static long GetFixedPlanBytes(string fixedPlan)
     {
+        long? fixedPlanBytes = GetFixedPlanBytesOrNull(fixedPlan);
+
+        return fixedPlanBytes
+            ?? throw new InvalidOperationException($"Unknown fixed plan '{fixedPlan}'.");
+    }
+
+    private static long? GetFixedPlanBytesOrNull(string fixedPlan)
+    {
         const long mebibyte = 1024L * 1024L;
         const long gibibyte = 1024L * mebibyte;
 
@@ -351,7 +359,7 @@ public sealed class ReconcileMutableSettingsStepDefinitions
             case "fixed_500gb":
                 return 500L * gibibyte;
             default:
-                throw new InvalidOperationException($"Unknown fixed plan '{fixedPlan}'.");
+                return null;
         }
     }
 
@@ -383,7 +391,7 @@ public sealed class ReconcileMutableSettingsStepDefinitions
 
         public Task ChangePlanAsync(string databaseId, UpstashRedisChangePlanRequest request, CancellationToken cancellationToken)
         {
-            Mutate(databaseId, "plan", database => database.Type = request.PlanName);
+            Mutate(databaseId, "plan", database => ApplyPlanMutation(database, request.PlanName));
 
             return Task.CompletedTask;
         }
@@ -450,6 +458,22 @@ public sealed class ReconcileMutableSettingsStepDefinitions
             }
 
             apply(GetDatabase(databaseId));
+        }
+
+        private static void ApplyPlanMutation(UpstashRedisDatabaseDetails database, string planName)
+        {
+            long? fixedPlanBytes = GetFixedPlanBytesOrNull(planName);
+
+            if (fixedPlanBytes is not null)
+            {
+                database.Type = "pro";
+                database.DbDiskThreshold = fixedPlanBytes;
+
+                return;
+            }
+
+            database.Type = planName;
+            database.DbDiskThreshold = planName == "payg" ? 100L * 1024L * 1024L * 1024L : null;
         }
 
         private UpstashRedisDatabaseDetails GetDatabase(string databaseId)

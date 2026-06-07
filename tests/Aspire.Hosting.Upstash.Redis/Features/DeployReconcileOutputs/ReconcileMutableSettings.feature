@@ -39,6 +39,15 @@ Feature: Reconcile mutable Upstash Redis settings
     Then Upstash Redis reconciliation succeeds
     And the Upstash reconcile provider recorded no mutation calls
 
+  Scenario: Pay-as-you-go databases with the same disk threshold still reconcile to fixed plans
+    Given the Upstash reconcile target database has read regions "eu-west-1", coarse plan "paid", fixed plan "fixed_100gb", budget 100, and eviction disabled
+    When Upstash Redis reconciliation runs with only plan "fixed_100gb"
+    Then Upstash Redis reconciliation succeeds
+    And the Upstash reconcile provider recorded mutation calls in order:
+      | mutation |
+      | plan     |
+    And the Upstash reconcile target database has read regions "eu-west-1", plan "pro", budget 100, and eviction disabled
+
   Scenario: Deployment pipeline reconciles adopted databases
     Given the Upstash reconcile target database has read regions "eu-west-1", plan "free", budget 100, and eviction disabled
     When the Upstash Redis deployment pipeline runs for existing-only with only plan "payg"

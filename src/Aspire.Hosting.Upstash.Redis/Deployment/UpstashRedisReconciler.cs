@@ -282,7 +282,8 @@ internal sealed class UpstashRedisReconciler
 
         if (desiredFixedPlanBytes is not null)
         {
-            return current.DbDiskThreshold == desiredFixedPlanBytes;
+            return StringComparer.Ordinal.Equals(current.Type, "pro")
+                && current.DbDiskThreshold == desiredFixedPlanBytes;
         }
 
         return StringComparer.Ordinal.Equals(desiredPlan, NormalizeProviderPlan(current.Type));
