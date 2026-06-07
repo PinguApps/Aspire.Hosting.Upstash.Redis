@@ -6,10 +6,12 @@ internal sealed class UpstashRedisRemoteIdentityResolution
 {
     private UpstashRedisRemoteIdentityResolution(
         UpstashRedisDatabaseDetails? database,
-        UpstashRedisRemoteIdentityState? identityState)
+        UpstashRedisRemoteIdentityState? identityState,
+        bool resolvedFromCachedIdentity)
     {
         Database = database;
         IdentityState = identityState;
+        ResolvedFromCachedIdentity = resolvedFromCachedIdentity;
     }
 
     public UpstashRedisDatabaseDetails? Database { get; }
@@ -18,14 +20,19 @@ internal sealed class UpstashRedisRemoteIdentityResolution
 
     public bool Found => Database is not null;
 
-    public static UpstashRedisRemoteIdentityResolution NotFound() => new(null, null);
+    public bool ResolvedFromCachedIdentity { get; }
 
-    public static UpstashRedisRemoteIdentityResolution FoundDatabase(UpstashRedisDatabaseDetails database)
+    public static UpstashRedisRemoteIdentityResolution NotFound() => new(null, null, resolvedFromCachedIdentity: false);
+
+    public static UpstashRedisRemoteIdentityResolution FoundDatabase(
+        UpstashRedisDatabaseDetails database,
+        bool resolvedFromCachedIdentity = false)
     {
         ArgumentNullException.ThrowIfNull(database);
 
         return new(
             database,
-            new UpstashRedisRemoteIdentityState(database.DatabaseName, database.DatabaseId));
+            new UpstashRedisRemoteIdentityState(database.DatabaseName, database.DatabaseId),
+            resolvedFromCachedIdentity);
     }
 }

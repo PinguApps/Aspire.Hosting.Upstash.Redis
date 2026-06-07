@@ -45,7 +45,9 @@ internal sealed class UpstashRedisRemoteIdentityResolver
                     cachedDatabase.DatabaseId);
             }
 
-            UpstashRedisRemoteIdentityResolution resolution = UpstashRedisRemoteIdentityResolution.FoundDatabase(cachedDatabase);
+            UpstashRedisRemoteIdentityResolution resolution = UpstashRedisRemoteIdentityResolution.FoundDatabase(
+                cachedDatabase,
+                resolvedFromCachedIdentity: true);
 
             if (cachedDatabase.DatabaseName != configuredDatabaseName)
             {
@@ -98,7 +100,9 @@ internal sealed class UpstashRedisRemoteIdentityResolver
                 database.DatabaseId);
         }
 
-        return UpstashRedisRemoteIdentityResolution.FoundDatabase(database);
+        return UpstashRedisRemoteIdentityResolution.FoundDatabase(
+            database,
+            resolvedFromCachedIdentity: true);
     }
 
     private async Task<UpstashRedisRemoteIdentityResolution> ResolveDriftedCachedIdentityAsync(
