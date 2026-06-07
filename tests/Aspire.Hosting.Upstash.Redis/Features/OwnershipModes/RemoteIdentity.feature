@@ -30,6 +30,13 @@ Feature: Upstash Redis remote identity
       | Method | Path                        |
       | GET    | /v2/redis/database/db-orders |
 
+  Scenario: Cached identity refuses a detail response with a different provider id
+    Given cached Upstash remote identity is database "orders-cache" with id "db-orders"
+    And the Upstash identity API returns details for database "orders-cache" with id "db-other"
+    When the Upstash remote identity resolver resolves configured database "orders-cache"
+    Then the Upstash remote identity resolver fails with provider kind "ProviderContract"
+    And the Upstash remote identity failure message contains "mismatched cached remote identity"
+
   Scenario: Explicit configured name changes select the new configured remote identity
     Given cached Upstash remote identity is database "orders-cache" with id "db-orders"
     And the Upstash identity API returns a list containing database "billing-cache" with id "db-billing"

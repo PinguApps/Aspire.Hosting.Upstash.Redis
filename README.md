@@ -89,7 +89,7 @@ Literal option values are validated during AppHost model construction and mapped
 
 Local Aspire behavior is preserved: `.PublishToUpstash(...)` does not replace the Redis resource, does not call Upstash during model construction or local runs, and does not prevent normal `WithReference(cache)` usage.
 
-Remote identity uses the explicit Upstash Redis database name as the source of truth. First deployments look up the configured name through `GET /redis/databases`, require exactly one case-sensitive match, then fetch details by provider id. Repeated deployments can load the cached `UpstashRedisRemoteIdentityState` through the Aspire deployment-state-backed store and pass it back into the resolver; the resolver prefers that id only when the cached configured name still matches and the fetched database still has the configured name. If the configured name changes, v1 treats it as selecting a different remote database identity and never calls the provider rename endpoint. If a cached identity for the same configured name now points at a renamed database or the name resolves to a different provider id, deployment logic must fail rather than take over the wrong database.
+Remote identity uses the explicit Upstash Redis database name as the source of truth. First deployments look up the configured name through `GET /redis/databases`, require exactly one case-sensitive match, then fetch details by provider id. Repeated deployments can load the cached `UpstashRedisRemoteIdentityState` through the Aspire deployment-state-backed store and pass it back into the resolver; the resolver prefers that id only when the cached configured name still matches and the fetched database still reports both the configured name and cached provider id. If the configured name changes, v1 treats it as selecting a different remote database identity and never calls the provider rename endpoint. If a cached identity for the same configured name now points at a renamed database or the name resolves to a different provider id, deployment logic must fail rather than take over the wrong database.
 
 The test suite is Reqnroll-first. Feature files live under behavior-focused folders in `tests/Aspire.Hosting.Upstash.Redis/Features/`, shared scenario support lives under `tests/Aspire.Hosting.Upstash.Redis/Support/`, and the scenario map for future tasks is documented in `tests/Aspire.Hosting.Upstash.Redis/README.md`.
 
@@ -99,7 +99,7 @@ The Upstash management capability matrix is documented in [`plans/0.2-confirm-up
 
 - Management authentication uses separate native Upstash account email and Management API key values.
 - Third-party marketplace Upstash accounts are not supported by the Developer API and should fail fast with a tailored error.
-- Remote lookup uses list-by-account plus explicit database-name matching, with provider id preferred after discovery only when cached identity state still verifies against the explicit configured name.
+- Remote lookup uses list-by-account plus explicit database-name matching, with provider id preferred after discovery only when cached identity state still verifies against the explicit configured name and returned provider id.
 - Ownership resolution is deterministic: create-only rejects existing names, existing-only rejects missing names, and create-or-adopt creates only when the explicit name is absent.
 - Create supports database name, platform, primary region, read regions, plan, budget, and eviction.
 - Reconcile supports read regions, plan, budget, and eviction only.

@@ -37,7 +37,12 @@ internal sealed class UpstashRedisRemoteIdentityResolver
             UpstashRedisDatabaseDetails cachedDatabase =
                 await _client.GetDatabaseAsync(cachedIdentity.ProviderDatabaseId, cancellationToken).ConfigureAwait(false);
 
-            return cachedDatabase.DatabaseName == configuredDatabaseName
+            return cachedDatabase.DatabaseId != cachedIdentity.ProviderDatabaseId
+                ? throw CreateMismatchedCachedDetailException(
+                    configuredDatabaseName,
+                    cachedIdentity.ProviderDatabaseId,
+                    cachedDatabase.DatabaseId)
+                : cachedDatabase.DatabaseName == configuredDatabaseName
                 ? UpstashRedisRemoteIdentityResolution.FoundDatabase(cachedDatabase)
                 : await ResolveDriftedCachedIdentityAsync(
                     configuredDatabaseName,
@@ -114,5 +119,16 @@ internal sealed class UpstashRedisRemoteIdentityResolver
             UpstashRedisProviderFailureKind.ProviderContract,
             statusCode: null,
             $"Configured Upstash Redis database name '{configuredDatabaseName}' resolves to provider id '{resolvedProviderDatabaseId}', but cached identity expected provider id '{cachedProviderDatabaseId}'. Refusing to adopt a different database for the same configured name.");
+    }
+
+    private static UpstashRedisProviderException CreateMismatchedCachedDetailException(
+        string configuredDatabaseName,
+        string cachedProviderDatabaseId,
+        string resolvedProviderDatabaseId)
+    {
+        return new UpstashRedisProviderException(
+            UpstashRedisProviderFailureKind.ProviderContract,
+            statusCode: null,
+            $"Cached Upstash Redis database '{cachedProviderDatabaseId}' detail response returned provider id '{resolvedProviderDatabaseId}' for configured name '{configuredDatabaseName}'. Refusing to reconcile a mismatched cached remote identity.");
     }
 }
