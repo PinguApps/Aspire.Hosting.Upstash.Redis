@@ -77,6 +77,18 @@ public sealed class ReconcileMutableSettingsStepDefinitions
         await TryReconcileAsync(options => options.SetBudget(budget)).ConfigureAwait(false);
     }
 
+    [When("a general Upstash reconciliation exception is created with constructor {string}")]
+    public void WhenAGeneralUpstashReconciliationExceptionIsCreatedWithConstructor(string constructor)
+    {
+        _exception = constructor switch
+        {
+            "Parameterless" => new UpstashRedisReconciliationException(),
+            "Message" => new UpstashRedisReconciliationException("Reconciliation failure."),
+            "MessageAndInner" => new UpstashRedisReconciliationException("Reconciliation failure.", new InvalidOperationException()),
+            _ => throw new InvalidOperationException($"Unknown constructor '{constructor}'."),
+        };
+    }
+
     [Then("Upstash Redis reconciliation succeeds")]
     public void ThenUpstashRedisReconciliationSucceeds()
     {
@@ -122,6 +134,14 @@ public sealed class ReconcileMutableSettingsStepDefinitions
         UpstashRedisReconciliationException exception = Assert.IsType<UpstashRedisReconciliationException>(_exception);
 
         Assert.Equal(settingName, exception.SettingName);
+    }
+
+    [Then("Upstash Redis reconciliation fails with provider kind {string}")]
+    public void ThenUpstashRedisReconciliationFailsWithProviderKind(string failureKind)
+    {
+        UpstashRedisReconciliationException exception = Assert.IsType<UpstashRedisReconciliationException>(_exception);
+
+        Assert.Equal(Enum.Parse<UpstashRedisProviderFailureKind>(failureKind), exception.FailureKind);
     }
 
     [Then("the Upstash Redis reconciliation failure message contains {string}")]

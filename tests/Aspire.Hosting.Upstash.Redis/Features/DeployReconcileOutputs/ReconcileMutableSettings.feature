@@ -40,3 +40,13 @@ Feature: Reconcile mutable Upstash Redis settings
     When Upstash Redis reconciliation is attempted with only budget 360
     Then Upstash Redis reconciliation fails for setting "budget"
     And the Upstash Redis reconciliation failure message contains "did not converge after reconciling setting 'budget'"
+
+  Scenario Outline: General reconciliation exceptions default to unexpected failures
+    When a general Upstash reconciliation exception is created with constructor "<Constructor>"
+    Then Upstash Redis reconciliation fails with provider kind "Unexpected"
+
+    Examples:
+      | Constructor     |
+      | Parameterless   |
+      | Message         |
+      | MessageAndInner |

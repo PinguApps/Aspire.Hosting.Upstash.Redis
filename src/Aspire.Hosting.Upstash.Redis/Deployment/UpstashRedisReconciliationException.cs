@@ -41,5 +41,5 @@ internal sealed class UpstashRedisReconciliationException : Exception
 
     public string SettingName { get; } = string.Empty;
 
-    public UpstashRedisProviderFailureKind FailureKind { get; }
+    public UpstashRedisProviderFailureKind FailureKind { get; } = UpstashRedisProviderFailureKind.Unexpected;
 }
