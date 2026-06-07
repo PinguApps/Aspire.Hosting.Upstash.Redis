@@ -17,6 +17,7 @@ public sealed class SupplementaryOutputsStepDefinitions
     private RedisResource? _resource;
     private UpstashRedisResolvedDeployment? _deployment;
     private FakeSupplementaryOutputsManagementClient? _client;
+    private Exception? _exception;
 
     [Given("an Upstash Redis resource with supplementary outputs")]
     public void GivenAnUpstashRedisResourceWithSupplementaryOutputs()
@@ -65,6 +66,15 @@ public sealed class SupplementaryOutputsStepDefinitions
         _client = new FakeSupplementaryOutputsManagementClient(CreateDatabase(databaseName, databaseId));
     }
 
+    [Given("the Upstash deployment provider will create database {string} with id {string} without a password")]
+    public void GivenTheUpstashDeploymentProviderWillCreateDatabaseWithIdWithoutAPassword(string databaseName, string databaseId)
+    {
+        UpstashRedisDatabaseDetails database = CreateDatabase(databaseName, databaseId);
+        database.Password = null;
+
+        _client = new FakeSupplementaryOutputsManagementClient(database);
+    }
+
     [When("the Upstash deployment pipeline populates supplementary outputs")]
     public async Task WhenTheUpstashDeploymentPipelinePopulatesSupplementaryOutputs()
     {
@@ -73,6 +83,12 @@ public sealed class SupplementaryOutputsStepDefinitions
             GetClient(),
             GetOutputs(),
             CancellationToken.None).ConfigureAwait(false);
+    }
+
+    [When("the Upstash deployment pipeline attempts to populate supplementary outputs")]
+    public async Task WhenTheUpstashDeploymentPipelineAttemptsToPopulateSupplementaryOutputs()
+    {
+        _exception = await Record.ExceptionAsync(WhenTheUpstashDeploymentPipelinePopulatesSupplementaryOutputs).ConfigureAwait(false);
     }
 
     [Then("the supplementary Upstash Redis outputs are:")]
@@ -146,6 +162,23 @@ public sealed class SupplementaryOutputsStepDefinitions
             IValueWithReferences valueWithReferences = Assert.IsAssignableFrom<IValueWithReferences>(valueProvider);
             Assert.Contains(resource, valueWithReferences.References);
         }
+    }
+
+    [Then("supplementary Upstash Redis output population fails with provider kind {string}")]
+    public void ThenSupplementaryUpstashRedisOutputPopulationFailsWithProviderKind(string failureKind)
+    {
+        UpstashRedisProviderException exception = Assert.IsType<UpstashRedisProviderException>(_exception);
+
+        Assert.Equal(Enum.Parse<UpstashRedisProviderFailureKind>(failureKind), exception.FailureKind);
+    }
+
+    [Then("the supplementary Upstash Redis output failure message contains {string}")]
+    public void ThenTheSupplementaryUpstashRedisOutputFailureMessageContains(string expectedText)
+    {
+        Exception exception =
+            _exception ?? throw new InvalidOperationException("Supplementary output population did not fail.");
+
+        Assert.Contains(expectedText, exception.Message, StringComparison.Ordinal);
     }
 
     private IReadOnlyDictionary<string, UpstashRedisOutputReference> GetOutputReferences()

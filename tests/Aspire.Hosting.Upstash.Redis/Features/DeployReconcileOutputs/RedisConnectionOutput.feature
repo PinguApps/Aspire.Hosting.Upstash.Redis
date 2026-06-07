@@ -32,3 +32,10 @@ Feature: Redis connection output
     Then Upstash Redis connection output fails with provider kind "ProviderContract"
     And the Upstash Redis connection output failure message contains "without an endpoint"
     And the Redis resource has no Upstash connection output
+
+  Scenario: Missing provider passwords are rejected for Redis connection output
+    Given a standard Aspire Redis resource named "cache"
+    When applying Upstash Redis connection output without a password is attempted
+    Then Upstash Redis connection output fails with provider kind "ProviderContract"
+    And the Upstash Redis connection output failure message contains "without credentials"
+    And the Redis resource has no Upstash connection output

@@ -83,6 +83,15 @@ public sealed class ReconcileMutableSettingsStepDefinitions
         database.DatabaseName = databaseName;
     }
 
+    [Given("the Upstash reconcile target database has no password")]
+    public void GivenTheUpstashReconcileTargetDatabaseHasNoPassword()
+    {
+        UpstashRedisDatabaseDetails database =
+            _database ?? throw new InvalidOperationException("The reconcile target database has not been configured.");
+
+        database.Password = null;
+    }
+
     [When("Upstash Redis reconciliation runs with read regions {string}, plan {string}, budget {int}, and eviction enabled")]
     public async Task WhenUpstashRedisReconciliationRunsWithSettingsAndEvictionEnabled(
         string readRegions,
@@ -102,6 +111,24 @@ public sealed class ReconcileMutableSettingsStepDefinitions
     public async Task WhenUpstashRedisReconciliationRunsWithOnlyPlan(string plan)
     {
         await ReconcileAsync(options => options.Plan = plan).ConfigureAwait(false);
+    }
+
+    [When("Upstash Redis reconciliation runs with only {word} set to {string}")]
+    public async Task WhenUpstashRedisReconciliationRunsWithOnlySettingSetTo(string settingName, string value)
+    {
+        await ReconcileAsync(options => ApplySetting(options, settingName, value)).ConfigureAwait(false);
+    }
+
+    [When("Upstash Redis reconciliation runs with only read regions set to {string}")]
+    public async Task WhenUpstashRedisReconciliationRunsWithOnlyReadRegionsSetTo(string value)
+    {
+        await ReconcileAsync(options => ApplySetting(options, "read regions", value)).ConfigureAwait(false);
+    }
+
+    [When("Upstash Redis reconciliation runs with only TLS enabled")]
+    public async Task WhenUpstashRedisReconciliationRunsWithOnlyTlsEnabled()
+    {
+        await ReconcileAsync(options => options.Tls = true).ConfigureAwait(false);
     }
 
     [When("the Upstash Redis deployment pipeline runs for existing-only with only plan {string}")]
@@ -302,6 +329,30 @@ public sealed class ReconcileMutableSettingsStepDefinitions
     private static IReadOnlyList<string> ParseRegionNames(string readRegions)
     {
         return [.. readRegions.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)];
+    }
+
+    private static void ApplySetting(
+        UpstashRedisDeploymentOptions options,
+        string settingName,
+        string value)
+    {
+        switch (settingName)
+        {
+            case "read regions":
+                options.ReadRegions = ParseReadRegions(value);
+                break;
+            case "plan":
+                options.Plan = value;
+                break;
+            case "budget":
+                options.SetBudget(int.Parse(value, System.Globalization.CultureInfo.InvariantCulture));
+                break;
+            case "eviction":
+                options.Eviction = bool.Parse(value);
+                break;
+            default:
+                throw new InvalidOperationException($"Unknown setting '{settingName}'.");
+        }
     }
 
     private static UpstashRedisDatabaseDetails CreateDatabase(

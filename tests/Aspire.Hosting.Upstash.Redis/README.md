@@ -36,5 +36,5 @@ Only the groups needed by the current skeleton have feature files today. Future 
 - `5.1`: covered in `Features/DeployReconcileOutputs/RedisConnectionOutput.feature` for the standard Redis connection string, deploy-time connection-property overrides, local pre-deploy no-op behavior, secret boundaries, and endpoint slug rejection.
 - `5.3`: covered in `Features/DeployReconcileOutputs/DeploymentDiagnostics.feature` for deploy progress phase order, actionable failure context, secret redaction, and provider id visibility.
 - `5.2`: covered in `Features/DeployReconcileOutputs/SupplementaryOutputs.feature` for deployed supplementary output values, stable names, secret classification, and management-key exclusion.
-- `6.1`, `6.2`, and `6.3`: harden the already populated groups rather than duplicating shallow coverage elsewhere.
+- `6.1`, `6.2`, and `6.3`: harden the already populated groups rather than duplicating shallow coverage elsewhere. `6.3` has started in `Features/DeployReconcileOutputs` with per-setting mutable reconciliation, TLS non-mutation, adopted missing-credential, and output missing-password coverage; live-provider deploy/repeat-deploy/output hardening remains outstanding.
 - `7.1` and `7.2`: add `Features/DocsSamples` scenarios for README and sample snippets where practical.

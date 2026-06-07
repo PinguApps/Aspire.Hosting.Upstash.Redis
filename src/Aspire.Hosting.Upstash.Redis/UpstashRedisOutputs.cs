@@ -57,10 +57,12 @@ public sealed class UpstashRedisOutputs
     {
         ArgumentNullException.ThrowIfNull(database);
 
-        Endpoint.SetValue(database.Endpoint);
-        Port.SetValue(database.Port.ToString(System.Globalization.CultureInfo.InvariantCulture));
-        Password.SetValue(database.Password ?? string.Empty);
-        Tls.SetValue(database.Tls.ToString().ToLowerInvariant());
+        UpstashRedisConnectionOutput connectionOutput = UpstashRedisConnectionOutput.FromDatabase(database);
+
+        Endpoint.SetValue(connectionOutput.Host);
+        Port.SetValue(connectionOutput.Port.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        Password.SetValue(connectionOutput.Password);
+        Tls.SetValue(connectionOutput.Tls.ToString().ToLowerInvariant());
         DatabaseName.SetValue(database.DatabaseName);
     }
 }
