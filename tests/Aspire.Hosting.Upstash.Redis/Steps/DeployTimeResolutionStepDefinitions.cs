@@ -40,6 +40,12 @@ public sealed class DeployTimeResolutionStepDefinitions
         await _context.TryResolveUpstashDeploymentInputsAsync();
     }
 
+    [When("executing the Upstash deployment pipeline with a missing context is attempted")]
+    public async Task WhenExecutingTheUpstashDeploymentPipelineWithAMissingContextIsAttempted()
+    {
+        await _context.TryExecuteUpstashDeploymentPipelineWithMissingContextAsync();
+    }
+
     [Then("the resolved Upstash deployment targets database {string}")]
     public void ThenTheResolvedUpstashDeploymentTargetsDatabase(string databaseName)
     {

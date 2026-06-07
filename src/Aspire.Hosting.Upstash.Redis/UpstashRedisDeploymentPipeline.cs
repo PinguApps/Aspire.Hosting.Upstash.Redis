@@ -10,6 +10,7 @@ internal static class UpstashRedisDeploymentPipeline
     public static async Task ExecuteAsync(RedisResource resource, PipelineStepContext context)
     {
         ArgumentNullException.ThrowIfNull(resource);
+        ArgumentNullException.ThrowIfNull(context);
 
         UpstashRedisDeploymentState state = resource.GetUpstashRedisDeploymentState()
             ?? throw new InvalidOperationException($"Redis resource '{resource.Name}' is missing Upstash deployment state.");

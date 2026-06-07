@@ -15,6 +15,12 @@ Feature: Deploy-time Upstash parameter resolution
     Then the Upstash deployment resolution fails with "InvalidOperationException"
     And the Upstash deployment resolution failure message contains "API key parameter 'upstash-api-key'"
 
+  Scenario: Missing pipeline context fails with argument validation
+    Given a standard Aspire Redis resource named "cache"
+    When the Redis resource is marked for Upstash with resolvable parameter inputs
+    And executing the Upstash deployment pipeline with a missing context is attempted
+    Then the Upstash deployment resolution fails with "ArgumentNullException"
+
   Scenario: Management API keys do not become app-facing Redis outputs
     Given a standard Aspire Redis resource named "cache"
     When the Redis resource is marked for Upstash with resolvable parameter inputs

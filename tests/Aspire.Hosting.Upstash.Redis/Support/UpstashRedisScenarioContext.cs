@@ -154,6 +154,12 @@ public sealed class UpstashRedisScenarioContext
         DeploymentResolutionException = await Record.ExceptionAsync(ResolveUpstashDeploymentInputsAsync);
     }
 
+    public async Task TryExecuteUpstashDeploymentPipelineWithMissingContextAsync()
+    {
+        DeploymentResolutionException = await Record.ExceptionAsync(() =>
+            UpstashRedisDeploymentPipeline.ExecuteAsync(RedisBuilder.Resource, context: null!));
+    }
+
     public void MarkRedisForUpstashWithTypedDomainOptions()
     {
         _accountEmail ??= AppBuilder.AddParameter("upstash-account-email");
