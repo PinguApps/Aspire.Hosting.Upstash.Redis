@@ -125,9 +125,11 @@ public static class UpstashRedisBuilderExtensions
                     options),
                 ResourceAnnotationMutationBehavior.Replace);
 
+            RedisResource resource = builder.Resource;
+
             return builder.WithPipelineStepFactory(
                 $"upstash-redis-{builder.Resource.Name}",
-                static _ => Task.CompletedTask,
+                context => UpstashRedisDeploymentPipeline.ExecuteAsync(resource, context),
                 dependsOn: [WellKnownPipelineSteps.DeployPrereq],
                 requiredBy: [WellKnownPipelineSteps.Deploy],
                 tags: [WellKnownPipelineTags.ProvisionInfrastructure],
