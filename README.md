@@ -2,7 +2,7 @@
 
 This package is an Aspire hosting integration for publishing a standard Aspire Redis resource to Upstash Redis during deployment.
 
-Current state: the Aspire integration shape, public API shape, internal resource state model, Upstash Redis management client layer, Upstash Redis option/domain model, deploy-time parameter resolution, ownership-resolution decision engine, and remote identity resolver are implemented. The package extends the built-in Redis resource returned by `builder.AddRedis("cache")`, attaches internal Upstash deployment state with `.PublishToUpstash(...)`, resolves the configured deployment values from the Aspire deploy pipeline step, and can resolve the intended remote identity by explicit database name. Later implementation tasks still own creation, reconciliation, and deployed connection outputs.
+Current state: the Aspire integration shape, public API shape, internal resource state model, Upstash Redis management client layer, Upstash Redis option/domain model, deploy-time parameter resolution, ownership-resolution decision engine, remote identity resolver, and mutable-setting reconciler are implemented. The package extends the built-in Redis resource returned by `builder.AddRedis("cache")`, attaches internal Upstash deployment state with `.PublishToUpstash(...)`, resolves the configured deployment values from the Aspire deploy pipeline step, can resolve the intended remote identity by explicit database name, and can reconcile supported mutable settings on an adopted database. Later implementation tasks still own creation and deployed connection outputs.
 
 ```csharp
 var databaseName = builder.AddParameter("upstash-database-name");
@@ -51,7 +51,7 @@ The internal ownership resolver looks up the configured remote database name thr
 - `ExistingOnly` adopts an existing compatible database and fails if the name is missing.
 - `CreateOrAdopt` adopts an existing compatible database or selects create when the name is missing.
 
-When an existing database conflicts with immutable/read-only settings the resolver can verify from provider details, such as an explicit primary region or required TLS, resolution fails before later create or reconcile steps. Mutable settings are still handled by the later reconcile task.
+When an existing database conflicts with immutable/read-only settings the resolver can verify from provider details, such as an explicit primary region or required TLS, resolution fails before later create or reconcile steps. The mutable reconciler then enforces only explicit desired read regions, plan, budget, and eviction settings.
 
 Required values and optional string settings are represented as `UpstashRedisValue`, which can hold either a literal string or an Aspire `ParameterResource`. Literal strings convert implicitly; parameterized optional settings use `UpstashRedisValue.FromParameter(...)`. Internally, the Redis resource annotation stores a single deployment state snapshot containing required values, ownership mode, infrastructure-only management credential sources, optional settings, and explicit-setting metadata for later reconcile tasks.
 
@@ -86,6 +86,8 @@ builder.AddRedis("cache")
 ```
 
 Literal option values are validated during AppHost model construction and mapped internally to Upstash API payload values. Parameter-backed option values keep their source and are validated after deploy-time parameter resolution. Missing required deploy-time parameters fail with an explicit message naming the missing parameter. TLS remains required-on/read-only for v1: `Tls = false` is rejected and deployment logic must not try to disable TLS.
+
+Repeated deployments reconcile supported mutable settings in deterministic order: read regions, plan, budget, then eviction. Unspecified options are left untouched, matching explicit provider state is a no-op with no mutation call, provider readiness/detail state is re-fetched after each mutation, and final state is verified before later output generation. If a provider update fails or does not converge, reconciliation raises an `UpstashRedisReconciliationException` naming the setting.
 
 Local Aspire behavior is preserved: `.PublishToUpstash(...)` does not replace the Redis resource, does not call Upstash during model construction or local runs, and does not prevent normal `WithReference(cache)` usage.
 
