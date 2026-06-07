@@ -143,7 +143,7 @@ The deployment options support:
 - `PrimaryRegion`: the primary Upstash Redis region. Required for create paths.
 - `ReadRegions`: optional read replica regions.
 - `Plan`: `Free`, `PayAsYouGo`, or one of the fixed-size plans.
-- `Budget`: a positive monthly budget value.
+- `Budget`: a positive monthly budget value. If `Plan` is also configured, it must be `PayAsYouGo`.
 - `Eviction`: whether eviction is enabled.
 - `Tls`: required-on/read-only for v1. Leave it unset or set it to `true`; `false` is rejected.
 
