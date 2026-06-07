@@ -42,7 +42,8 @@ internal static class UpstashRedisDeploymentPipeline
         UpstashRedisResolvedDeployment deployment =
             await UpstashRedisDeployTimeResolver.ResolveAsync(state, resource, context).ConfigureAwait(false);
 
-        IUpstashRedisManagementClient client = new UpstashRedisManagementClient(_managementHttpClient, deployment.ManagementCredentials);
+        IUpstashRedisManagementClient client = context.Services.GetService<IUpstashRedisManagementClient>()
+            ?? new UpstashRedisManagementClient(_managementHttpClient, deployment.ManagementCredentials);
         UpstashRedisRemoteIdentityDeploymentStateStore identityStore = new(
             context.Services.GetRequiredService<IDeploymentStateManager>());
         UpstashRedisRemoteIdentityState? cachedIdentity =

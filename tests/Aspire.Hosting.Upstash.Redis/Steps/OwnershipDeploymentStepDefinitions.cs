@@ -1,9 +1,15 @@
+#pragma warning disable ASPIREPIPELINES001
+#pragma warning disable ASPIREPIPELINES002
+
 using System.Net;
 using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
+using Aspire.Hosting.Pipelines;
 using Aspire.Hosting.Upstash.Redis;
 using Aspire.Hosting.Upstash.Redis.Deployment;
 using Aspire.Hosting.Upstash.Redis.Management;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
 using PinguApps.Aspire.Hosting.Upstash.Redis.Tests.Support;
 using Reqnroll;
 using Xunit;
@@ -15,7 +21,8 @@ public sealed class OwnershipDeploymentStepDefinitions
 {
     private readonly UpstashRedisScenarioContext _context;
     private readonly OwnershipDeploymentManagementClient _client = new();
-    private UpstashRedisResolvedDeployment? _deployment;
+    private readonly OwnershipDeploymentStateManager _deploymentStateManager = new();
+    private RedisResource? _redisResource;
     private UpstashRedisOutputs? _outputs;
     private UpstashRedisDatabaseDetails? _result;
     private UpstashRedisRemoteIdentityState? _cachedIdentity;
@@ -42,10 +49,16 @@ public sealed class OwnershipDeploymentStepDefinitions
                 databaseName,
                 builder.AddParameter("upstash-account-email", "owner@example.com"),
                 builder.AddParameter("upstash-api-key", "management-secret", secret: true),
-                mode);
+                mode,
+                options =>
+                {
+                    options.Platform = "aws";
+                    options.PrimaryRegion = "eu-west-1";
+                    options.Tls = true;
+                });
 
+        _redisResource = redis.Resource;
         _outputs = redis.Resource.GetUpstashRedisOutputs();
-        _deployment = CreateDeployment(databaseName, mode);
     }
 
     [Given("the Upstash ownership deployment provider has no database named {string}")]
@@ -240,37 +253,24 @@ public sealed class OwnershipDeploymentStepDefinitions
     private async Task RunPipelineAsync()
     {
         _previousCreateCount = _client.CreateCount;
-        _result = await UpstashRedisDeploymentPipeline.ExecuteAsync(
-            GetDeployment(),
-            _client,
-            _cachedIdentity,
-            identity =>
-            {
-                _savedIdentity = identity;
-                _cachedIdentity = identity;
-                return Task.CompletedTask;
-            },
-            CancellationToken.None).ConfigureAwait(false);
 
-        GetOutputs().Populate(_result!);
-    }
+        RedisResource resource = GetRedisResource();
+        UpstashRedisRemoteIdentityDeploymentStateStore identityStore = new(_deploymentStateManager);
 
-    private static UpstashRedisResolvedDeployment CreateDeployment(
-        string databaseName,
-        UpstashRedisOwnershipMode ownershipMode)
-    {
-        UpstashRedisDeploymentOptions options = new()
+        if (_cachedIdentity is not null)
         {
-            Platform = "aws",
-            PrimaryRegion = "eu-west-1",
-            Tls = true,
-        };
+            await identityStore.SaveAsync(resource.Name, _cachedIdentity, CancellationToken.None).ConfigureAwait(false);
+        }
 
-        return new UpstashRedisResolvedDeployment(
-            databaseName,
-            ownershipMode,
-            new UpstashRedisManagementCredentials("owner@example.com", "management-secret"),
-            options.ToProviderOptions());
+        await UpstashRedisDeploymentPipeline.ExecuteAsync(resource, CreatePipelineStepContext(resource)).ConfigureAwait(false);
+
+        _savedIdentity = await identityStore.LoadAsync(resource.Name, CancellationToken.None).ConfigureAwait(false);
+        _cachedIdentity = _savedIdentity;
+
+        if (_savedIdentity is not null)
+        {
+            _result = await _client.GetDatabaseAsync(_savedIdentity.ProviderDatabaseId, CancellationToken.None).ConfigureAwait(false);
+        }
     }
 
     private UpstashRedisOutputs GetOutputs()
@@ -278,9 +278,30 @@ public sealed class OwnershipDeploymentStepDefinitions
         return _outputs ?? throw new InvalidOperationException("No Upstash Redis outputs were configured.");
     }
 
-    private UpstashRedisResolvedDeployment GetDeployment()
+    private RedisResource GetRedisResource()
     {
-        return _deployment ?? throw new InvalidOperationException("No ownership deployment was configured.");
+        return _redisResource ?? throw new InvalidOperationException("No ownership deployment was configured.");
+    }
+
+    private PipelineStepContext CreatePipelineStepContext(RedisResource resource)
+    {
+        ServiceProvider services = new ServiceCollection()
+            .AddSingleton<IDeploymentStateManager>(_deploymentStateManager)
+            .AddSingleton<IUpstashRedisManagementClient>(_client)
+            .BuildServiceProvider();
+
+        PipelineContext pipelineContext = new(
+            new DistributedApplicationModel([resource]),
+            new DistributedApplicationExecutionContext(DistributedApplicationOperation.Publish),
+            services,
+            NullLogger.Instance,
+            CancellationToken.None);
+
+        return new PipelineStepContext
+        {
+            PipelineContext = pipelineContext,
+            ReportingStep = null!,
+        };
     }
 
     private string GetLiveDatabaseName()
@@ -382,6 +403,50 @@ public sealed class OwnershipDeploymentStepDefinitions
             Eviction = database.Eviction,
             CustomerId = database.CustomerId,
         };
+    }
+
+    private sealed class OwnershipDeploymentStateManager : IDeploymentStateManager
+    {
+        private readonly Dictionary<string, DeploymentStateSection> _sections = [];
+
+        public string StateFilePath => "/tmp/fake-aspire-state.json";
+
+        public Task<DeploymentStateSection> AcquireSectionAsync(string sectionName, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (!_sections.TryGetValue(sectionName, out DeploymentStateSection? section))
+            {
+                section = new DeploymentStateSection(sectionName, [], version: 0);
+                _sections[sectionName] = section;
+            }
+
+            return Task.FromResult(section);
+        }
+
+        public Task SaveSectionAsync(DeploymentStateSection section, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            _sections[section.SectionName] = section;
+
+            return Task.CompletedTask;
+        }
+
+        public Task DeleteSectionAsync(DeploymentStateSection section, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            _sections.Remove(section.SectionName);
+
+            return Task.CompletedTask;
+        }
+
+        public Task ClearAllStateAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            _sections.Clear();
+
+            return Task.CompletedTask;
+        }
     }
 
     private sealed class OwnershipDeploymentManagementClient : IUpstashRedisManagementClient
