@@ -51,7 +51,7 @@ cache = await cache.publishToUpstash(
 
 const outputs = await cache.getUpstashRedisOutputs();
 
-let api = await builder.addProject("api", "../Api");
+let api = await builder.addProject("api", "../Api/Api.csproj");
 api = await api.withReference(cache);
 api = await api.withEnvironment("UPSTASH_REDIS_ENDPOINT", await outputs.endpoint());
 api = await api.withEnvironment("UPSTASH_REDIS_TLS", await outputs.tls());
