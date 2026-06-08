@@ -118,6 +118,12 @@ public sealed class PublishToUpstashStepDefinitions
         AspireModelAssertions.AssertStandardRedisResource(_context.RedisBuilder.Resource);
     }
 
+    [Then("the resource is excluded from publish")]
+    public void ThenTheResourceIsExcludedFromPublish()
+    {
+        Assert.True(AspireModelInspector.IsExcludedFromPublish(_context.RedisBuilder.Resource));
+    }
+
     [Then("the resource has Upstash deployment metadata for database {string}")]
     public void ThenTheResourceHasUpstashDeploymentMetadataForDatabase(string databaseName)
     {

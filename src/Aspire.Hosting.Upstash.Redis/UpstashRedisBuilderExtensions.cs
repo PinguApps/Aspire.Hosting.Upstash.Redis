@@ -115,6 +115,7 @@ public static class UpstashRedisBuilderExtensions
             options.ToProviderOptions();
 
             RemoveExistingUpstashPipelineStep(builder.Resource);
+            global::Aspire.Hosting.ResourceBuilderExtensions.ExcludeFromManifest(builder);
 
             builder.WithAnnotation(
                 new UpstashRedisDeploymentAnnotation(

@@ -17,7 +17,14 @@ public static class UpstashRedisAppHostSnippets
                 databaseName,
                 accountEmail,
                 apiKey,
-                UpstashRedisOwnershipMode.CreateOrAdopt);
+                UpstashRedisOwnershipMode.CreateOrAdopt,
+                options =>
+                {
+                    options.SetPlatform(UpstashRedisCloudPlatform.Aws);
+                    options.SetPrimaryRegion(UpstashRedisRegion.AwsEuWest1);
+                    options.SetPlan(UpstashRedisPlan.PayAsYouGo);
+                    options.Eviction = true;
+                });
 
         builder.AddProject<Projects.Api>("api")
             .WithReference(cache);

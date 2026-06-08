@@ -107,128 +107,46 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ### Preserve Baseline Content
 - Everything above this section is the user-authored baseline. Keep it intact.
-- Add repo-state updates beneath the existing content unless a future change clearly requires restructuring for accuracy.
+- Keep this section concise and accurate for the current released state of the repository.
 
-### Repository Goal
-- This repository is for an open source Aspire hosting integration for Upstash Redis.
-- The intended consumer experience starts from standard Aspire Redis usage, such as `builder.AddRedis("cache")`.
-- Local development should continue to behave like normal Aspire Redis.
-- Upstash behavior is opt-in and should only happen during `aspire deploy`, not during normal local runs.
+### Repository Overview
+- This repository contains the released `PinguApps.Aspire.Hosting.Upstash.Redis` package.
+- The package lets an Aspire AppHost opt a normal `RedisResource` into Upstash Redis during `aspire deploy`.
+- Consumer usage starts from standard Aspire Redis, such as `builder.AddRedis("cache")`, then adds `.PublishToUpstash(...)`.
+- Local development should continue to behave like normal Aspire Redis. Upstash behavior is deploy-only and opt-in.
 
-### Planned Product Contract
-- The package should let a consumer opt a standard Redis resource into Upstash publishing through a single publish-oriented API.
-- The deployment contract must support three ownership modes:
-  - create-only
-  - existing-only
-  - create-or-adopt
-- The remote Upstash database name is explicit and required.
-- Upstash management authentication is infrastructure-only and uses separate account email and API key values.
-- The consuming application should receive Redis connection details, not the Upstash management API key.
-- Repeated deploys should target the same intended remote database and reconcile only settings the caller explicitly set.
-- If an explicitly requested setting cannot be safely reconciled, deployment must fail clearly.
-- The package must never auto-delete remote Upstash databases in v1.
-- App-facing outputs are expected to include:
-  - a standard Redis connection string
-  - host / endpoint
-  - port
-  - password
-  - TLS enabled flag
-  - database name
+### Current Product Contract
+- This package is Upstash Redis only.
+- Remote identity is the explicit Upstash database name.
+- Supported ownership modes are `CreateOnly`, `ExistingOnly`, and `CreateOrAdopt`.
+- Management authentication uses Upstash account email plus Management API key and is infrastructure-only.
+- Application-facing outputs expose Redis connection details, never the Upstash Management API key.
+- Repeated deploys must target the same intended remote database and only reconcile settings the caller explicitly set.
+- Deployment must fail clearly on unsafe drift or unreconcilable explicit settings.
+- The package must not auto-delete remote Upstash databases.
 
-### Current Repository State
-- The repository currently contains the package project, the test project, shared build settings, planning artifacts, decision records, the Aspire integration skeleton from task `0.1`, the locked public API shape from task `1.1`, the internal resource annotation/state model from task `2.1`, the typed Upstash Redis management client layer from task `2.2`, the Upstash Redis option/domain model from task `2.3`, deploy-time auth/parameter resolution from task `3.1`, the ownership-resolution decision engine from task `3.2`, the remote identity resolver from task `3.3`, the create flow from task `4.1`, the mutable-setting reconciler from task `4.2` with deploy-pipeline remote identity cache wiring, immutable drift detection from task `4.3`, primary Redis connection-string output generation from task `5.1`, supplementary app-facing outputs from task `5.2`, deploy diagnostics/progress reporting from task `5.3`, local no-op/API-shape hardening coverage from task `6.1`, end-to-end ownership-mode deployment hardening from task `6.2`, reconcile/output hardening coverage from task `6.3`, release-quality README usage docs from task `7.1`, and compile-validated AppHost sample snippets from task `7.2`.
-- `src/Aspire.Hosting.Upstash.Redis/Aspire.Hosting.Upstash.Redis.csproj` is the main package project to implement.
-- `tests/Aspire.Hosting.Upstash.Redis/` is the single test project and should remain the home for the package test suite.
-- The test project now has a Reqnroll feature taxonomy and shared support layer from task `1.2`; read `tests/Aspire.Hosting.Upstash.Redis/README.md` before adding scenarios.
-- `plans/` contains the current implementation roadmap as 22 numbered task files from `0.1` through `7.3`.
-- `decisions/` contains accepted architecture and product decision records. Future files that record durable decisions, rejected alternatives, or investigation outcomes should live there rather than in `plans/`.
-- `.diary/` contains branch-specific session state and must be read and maintained per the diary rules above.
-- `README.md` is now the consumer-facing usage guide for installing the package, opting Aspire Redis into Upstash deployment, ownership modes, parameters, optional settings, app-facing outputs, repeated deploy behavior, and safety limits.
-- Plan `0.2` is complete and now contains the authoritative Upstash Redis management capability matrix for v1.
-- Plan `1.1` is complete; `.PublishToUpstash(...)` is the locked public entry point, ownership is expressed with `UpstashRedisOwnershipMode`, and required/optional deploy-time strings are captured as `UpstashRedisValue` literal-or-parameter sources.
-- Plan `1.2` is complete and now defines the Reqnroll spec matrix, fake-provider default pattern, Aspire model inspection helpers, and opt-in live-provider cleanup pattern.
-- Plan `2.1` is complete; `.PublishToUpstash(...)` attaches an internal `UpstashRedisDeploymentState` snapshot to the built-in `RedisResource` through an internal annotation, preserving required inputs, ownership mode, management credential value sources, optional settings, and explicit-setting metadata without changing local Redis behavior.
-- Plan `2.2` is complete; `src/Aspire.Hosting.Upstash.Redis/Management/` contains the narrow internal client for the supported Upstash Redis Developer API endpoints, typed DTOs, Basic-auth helper, readiness polling helper, and typed provider failure classification.
-- Plan `2.3` is complete; public typed helpers now cover Upstash Redis cloud platforms, regions, plans, and budgets while internal provider-domain mapping validates literal values and preserves parameter-backed sources for deploy-time resolution.
-- Plan `3.1` is complete; the registered Redis deploy pipeline step resolves `UpstashRedisDeploymentState` through Aspire `ParameterResource.GetValueAsync(...)`, validates parameter-backed provider options after resolution, produces actionable missing-parameter failures, and keeps the Upstash Management API key inside infrastructure-only management credentials rather than app-facing Redis outputs.
-- Plan `3.2` is complete; `src/Aspire.Hosting.Upstash.Redis/Deployment/` contains the internal ownership resolver that looks up the explicit remote database name through the management client, selects create or adopt for the three ownership modes, and raises stable ownership-resolution failures for create-only collisions, existing-only misses, and incompatible existing databases.
-- Plan `3.3` is complete; `UpstashRedisRemoteIdentityResolver` uses explicit database-name lookup as the v1 identity source of truth, can reuse a cached provider id through `UpstashRedisRemoteIdentityState` loaded from the Aspire deployment-state-backed store, verifies cached detail responses still have the configured name and cached provider id, confirms a fresh configured-name lookup resolves exactly one matching provider id before cached reuse, treats configured-name changes as selecting a different remote identity, and fails unsafe drift or duplicate-name situations.
-- Plan `4.1` is complete; `UpstashRedisCreateFlow` maps resolved v1 options to `POST /redis/database`, runs only for create ownership results, sends TLS as required-on, waits for the created database to become active with no modifying state, returns credential-bearing details for later output tasks while failing provider-contract responses that omit required Redis connection fields, and the deploy pipeline persists the resolved remote identity after successful create/adopt.
-- Plan `4.2` is complete; `UpstashRedisReconciler` enforces only explicit desired read regions, plan, budget, and eviction settings on existing databases, applies updates in deterministic order, re-fetches readiness/detail state after each mutation, verifies final convergence, and raises setting-specific reconciliation failures.
-- Plan `4.3` is complete; `UpstashRedisImmutableDriftDetector` enforces fail-fast drift for database name identity, detectable platform, explicit primary region, and TLS disabled state before unsafe mutation, while leaving read regions, plan, budget, and eviction for mutable reconciliation.
-- Plan `5.1` is complete; after successful create/adopt/reconcile the deploy pipeline redirects the existing `RedisResource` connection string to the final Upstash database details using Aspire Redis's standard `host:port,password=password,ssl=true` format, adds deploy-time connection-property overrides for normal reference injection, rejects endpoint slugs or URI-like endpoint values, and keeps Upstash management credentials out of app-facing output.
-- Plan `5.2` is complete; `.PublishToUpstash(...)` attaches supplementary output references to the Redis resource, `GetUpstashRedisOutputs()` exposes stable `Endpoint`, `Port`, `Password`, `Tls`, and `DatabaseName` references with public secret metadata, the deploy pipeline populates them from the credential-bearing database detail response after create/adopt/reconcile succeeds, and only `Password` is classified as secret.
-- Plan `5.3` is complete; the deploy pipeline reports secret-safe progress phases for configuration resolution, database lookup, immutable drift validation, create, mutable reconciliation, and output retrieval, while redacting the Upstash Management API key, Redis credentials, and full Redis connection strings.
-- Plan `6.1` is complete; the Reqnroll suite now hardens plain `AddRedis` no-op behavior, local pre-deploy `.PublishToUpstash(...)` no-op behavior, standard Redis reference preservation, overload consistency, same-builder fluent chaining, and management-secret separation from app-facing Redis outputs/references.
-- Plan `6.2` is complete; `Features/OwnershipModes/OwnershipDeployment.feature` now covers deployment-pipeline ownership behavior for create-only, existing-only, create-or-adopt, repeated deploy identity reuse, duplicate configured names, cached identity edge cases, and opt-in live ownership create/adopt scenarios that register isolated database deletion cleanup.
-- Plan `6.3` is complete; hardening coverage now includes individual mutable setting reconciliation, TLS non-mutation, missing Redis credentials after adopt, missing provider-password failures for primary and supplementary output paths, assertions that missing credentials do not trigger automatic `reset-password`, secret redaction, and opt-in live-provider disposable deploy/repeat-deploy/output scenarios.
-- Plan `7.1` is complete; `README.md` now provides release-quality consumer usage docs with canonical create-or-adopt usage, less common ownership modes, recommended parameter patterns, `UpstashRedisValue` optional-setting examples, output surfaces, repeated deployment behavior, native Upstash account requirements, and v1 limitations.
-- Plan `7.2` is complete; `samples/AppHostSnippets/UpstashRedisAppHostSnippets.cs` is linked into the test project and exercised by `Features/DocsSamples/AppHostSnippets.feature`, covering create-or-adopt, create-only, existing-only, parameterized credentials and database names, parameter-backed optional settings, project `WithReference(cache)`, and supplementary output access.
-- Plan `7.3` is complete; the full solution build and Reqnroll suite pass, live-provider scenarios ran with cleanup verified against the Upstash account, README/sample/API/plan consistency was reviewed, and no release-critical follow-up work remains.
-- Task agents can now receive Upstash management credentials through environment variables `UPSTASH_EMAIL` and `UPSTASH_API_KEY`.
+### Key Paths
+- `src/Aspire.Hosting.Upstash.Redis/` contains the package source.
+- `src/Aspire.Hosting.Upstash.Redis/Management/` contains the typed Upstash management client layer.
+- `src/Aspire.Hosting.Upstash.Redis/Deployment/` contains deploy-time resolution, ownership, create, reconcile, drift, and diagnostics logic.
+- `tests/Aspire.Hosting.Upstash.Redis/` contains the full Reqnroll-based test suite.
+- `tests/Aspire.Hosting.Upstash.Redis/README.md` explains the feature taxonomy and test support patterns.
+- `samples/AppHostSnippets/UpstashRedisAppHostSnippets.cs` is the compile-validated sample source used by docs tests.
+- `README.md` is the consumer-facing package guide and should stay aligned with shipped behavior.
+- `.diary/` contains branch-specific session state and must be maintained per the diary rules above.
 
 ### Technical Baseline
 - Target framework: `.NET 10`.
-- Target Aspire version for v1 planning: `13.4.2`.
-- The package is Upstash Redis only. Do not broaden scope to non-Redis Upstash products in v1.
-- The desired v1 option surface includes:
-  - database name
-  - platform / cloud provider
-  - primary region
-  - read regions
-  - plan
-  - budget
-  - eviction
-- TLS, treated as required-on/read-only rather than safely mutable
-- The v1 mutable provider settings are read regions, plan, budget, and eviction.
-- The v1 create-time-only or fail-fast settings include platform, primary region, database name identity, and TLS disabled state.
-- Literal platform, region, plan, and budget values are validated during AppHost model construction. Parameter-backed values preserve their source and must be validated after deploy-time resolution.
-- Remote identity is deterministic by explicit database name. Cached provider ids are an optimization/diagnostic state only and must be name-verified before reuse.
+- Target Aspire version: `13.4.2`.
+- Keep Aspire's built-in `RedisResource` as the resource of record.
+- Preserve normal local Redis behavior unless the work is explicitly about deploy-time Upstash behavior.
+- Keep app-facing Redis outputs separate from infrastructure-only management credentials.
+- TLS is required-on/read-only for v1.
+- Mutable provider settings are read regions, plan, budget, and eviction.
+- Database identity, platform, primary region, and TLS disabled state are create-time or fail-fast checks.
 
-### Testing Rules For This Repository
-- Full test coverage is the goal.
-- Every task that introduces or changes code must add or update tests in the same PR.
-- All tests in this repository should use Reqnroll feature files and step definitions. Do not introduce a second testing style for product behavior.
-- Each task should validate its own work before PR creation. Do not defer obvious missing coverage to later tasks unless the plan explicitly says that later task is the first valid place for it.
-- Opt-in live-provider tests are allowed when `UPSTASH_EMAIL` and `UPSTASH_API_KEY` are present. Deterministic fake-provider coverage remains the default path for normal test runs.
-- Live-provider scenarios must use the `@live-upstash` tag so the shared hook can skip without credentials and run registered cleanup actions.
-- Any live Upstash test must leave the remote account in the same state it found it. Use isolated explicit database names where possible, always tear down databases created by the test, and restore any pre-existing resource settings the test changed before it exits.
-- Live-provider tests must skip cleanly when the required environment variables are absent, and they must never rely on leftover remote state from prior runs.
-
-### Plans As Source Of Truth
-- Treat `plans/` as the execution board for this repository.
-- The numbering expresses dependency stages and parallelism:
-  - `0.x` tasks can run first
-  - tasks with the same stage prefix may run in parallel if their dependencies allow it
-  - later stages assume earlier blocking work is complete
-- If implementation or investigation changes the actual required order, scope, or dependency graph, update the affected plan files in the same PR before it is created.
-- Do not let the plan drift behind the code.
-
-### Decisions As Source Of Truth
-- Treat `decisions/` as the repository's home for durable decision records.
-- Decision files should capture the accepted direction, important evidence, rejected alternatives, and any boundaries that future implementation must preserve.
-- If later work changes or supersedes a recorded decision, update or add the affected decision record in the same PR.
-
-### Documentation Sync Rule
-- Keep the repository's documented state accurate at all times.
-- Whenever a task changes behavior, structure, workflow, usage, constraints, validation, or roadmap reality, update the relevant documentation in the same PR.
-- At minimum, consider whether the change requires updates to:
-  - `README.md`
-  - `AGENTS.md`
-  - one or more files in `plans/`
-  - one or more files in `decisions/`
-  - `.diary/<branch>.md`
-- A PR is not complete if the code, tests, `README.md`, `AGENTS.md`, and relevant plan files describe different realities.
-
-### Task Execution Rule
-- When working a plan task, read the specific file in `plans/` first and treat it as an executable brief.
-- If a task includes investigation and that investigation changes assumptions, update the impacted task files before opening the PR.
-- If a task discovers new required work, create or revise plan files in the same branch rather than leaving the follow-up only in PR prose.
-- PR descriptions should explain the work in enough detail that the next agent can understand what changed, why it changed, what was tested, and whether any plan files were updated.
-
-### Implementation Boundaries
-- Prefer the smallest correct implementation that satisfies the current task and the locked product contract.
-- Preserve normal Aspire Redis local behavior unless the task explicitly concerns deploy-time Upstash behavior.
-- Keep application-facing Redis outputs separate from infrastructure-only Upstash management credentials.
-- Do not add speculative features such as auto-delete, non-Redis Upstash products, or extra provider abstractions that are not required by the current plan.
-- The `0.1` decision keeps Aspire's built-in `RedisResource` as the resource of record. Upstash intent is attached through resource annotations and Aspire `13.4.2` deploy pipeline steps, not through a wrapper resource or local-run behavior.
+### Testing And Docs
+- Any behavior change must update or add Reqnroll coverage in `tests/Aspire.Hosting.Upstash.Redis/`.
+- Do not introduce a second testing style for product behavior.
+- Live-provider scenarios must use `@live-upstash`, skip cleanly without `UPSTASH_EMAIL` and `UPSTASH_API_KEY`, and leave the remote account unchanged after the run.
+- Keep `README.md`, `AGENTS.md`, samples, and tests in sync with the actual shipped behavior.
