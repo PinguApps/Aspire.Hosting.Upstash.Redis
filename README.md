@@ -1,6 +1,8 @@
-# Aspire.Hosting.Upstash.Redis
+# PinguApps.Aspire.Hosting.Upstash.Redis
 
-`Aspire.Hosting.Upstash.Redis` lets an Aspire AppHost publish a normal Aspire Redis resource to Upstash Redis during `aspire deploy`.
+[![PinguApps.Aspire.Hosting.Upstash.Redis version](https://img.shields.io/nuget/v/PinguApps.Aspire.Hosting.Upstash.Redis?style=for-the-badge&label=PinguApps.Aspire.Hosting.Upstash.Redis)](https://www.nuget.org/packages/PinguApps.Aspire.Hosting.Upstash.Redis/) [![PinguApps.Aspire.Hosting.Upstash.Redis downloads](https://img.shields.io/nuget/dt/PinguApps.Aspire.Hosting.Upstash.Redis?style=for-the-badge&label=downloads)](https://www.nuget.org/packages/PinguApps.Aspire.Hosting.Upstash.Redis/)
+
+`PinguApps.Aspire.Hosting.Upstash.Redis` lets an Aspire AppHost publish a normal Aspire Redis resource to Upstash Redis during `aspire deploy`.
 
 The package is intentionally small: you still start with Aspire's built-in `builder.AddRedis("cache")`, opt that resource into Upstash publishing with `.PublishToUpstash(...)`, and keep using normal Aspire Redis references for your application.
 
