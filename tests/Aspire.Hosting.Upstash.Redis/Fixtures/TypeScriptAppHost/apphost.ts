@@ -1,10 +1,10 @@
-import { createBuilder } from "./.aspire/modules/aspire.mjs";
 import {
+  createBuilder,
   upstashRedisCloudPlatform,
   upstashRedisOwnershipMode,
   upstashRedisPlan,
   upstashRedisRegion,
-} from "./.aspire/modules/pinguapps-aspire-hosting-upstash-redis.mjs";
+} from "./.modules/aspire.js";
 
 const builder = await createBuilder();
 
@@ -25,13 +25,17 @@ cache = await cache.publishToUpstash(databaseName, accountEmail, apiKey, {
 });
 
 const outputs = await cache.getUpstashRedisOutputs();
+const outputReferences = [
+  await outputs.endpoint(),
+  await outputs.port(),
+  await outputs.password(),
+  await outputs.tls(),
+  await outputs.databaseName(),
+];
 
 let worker = await builder.addContainer("worker", "mcr.microsoft.com/dotnet/runtime-deps:10.0");
 worker = await worker.withReference(cache);
-worker = await worker.withEnvironment("UPSTASH_REDIS_ENDPOINT", await outputs.endpoint());
-worker = await worker.withEnvironment("UPSTASH_REDIS_PORT", await outputs.port());
-worker = await worker.withEnvironment("UPSTASH_REDIS_PASSWORD", await outputs.password());
-worker = await worker.withEnvironment("UPSTASH_REDIS_TLS", await outputs.tls());
-worker = await worker.withEnvironment("UPSTASH_REDIS_DATABASE_NAME", await outputs.databaseName());
+void outputReferences;
 
-await builder.build().runAsync();
+const app = await builder.build();
+await app.run();

@@ -10,5 +10,8 @@
   "include": [
     "apphost.ts",
     ".modules/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
   ]
 }
