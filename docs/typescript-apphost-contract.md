@@ -24,7 +24,7 @@ import {
   upstashRedisOwnershipMode,
   upstashRedisPlan,
   upstashRedisRegion,
-} from "./.aspire/modules/pinguapps-aspire-hosting-upstash-redis";
+} from "./.aspire/modules/pinguapps-aspire-hosting-upstash-redis.mjs";
 
 const builder = await createBuilder();
 
