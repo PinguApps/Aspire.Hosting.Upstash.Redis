@@ -9,6 +9,11 @@ namespace PinguApps.Aspire.Hosting.Upstash.Redis.Tests.Support;
 
 internal static class AspireModelInspector
 {
+    public static bool IsExcludedFromPublish(IResource resource)
+    {
+        return resource.IsExcludedFromPublish();
+    }
+
     public static UpstashRedisDeploymentAnnotation GetUpstashAnnotation(RedisResource resource)
     {
         return Assert.Single(resource.Annotations.OfType<UpstashRedisDeploymentAnnotation>());

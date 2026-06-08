@@ -4,6 +4,7 @@ Feature: Publish Redis to Upstash
     Given a standard Aspire Redis resource named "cache"
     When the Redis resource is marked for Upstash database "orders-cache"
     Then the resource remains a standard Aspire Redis resource
+    And the resource is excluded from publish
     And the resource has Upstash deployment metadata for database "orders-cache"
     And mutating captured callback options cannot mutate deployment metadata
     And the explicit setting snapshot cannot mutate deployment metadata
