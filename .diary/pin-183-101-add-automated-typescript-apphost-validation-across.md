@@ -1,11 +1,16 @@
 ## Rolling state
 - Goal: Add automated validation that TypeScript AppHosts can consume the Upstash Redis integration across generated SDK, local run, and deploy-oriented flows.
-- Current plan: Reqnroll now executes restore/type-check/publish-list for the TypeScript fixture; local start is Docker-gated with Redis readiness handling.
-- Open questions/risks: Docker is not installed in this environment, so the local-start scenario skipped here; live-provider TypeScript fixture coverage is still not added.
-- Next actions: Add TypeScript-authored fake-provider repeated-deploy coverage; add gated live-provider TypeScript coverage if still required by PIN-183.
+- Current plan: TypeScript fixture, SDK generation/type-check, local-run guard, publish-list guard, fake repeated-deploy, and gated live repeated-deploy validation are implemented.
+- Open questions/risks: Aspire CLI/Docker-dependent fixture scenarios skip cleanly when prerequisites are unavailable; live-provider scenario skips without `UPSTASH_EMAIL` and `UPSTASH_API_KEY`.
+- Next actions: None for PIN-183 unless review asks for broader coverage.
 - Key paths: tests/Aspire.Hosting.Upstash.Redis/Fixtures/TypeScriptAppHost; tests/Aspire.Hosting.Upstash.Redis/Features/ApiShape/TypeScriptAppHostFixture.feature; tests/Aspire.Hosting.Upstash.Redis/Steps/TypeScriptAppHostFixtureStepDefinitions.cs
 
 ## Session log
+### 2026-06-08 23:42 Z (agent/pin-183-101-add-automated-typescript-apphost-validation-across)
+- Add TypeScript bridge deployment validation [tests] (impact: med)
+  - Why: PIN-183 still needed TypeScript-authored fake repeated-deploy and gated live-provider evidence through the existing deploy pipeline.
+  - Change: Added Reqnroll scenarios and steps for `PublishToUpstashForTypeScript` repeated deploys with fake provider state plus `@live-upstash` disposable repeat deploy cleanup. (files: TypeScriptDeployment.feature, TypeScriptDeploymentStepDefinitions.cs, tests README | cmds: `dotnet test tests/Aspire.Hosting.Upstash.Redis/Aspire.Hosting.Upstash.Redis.Tests.csproj --filter "FullyQualifiedName~TypeScript"`, `dotnet test tests/Aspire.Hosting.Upstash.Redis/Aspire.Hosting.Upstash.Redis.Tests.csproj`)
+  - Notes: Full test project passed 141/144 with 3 prerequisite-gated TypeScript Aspire CLI skips.
 ### 2026-06-08 23:36 Z (agent/pin-183-101-add-automated-typescript-apphost-validation-across)
 - Add executable TypeScript AppHost validation [tests] (impact: med)
   - Why: PIN-183 requires generated SDK, local run, and publish-oriented evidence beyond script-shape checks.
