@@ -6,6 +6,7 @@ namespace Aspire.Hosting.Upstash.Redis;
 /// <summary>
 /// Supplementary app-facing outputs populated from the deployed Upstash Redis database.
 /// </summary>
+[AspireExport("pinguapps.upstash.redis.outputs", ExposeProperties = true, ExposeMethods = false)]
 public sealed class UpstashRedisOutputs
 {
     internal UpstashRedisOutputs(RedisResource resource)
@@ -43,9 +44,11 @@ public sealed class UpstashRedisOutputs
     public UpstashRedisOutputReference DatabaseName { get; }
 
     /// <summary>The stable supplementary output references.</summary>
+    [AspireExportIgnore(Reason = "TypeScript AppHosts consume named output properties directly.")]
     public IReadOnlyList<UpstashRedisOutputReference> Properties { get; }
 
     /// <summary>Returns whether the named supplementary output contains a secret value.</summary>
+    [AspireExportIgnore(Reason = "Output secret classification is implementation metadata.")]
     public static bool IsSecret(string outputName)
     {
         ArgumentNullException.ThrowIfNull(outputName);

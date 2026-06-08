@@ -15,6 +15,7 @@ public static class UpstashRedisResourceExtensions
     /// <returns>The stable Upstash Redis output references.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="resource"/> is null.</exception>
     /// <exception cref="InvalidOperationException">The Redis resource has not been marked for Upstash publishing.</exception>
+    [AspireExportIgnore(Reason = "TypeScript AppHosts should access outputs from the Redis resource builder.")]
     public static UpstashRedisOutputs GetUpstashRedisOutputs(this RedisResource resource)
     {
         ArgumentNullException.ThrowIfNull(resource);
@@ -24,6 +25,21 @@ public static class UpstashRedisResourceExtensions
             .SingleOrDefault()
             ?.Outputs
             ?? throw new InvalidOperationException($"Redis resource '{resource.Name}' has not been marked for Upstash publishing.");
+    }
+
+    /// <summary>
+    /// Gets the supplementary app-facing outputs for a Redis resource builder marked with <c>publishToUpstash</c>.
+    /// </summary>
+    /// <param name="builder">The Redis resource builder.</param>
+    /// <returns>The stable Upstash Redis output references.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="builder"/> is null.</exception>
+    /// <exception cref="InvalidOperationException">The Redis resource has not been marked for Upstash publishing.</exception>
+    [AspireExport("pinguapps.upstash.redis.getUpstashRedisOutputs", MethodName = "getUpstashRedisOutputs")]
+    public static UpstashRedisOutputs GetUpstashRedisOutputsForTypeScript(this IResourceBuilder<RedisResource> builder)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+
+        return builder.Resource.GetUpstashRedisOutputs();
     }
 
     internal static UpstashRedisDeploymentState? GetUpstashRedisDeploymentState(this RedisResource resource)
