@@ -18,6 +18,7 @@ The TypeScript surface should be DTO-based and intentionally smaller than the cu
 Pseudocode for the generated TypeScript AppHost API:
 
 ```ts
+import { createBuilder } from "./.aspire/modules/aspire.mjs";
 import {
   upstashRedisCloudPlatform,
   upstashRedisOwnershipMode,
@@ -25,7 +26,7 @@ import {
   upstashRedisRegion,
 } from "./.aspire/modules/pinguapps-aspire-hosting-upstash-redis";
 
-const builder = await DistributedApplication.createBuilder(args);
+const builder = await createBuilder();
 
 const databaseName = await builder.addParameter("upstash-database-name");
 const accountEmail = await builder.addParameter("upstash-account-email");
