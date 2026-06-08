@@ -1,6 +1,9 @@
-# Aspire.Hosting.Upstash.Redis
+# PinguApps.Aspire.Hosting.Upstash.Redis
 
-[IMG0](https://www.nuget.org/packages/PinguApps.Aspire.Hosting.Upstash.Redis/) [IMG1](https://www.nuget.org/packages/PinguApps.Aspire.Hosting.Upstash.Redis/)
+[![PinguApps.Aspire.Hosting.Upstash.Redis version](https://img.shields.io/nuget/v/PinguApps.Aspire.Hosting.Upstash.Redis?style=for-the-badge&label=PinguApps.Aspire.Hosting.Upstash.Redis)](https://www.nuget.org/packages/PinguApps.Aspire.Hosting.Upstash.Redis/) [![PinguApps.Aspire.Hosting.Upstash.Redis downloads](https://img.shields.io/nuget/dt/PinguApps.Aspire.Hosting.Upstash.Redis?style=for-the-badge&label=downloads)](https://www.nuget.org/packages/PinguApps.Aspire.Hosting.Upstash.Redis/)
+
+`PinguApps.Aspire.Hosting.Upstash.Redis` lets an Aspire AppHost publish a normal Aspire Redis resource to Upstash Redis during `aspire deploy`.
+
 
 `Aspire.Hosting.Upstash.Redis` lets you keep using a normal Aspire Redis resource in your AppHost and opt it into Upstash Redis only for deployment.
 You still start with `builder.AddRedis("cache")`. You still reference that resource with normal Aspire APIs such as `.WithReference(cache)`. The only extra step is calling `.PublishToUpstash(...)` so `aspire deploy` can create or adopt a real Upstash Redis database and redirect the standard Redis connection details to it.
