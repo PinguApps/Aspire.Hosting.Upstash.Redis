@@ -5,7 +5,7 @@ This document defines what full TypeScript AppHost support means for this reposi
 TypeScript support is complete only when a maintainer can validate the same deploy-only Upstash Redis behaviour from a TypeScript AppHost that is already covered for .NET AppHosts:
 
 - local AppHost runs keep using normal Aspire Redis behaviour
-- `PublishToUpstash` records deploy-time intent without calling Upstash at model/build time
+- `publishToUpstash` records deploy-time intent without calling Upstash at model/build time
 - `aspire deploy` resolves parameters, creates or adopts the named Upstash Redis database, reconciles only explicit mutable settings, fails on unsafe drift, and redirects app-facing Redis outputs
 - management credentials remain infrastructure-only
 - repeated deploys target the same configured remote database name
@@ -16,8 +16,8 @@ TypeScript support is complete only when a maintainer can validate the same depl
 | Area | Required scenarios | Normal CI | Gated or opt-in | Manual only |
 | --- | --- | --- | --- | --- |
 | Model/build-time validation | A TypeScript AppHost can import the generated Aspire module, call the Upstash Redis API, build the model, and represent the same annotations/options as the equivalent .NET AppHost. Invalid literal values fail before deploy where TypeScript can express literals. Parameter-backed values remain deploy-time values. | Yes. Exercise through the Reqnroll suite using a checked-in TypeScript fixture and deterministic assertions over the generated model or generated artifacts. | No. | No. |
-| Generated SDK validation | The generated TypeScript surface exposes the expected `PublishToUpstash` shape, ownership modes, option names, output helpers, and supported value constants without inventing a separate npm package story. | Yes. Reqnroll scenarios should compile/type-check the fixture against the generated module output produced by the current package. | No. | No. |
-| Local AppHost run validation | A TypeScript AppHost with `AddRedis(...).PublishToUpstash(...)` starts locally without Upstash credentials being required by the local application path. Standard Redis references keep working as a normal Aspire Redis resource. | Yes, if it can run without containers or external services in the existing CI environment by validating the model and local run contract. | If local runtime dependencies require containers or host services unavailable in CI, run through an explicit opt-in job. | No. |
+| Generated SDK validation | The generated TypeScript surface exposes the expected `publishToUpstash` shape, ownership modes, option names, output helpers, and supported value constants without inventing a separate npm package story. | Yes. Reqnroll scenarios should compile/type-check the fixture against the generated module output produced by the current package. | No. | No. |
+| Local AppHost run validation | A TypeScript AppHost with `addRedis(...).publishToUpstash(...)` starts locally without Upstash credentials being required by the local application path. Standard Redis references keep working as a normal Aspire Redis resource. | Yes, if it can run without containers or external services in the existing CI environment by validating the model and local run contract. | If local runtime dependencies require containers or host services unavailable in CI, run through an explicit opt-in job. | No. |
 | Publish validation | `aspire publish` for the TypeScript AppHost emits deployment artifacts where the Redis resource is treated as deploy-time Upstash intent and no fallback cloud compute Redis resource is published. | Yes for deterministic artifact inspection. | No. | No. |
 | Deploy validation with fake provider | Deployment pipeline behaviour from the TypeScript fixture covers create-only, existing-only, create-or-adopt, repeated deploy identity reuse, mutable reconciliation, immutable drift failures, output redirection, and secret redaction against the deterministic fake provider. | Yes. Product behaviour remains in Reqnroll and reuses the existing fake-provider/support model. | No. | No. |
 | Live-provider validation | A disposable TypeScript AppHost deploy can create/adopt a uniquely named Upstash database, repeat deploy against the same remote identity, verify app-facing Redis outputs, and clean up without leaving account changes behind. | No. | Yes. Tag with `@live-upstash`, require `UPSTASH_EMAIL` and `UPSTASH_API_KEY`, generate isolated names, and use the shared cleanup stack. | No, except for exploratory provider troubleshooting after a gated failure. |
@@ -33,7 +33,7 @@ TypeScript fixtures should live under `tests/Aspire.Hosting.Upstash.Redis/Fixtur
 
 The fixture should include:
 
-- a minimal TypeScript AppHost using standard Aspire Redis plus `PublishToUpstash`
+- a minimal TypeScript AppHost using standard Aspire Redis plus `publishToUpstash`
 - a variant with explicit optional settings for platform, primary region, read regions, plan, budget, eviction, and TLS-on intent
 - a small consumer resource reference so standard Redis connection output can be inspected
 - TypeScript package metadata only as needed to run the Aspire AppHost and generated module checks
@@ -84,7 +84,7 @@ The feature is fully demoable when the repository contains enough assets for a m
 
 Minimum in-repo sample assets:
 
-- `samples/TypeScriptAppHost/` with a minimal TypeScript AppHost using `AddRedis(...).PublishToUpstash(...)`
+- `samples/TypeScriptAppHost/` with a minimal TypeScript AppHost using `addRedis(...).publishToUpstash(...)`
 - a tiny consumer app or container resource that receives the standard Redis reference
 - sample parameter/secret setup instructions aligned with `docs/getting-started-typescript.md`
 - a publish/deploy command path that uses the current package rather than an unrelated published version
@@ -109,7 +109,7 @@ Use this checklist in the final walkthrough ticket.
 1. Start from a clean checkout of the repository and confirm normal tests pass without Upstash credentials.
 2. Create a fresh TypeScript AppHost using the documented Aspire command path.
 3. Add the current repository package to that AppHost using the documented local package or project-reference path.
-4. Add a normal Redis resource and opt it into Upstash Redis with `PublishToUpstash`.
+4. Add a normal Redis resource and opt it into Upstash Redis with `publishToUpstash`.
 5. Configure parameters for `upstash-database-name`, `upstash-account-email`, and secret `upstash-api-key`.
 6. Add explicit create settings for platform and primary region, plus at least one mutable setting such as plan or eviction.
 7. Run the AppHost locally and verify the local path behaves like standard Aspire Redis.
