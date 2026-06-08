@@ -19,6 +19,8 @@ public sealed class UpstashRedisScenarioContext
 
     internal bool? FluentApiReturnedSameBuilder { get; private set; }
 
+    internal UpstashRedisOutputs? LastOutputs { get; private set; }
+
     public List<UpstashRedisValue> ConfiguredReadRegions { get; } = ["eu-west-2"];
 
     internal FakeUpstashProvider FakeProvider { get; } = new();
@@ -221,6 +223,50 @@ public sealed class UpstashRedisScenarioContext
                 options.Eviction = true;
                 options.Tls = true;
             });
+    }
+
+    public void MarkRedisForUpstashThroughTypeScriptBridgeWithDtoOptions()
+    {
+        IResourceBuilder<RedisResource> originalBuilder = RedisBuilder;
+        IResourceBuilder<ParameterResource> databaseName = AppBuilder.AddParameter("upstash-database-name");
+        _accountEmail = AppBuilder.AddParameter("upstash-account-email");
+        _apiKey = AppBuilder.AddParameter("upstash-api-key", secret: true);
+
+        _redisBuilder = RedisBuilder.PublishToUpstashForTypeScript(
+            databaseName,
+            _accountEmail,
+            _apiKey,
+            new UpstashRedisDeploymentOptionsDto
+            {
+                OwnershipMode = UpstashRedisOwnershipMode.CreateOnly,
+                Platform = UpstashRedisCloudPlatform.Aws,
+                PrimaryRegion = UpstashRedisRegion.AwsEuWest1,
+                ReadRegions = [UpstashRedisRegion.AwsEuWest2],
+                Plan = UpstashRedisPlan.PayAsYouGo,
+                Budget = 360,
+                Eviction = true,
+                Tls = true
+            });
+
+        FluentApiReturnedSameBuilder = ReferenceEquals(originalBuilder, _redisBuilder);
+    }
+
+    public void TryMarkRedisForUpstashThroughTypeScriptBridgeWithDisabledTls()
+    {
+        ConfigurationException = Record.Exception(() =>
+            RedisBuilder.PublishToUpstashForTypeScript(
+                AppBuilder.AddParameter("upstash-database-name"),
+                AppBuilder.AddParameter("upstash-account-email"),
+                AppBuilder.AddParameter("upstash-api-key", secret: true),
+                new UpstashRedisDeploymentOptionsDto
+                {
+                    Tls = false
+                }));
+    }
+
+    public void GetOutputsThroughTypeScriptBridge()
+    {
+        LastOutputs = RedisBuilder.GetUpstashRedisOutputsForTypeScript();
     }
 
     public void MarkRedisForUpstashWithExplicitNullPrimaryRegion()

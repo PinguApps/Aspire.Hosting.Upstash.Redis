@@ -5,6 +5,7 @@ namespace Aspire.Hosting.Upstash.Redis;
 /// <summary>
 /// Represents an Upstash Redis deployment value supplied either as a literal string or as an Aspire parameter.
 /// </summary>
+[AspireExportIgnore(Reason = "TypeScript AppHosts use parameter builders and value catalogs instead of raw deployment values.")]
 public sealed class UpstashRedisValue
 {
     private UpstashRedisValue(string literalValue)

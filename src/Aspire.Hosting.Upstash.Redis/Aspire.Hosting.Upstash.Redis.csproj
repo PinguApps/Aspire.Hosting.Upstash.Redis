@@ -3,6 +3,7 @@
   <PropertyGroup>
     <PackageId>PinguApps.Aspire.Hosting.Upstash.Redis</PackageId>
     <Description>Upstash integration for Aspire.</Description>
+    <EnableAspireIntegrationAnalyzers>true</EnableAspireIntegrationAnalyzers>
   </PropertyGroup>
 
   <ItemGroup>

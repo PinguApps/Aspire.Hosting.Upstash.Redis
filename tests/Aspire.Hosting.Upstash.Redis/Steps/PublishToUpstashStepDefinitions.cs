@@ -1,6 +1,8 @@
+using Aspire.Hosting;
 using Aspire.Hosting.Upstash.Redis;
 using PinguApps.Aspire.Hosting.Upstash.Redis.Tests.Support;
 using Reqnroll;
+using System.Reflection;
 using Xunit;
 
 namespace PinguApps.Aspire.Hosting.Upstash.Redis.Tests.Steps;
@@ -55,6 +57,18 @@ public sealed class PublishToUpstashStepDefinitions
     public void WhenTheRedisResourceIsMarkedForUpstashWithTypedDomainOptions()
     {
         _context.MarkRedisForUpstashWithTypedDomainOptions();
+    }
+
+    [When("the Redis resource is marked for Upstash through the TypeScript bridge with DTO options")]
+    public void WhenTheRedisResourceIsMarkedForUpstashThroughTheTypeScriptBridgeWithDtoOptions()
+    {
+        _context.MarkRedisForUpstashThroughTypeScriptBridgeWithDtoOptions();
+    }
+
+    [When("the Redis resource is marked for Upstash through the TypeScript bridge with disabled TLS")]
+    public void WhenTheRedisResourceIsMarkedForUpstashThroughTheTypeScriptBridgeWithDisabledTls()
+    {
+        _context.TryMarkRedisForUpstashThroughTypeScriptBridgeWithDisabledTls();
     }
 
     [When("the Redis resource is marked for Upstash with an explicitly unset primary region")]
@@ -201,6 +215,45 @@ public sealed class PublishToUpstashStepDefinitions
         Assert.Equal("true", providerOptions.Tls?.Source.LiteralValue);
     }
 
+    [Then("the TypeScript DTO deployment metadata maps to provider payload values")]
+    public void ThenTheTypeScriptDtoDeploymentMetadataMapsToProviderPayloadValues()
+    {
+        UpstashRedisDeploymentState state = AspireModelInspector.GetUpstashState(_context.RedisBuilder.Resource);
+        UpstashRedisProviderDeploymentOptions providerOptions = state.Options.ToProviderOptions();
+
+        Assert.Equal(UpstashRedisOwnershipMode.CreateOnly, state.OwnershipMode);
+        Assert.Equal("aws", providerOptions.Platform?.LiteralValue);
+        Assert.Equal("eu-west-1", providerOptions.PrimaryRegion?.LiteralValue);
+        UpstashRedisProviderValue readRegion = Assert.Single(providerOptions.ReadRegions ?? []);
+        Assert.Equal("eu-west-2", readRegion.LiteralValue);
+        Assert.Equal("payg", providerOptions.Plan?.LiteralValue);
+        Assert.Equal(360, providerOptions.Budget?.LiteralValue);
+        Assert.Equal(true, providerOptions.Eviction?.LiteralValue);
+        Assert.Equal(true, providerOptions.Tls?.LiteralValue);
+        Assert.Contains(nameof(UpstashRedisDeploymentOptions.Platform), providerOptions.ExplicitSettings);
+        Assert.Contains(nameof(UpstashRedisDeploymentOptions.PrimaryRegion), providerOptions.ExplicitSettings);
+        Assert.Contains(nameof(UpstashRedisDeploymentOptions.ReadRegions), providerOptions.ExplicitSettings);
+        Assert.Contains(nameof(UpstashRedisDeploymentOptions.Plan), providerOptions.ExplicitSettings);
+        Assert.Contains(nameof(UpstashRedisDeploymentOptions.Budget), providerOptions.ExplicitSettings);
+        Assert.Contains(nameof(UpstashRedisDeploymentOptions.Eviction), providerOptions.ExplicitSettings);
+        Assert.Contains(nameof(UpstashRedisDeploymentOptions.Tls), providerOptions.ExplicitSettings);
+    }
+
+    [Then("the TypeScript output bridge returns the supplementary Upstash Redis outputs")]
+    public void ThenTheTypeScriptOutputBridgeReturnsTheSupplementaryUpstashRedisOutputs()
+    {
+        _context.GetOutputsThroughTypeScriptBridge();
+
+        UpstashRedisOutputs outputs = _context.LastOutputs ?? throw new InvalidOperationException("The outputs were not captured.");
+
+        Assert.Same(_context.RedisBuilder.Resource.GetUpstashRedisOutputs(), outputs);
+        Assert.NotNull(outputs.Endpoint);
+        Assert.NotNull(outputs.Port);
+        Assert.NotNull(outputs.Password);
+        Assert.NotNull(outputs.Tls);
+        Assert.NotNull(outputs.DatabaseName);
+    }
+
     [Then("the provider domain preserves explicit settings for reconcile")]
     public void ThenTheProviderDomainPreservesExplicitSettingsForReconcile()
     {
@@ -214,6 +267,26 @@ public sealed class PublishToUpstashStepDefinitions
         Assert.Contains(nameof(UpstashRedisDeploymentOptions.Budget), providerOptions.ExplicitSettings);
         Assert.Contains(nameof(UpstashRedisDeploymentOptions.Eviction), providerOptions.ExplicitSettings);
         Assert.Contains(nameof(UpstashRedisDeploymentOptions.Tls), providerOptions.ExplicitSettings);
+    }
+
+    [Then("the TypeScript export metadata matches the approved Upstash Redis contract")]
+    public void ThenTheTypeScriptExportMetadataMatchesTheApprovedUpstashRedisContract()
+    {
+        MethodInfo publishMethod = typeof(UpstashRedisBuilderExtensions).GetMethod(nameof(UpstashRedisBuilderExtensions.PublishToUpstashForTypeScript))
+            ?? throw new InvalidOperationException("The TypeScript publish bridge was not found.");
+        AspireExportAttribute publishExport = Assert.Single(publishMethod.GetCustomAttributes<AspireExportAttribute>());
+        Assert.Equal("pinguapps.upstash.redis.publishToUpstash", publishExport.Id);
+        Assert.Equal("publishToUpstash", publishExport.MethodName);
+
+        MethodInfo outputsMethod = typeof(UpstashRedisResourceExtensions).GetMethod(nameof(UpstashRedisResourceExtensions.GetUpstashRedisOutputsForTypeScript))
+            ?? throw new InvalidOperationException("The TypeScript outputs bridge was not found.");
+        AspireExportAttribute outputsExport = Assert.Single(outputsMethod.GetCustomAttributes<AspireExportAttribute>());
+        Assert.Equal("pinguapps.upstash.redis.getUpstashRedisOutputs", outputsExport.Id);
+        Assert.Equal("getUpstashRedisOutputs", outputsExport.MethodName);
+
+        Assert.NotNull(typeof(UpstashRedisDeploymentOptionsDto).GetCustomAttribute<AspireDtoAttribute>());
+        AssertOutputExportMetadata();
+        AssertValueCatalogMetadata();
     }
 
     [Then("the provider domain preserves parameter-backed option sources")]
@@ -382,5 +455,47 @@ public sealed class PublishToUpstashStepDefinitions
     public void ThenTheFluentApiReturnsTheSameRedisResourceBuilder()
     {
         Assert.True(_context.FluentApiReturnedSameBuilder);
+    }
+
+    private static void AssertOutputExportMetadata()
+    {
+        AspireExportAttribute outputsExport = Assert.Single(typeof(UpstashRedisOutputs).GetCustomAttributes<AspireExportAttribute>());
+        Assert.Equal("pinguapps.upstash.redis.outputs", outputsExport.Id);
+        Assert.True(outputsExport.ExposeProperties);
+        Assert.False(outputsExport.ExposeMethods);
+        Assert.NotNull(typeof(UpstashRedisOutputs).GetProperty(nameof(UpstashRedisOutputs.Properties))?.GetCustomAttribute<AspireExportIgnoreAttribute>());
+        Assert.NotNull(typeof(UpstashRedisOutputs).GetMethod(nameof(UpstashRedisOutputs.IsSecret))?.GetCustomAttribute<AspireExportIgnoreAttribute>());
+
+        AspireExportAttribute referenceExport = Assert.Single(typeof(UpstashRedisOutputReference).GetCustomAttributes<AspireExportAttribute>());
+        Assert.Equal("pinguapps.upstash.redis.outputReference", referenceExport.Id);
+        Assert.False(referenceExport.ExposeProperties);
+        Assert.False(referenceExport.ExposeMethods);
+    }
+
+    private static void AssertValueCatalogMetadata()
+    {
+        AssertValueCatalog(
+            UpstashRedisOwnershipMode.CreateOrAdopt,
+            "upstashRedisOwnershipMode",
+            "createOrAdopt");
+        AssertValueCatalog(UpstashRedisOwnershipMode.CreateOnly, "upstashRedisOwnershipMode", "createOnly");
+        AssertValueCatalog(UpstashRedisOwnershipMode.ExistingOnly, "upstashRedisOwnershipMode", "existingOnly");
+        AssertValueCatalog(UpstashRedisCloudPlatform.Aws, "upstashRedisCloudPlatform", "aws");
+        AssertValueCatalog(UpstashRedisCloudPlatform.Gcp, "upstashRedisCloudPlatform", "gcp");
+        AssertValueCatalog(UpstashRedisPlan.PayAsYouGo, "upstashRedisPlan", "payAsYouGo");
+        AssertValueCatalog(UpstashRedisPlan.Fixed250Mb, "upstashRedisPlan", "fixed250Mb");
+        AssertValueCatalog(UpstashRedisRegion.AwsEuWest2, "upstashRedisRegion", "awsEuWest2");
+        AssertValueCatalog(UpstashRedisRegion.GcpEuropeWest1, "upstashRedisRegion", "gcpEuropeWest1");
+    }
+
+    private static void AssertValueCatalog<TEnum>(TEnum value, string catalogName, string name)
+        where TEnum : struct, Enum
+    {
+        FieldInfo field = typeof(TEnum).GetField(value.ToString())
+            ?? throw new InvalidOperationException($"The enum value '{value}' was not found.");
+        AspireValueAttribute attribute = Assert.Single(field.GetCustomAttributes<AspireValueAttribute>());
+
+        Assert.Equal(catalogName, attribute.CatalogName);
+        Assert.Equal(name, attribute.Name);
     }
 }

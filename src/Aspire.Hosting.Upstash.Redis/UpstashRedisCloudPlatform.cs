@@ -8,10 +8,12 @@ public enum UpstashRedisCloudPlatform
     /// <summary>
     /// Amazon Web Services.
     /// </summary>
+    [AspireValue("upstashRedisCloudPlatform", Name = "aws")]
     Aws,
 
     /// <summary>
     /// Google Cloud Platform.
     /// </summary>
+    [AspireValue("upstashRedisCloudPlatform", Name = "gcp")]
     Gcp
 }

@@ -55,6 +55,23 @@ Feature: Publish Redis to Upstash
     Then the provider domain maps the typed options to Upstash payload values
     And the provider domain preserves explicit settings for reconcile
 
+  Scenario: TypeScript publish bridge captures DTO deployment intent
+    Given a standard Aspire Redis resource named "cache"
+    When the Redis resource is marked for Upstash through the TypeScript bridge with DTO options
+    Then the resource stores parameter references for the required Upstash inputs
+    And the TypeScript DTO deployment metadata maps to provider payload values
+    And the TypeScript output bridge returns the supplementary Upstash Redis outputs
+    And the fluent API returns the same Redis resource builder
+
+  Scenario: TypeScript publish bridge rejects disabled TLS
+    Given a standard Aspire Redis resource named "cache"
+    When the Redis resource is marked for Upstash through the TypeScript bridge with disabled TLS
+    Then the Upstash configuration fails with "InvalidOperationException"
+    And the Upstash configuration failure message contains "requires TLS"
+
+  Scenario: TypeScript export metadata matches the approved contract
+    Then the TypeScript export metadata matches the approved Upstash Redis contract
+
   Scenario: Marking a Redis resource for Upstash preserves explicit option intent
     Given a standard Aspire Redis resource named "cache"
     When the Redis resource is marked for Upstash with an explicitly unset primary region
