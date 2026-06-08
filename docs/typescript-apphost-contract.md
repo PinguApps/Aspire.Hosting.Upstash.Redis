@@ -72,8 +72,8 @@ Supplementary outputs are accessed through `await cache.getUpstashRedisOutputs()
 | New `UpstashRedisDeploymentOptionsDto` | `[AspireDto]`. | DTO carries guest-language optional settings through ATS/JSON. |
 | `UpstashRedisValue` | C# only; do not export. Mark public factories/operators `[AspireExportIgnore]` if ATS would otherwise see them. | TypeScript v1 uses parameter builders for required deploy-time values and value catalogs for optional settings. |
 | `UpstashRedisResourceExtensions.GetUpstashRedisOutputs` | Export a builder extension named `GetUpstashRedisOutputsForTypeScript` with `[AspireExport("pinguapps.upstash.redis.getUpstashRedisOutputs", MethodName = "getUpstashRedisOutputs")]`. Keep the existing `RedisResource` extension C#-only. | TypeScript authors should call `await cache.getUpstashRedisOutputs()` without reaching through `cache.resource`. |
-| `UpstashRedisOutputs` | `[AspireExport("pinguapps.upstash.redis.outputs", ExposeProperties = true, ExposeMethods = false)]`. Mark `Populate` and `IsSecret` ignored. | TypeScript needs generated getter methods for deployed app-facing output references, not population mechanics. |
-| `UpstashRedisOutputReference` | `[AspireExport("pinguapps.upstash.redis.outputReference", ExposeProperties = true, ExposeMethods = false)]`; ignore `SetValue` and do not export mutation/provider methods. | Callers consume references in expressions/environment variables. |
+| `UpstashRedisOutputs` | `[AspireExport("pinguapps.upstash.redis.outputs", ExposeProperties = true, ExposeMethods = false)]`. Mark `Properties`, `Populate`, and `IsSecret` ignored. | TypeScript needs generated getter methods for deployed app-facing output references, not population mechanics or helper collections. |
+| `UpstashRedisOutputReference` | `[AspireExport("pinguapps.upstash.redis.outputReference", ExposeProperties = false, ExposeMethods = false)]`; ignore `Name`, `Secret`, `References`, `ValueExpression`, `SetValue`, and provider/reference helper methods if ATS would otherwise see them. | Callers consume references in expressions/environment variables; reference metadata is not part of the TypeScript authoring surface. |
 | `UpstashRedisOwnershipMode` | Do not export the enum type directly. Export enum members as `[AspireValue("upstashRedisOwnershipMode", Name = "...")]` catalog entries. | Generated TypeScript should use stable values such as `upstashRedisOwnershipMode.createOrAdopt`. |
 | `UpstashRedisCloudPlatform` | Do not export the enum type directly. Export enum members as `[AspireValue("upstashRedisCloudPlatform", Name = "...")]` catalog entries. | Avoid raw provider strings and keep generated names discoverable. |
 | `UpstashRedisPlan` | Do not export the enum type directly. Export enum members as `[AspireValue("upstashRedisPlan", Name = "...")]` catalog entries. | Keeps supported plans explicit and type-checkable. |
@@ -110,7 +110,7 @@ The DTO-to-options adapter should create the existing `UpstashRedisDeploymentOpt
   - `upstashRedisCloudPlatform.aws`, `gcp`
   - `upstashRedisPlan.free`, `payAsYouGo`, `fixed250Mb`, `fixed1Gb`, `fixed5Gb`, `fixed10Gb`, `fixed50Gb`, `fixed100Gb`, `fixed500Gb`
   - `upstashRedisRegion.awsEuWest2`, etc.
-- Supplementary output getter method names should be lower camel case: `endpoint()`, `port()`, `password()`, `tls()`, `databaseName()`.
+- Supplementary output getter method names should be lower camel case: `endpoint()`, `port()`, `password()`, `tls()`, `databaseName()`. Generated TypeScript should not expose helper accessors such as `properties()`, `name()`, `secret()`, `references()`, or `valueExpression()`.
 - Capability IDs:
   - `pinguapps.upstash.redis.publishToUpstash`
   - `pinguapps.upstash.redis.getUpstashRedisOutputs`
