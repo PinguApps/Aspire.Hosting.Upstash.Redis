@@ -2,6 +2,8 @@
 
 This document defines what full TypeScript AppHost support means for this repository. It is the finish line for later implementation, test, sample, and documentation tickets.
 
+The implementation-ready export contract is locked in [`docs/typescript-apphost-contract.md`](typescript-apphost-contract.md). Use that note as the API-shape source of truth before adding ATS attributes or TypeScript fixtures.
+
 TypeScript support is complete only when a maintainer can validate the same deploy-only Upstash Redis behaviour from a TypeScript AppHost that is already covered for .NET AppHosts:
 
 - local AppHost runs keep using normal Aspire Redis behaviour
