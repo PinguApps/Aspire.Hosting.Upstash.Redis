@@ -1,0 +1,14 @@
+{
+  "name": "pinguapps-upstash-redis-typescript-apphost-fixture",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "restore": "aspire restore --non-interactive",
+    "start": "aspire start --non-interactive",
+    "publish": "aspire publish --non-interactive",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0"
+  }
+}
