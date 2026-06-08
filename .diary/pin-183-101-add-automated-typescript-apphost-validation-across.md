@@ -1,11 +1,16 @@
 ## Rolling state
 - Goal: Add automated validation that TypeScript AppHosts can consume the Upstash Redis integration across generated SDK, local run, and deploy-oriented flows.
-- Current plan: TypeScript fixture, SDK generation/type-check, local-run guard, publish-list guard, fake repeated-deploy, and gated live repeated-deploy validation are implemented.
-- Open questions/risks: Aspire CLI/Docker-dependent fixture scenarios skip cleanly when prerequisites are unavailable; live-provider scenario skips without `UPSTASH_EMAIL` and `UPSTASH_API_KEY`.
+- Current plan: TypeScript fixture, SDK generation/type-check, local-run guard, publish-list guard, fake repeated-deploy, gated live repeated-deploy validation, and CI Aspire CLI setup are implemented.
+- Open questions/risks: Docker-dependent fixture scenario skips cleanly when Docker is unavailable; live-provider scenario skips without `UPSTASH_EMAIL` and `UPSTASH_API_KEY`.
 - Next actions: None for PIN-183 unless review asks for broader coverage.
 - Key paths: tests/Aspire.Hosting.Upstash.Redis/Fixtures/TypeScriptAppHost; tests/Aspire.Hosting.Upstash.Redis/Features/ApiShape/TypeScriptAppHostFixture.feature; tests/Aspire.Hosting.Upstash.Redis/Steps/TypeScriptAppHostFixtureStepDefinitions.cs
 
 ## Session log
+### 2026-06-08 23:50 Z (agent/pin-183-101-add-automated-typescript-apphost-validation-across)
+- Add CI Aspire CLI setup [tests] (impact: low)
+  - Why: TypeScript AppHost restore/local-run/publish scenarios skipped by default when the reusable test workflow did not provide `aspire`.
+  - Change: Install pinned `Aspire.Cli` 13.4.2 in `_run-tests.yml` and add the global tools directory to `GITHUB_PATH`. (files: .github/workflows/_run-tests.yml | cmds: `dotnet tool install -g Aspire.Cli --version 13.4.2`, `dotnet test tests/Aspire.Hosting.Upstash.Redis/Aspire.Hosting.Upstash.Redis.Tests.csproj --filter "FullyQualifiedName~TypeScript"`, `dotnet test tests/Aspire.Hosting.Upstash.Redis/Aspire.Hosting.Upstash.Redis.Tests.csproj`)
+  - Notes: Filtered TypeScript tests passed 9/10 with 1 Docker-prerequisite skip locally; full test project passed 143/144 with the same local Docker skip.
 ### 2026-06-08 23:42 Z (agent/pin-183-101-add-automated-typescript-apphost-validation-across)
 - Add TypeScript bridge deployment validation [tests] (impact: med)
   - Why: PIN-183 still needed TypeScript-authored fake repeated-deploy and gated live-provider evidence through the existing deploy pipeline.
