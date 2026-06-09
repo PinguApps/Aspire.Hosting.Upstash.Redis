@@ -106,12 +106,12 @@ The management API key is never exposed as an application-facing Redis output.
 
 ## Docs
 
-- [Overview and product contract](docs/overview.md)
-- [Install and package consumption](docs/install.md)
-- [C# AppHost usage](docs/getting-started-dotnet.md)
-- [TypeScript AppHost usage](docs/getting-started-typescript.md)
-- [Configuration and ownership modes](docs/configuration.md)
-- [Deployment behaviour](docs/deployment-behaviour.md)
-- [Outputs and security boundaries](docs/outputs-and-security.md)
-- [Samples and demos](docs/samples-and-demos.md)
-- [Testing guidance](docs/testing.md)
+- [Overview and product contract](https://github.com/PinguApps/Aspire.Hosting.Upstash.Redis/blob/main/docs/overview.md)
+- [Install and package consumption](https://github.com/PinguApps/Aspire.Hosting.Upstash.Redis/blob/main/docs/install.md)
+- [C# AppHost usage](https://github.com/PinguApps/Aspire.Hosting.Upstash.Redis/blob/main/docs/getting-started-dotnet.md)
+- [TypeScript AppHost usage](https://github.com/PinguApps/Aspire.Hosting.Upstash.Redis/blob/main/docs/getting-started-typescript.md)
+- [Configuration and ownership modes](https://github.com/PinguApps/Aspire.Hosting.Upstash.Redis/blob/main/docs/configuration.md)
+- [Deployment behaviour](https://github.com/PinguApps/Aspire.Hosting.Upstash.Redis/blob/main/docs/deployment-behaviour.md)
+- [Outputs and security boundaries](https://github.com/PinguApps/Aspire.Hosting.Upstash.Redis/blob/main/docs/outputs-and-security.md)
+- [Samples and demos](https://github.com/PinguApps/Aspire.Hosting.Upstash.Redis/blob/main/docs/samples-and-demos.md)
+- [Testing guidance](https://github.com/PinguApps/Aspire.Hosting.Upstash.Redis/blob/main/docs/testing.md)
