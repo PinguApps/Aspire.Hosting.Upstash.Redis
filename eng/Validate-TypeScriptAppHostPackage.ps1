@@ -27,7 +27,7 @@ Remove-Item (Join-Path $fixtureWork "node_modules") -Recurse -Force -ErrorAction
 $aspireConfigPath = Join-Path $fixtureWork "aspire.config.json"
 $aspireConfig = Get-Content $aspireConfigPath -Raw | ConvertFrom-Json
 $aspireConfig.packages."PinguApps.Aspire.Hosting.Upstash.Redis" = $PackageVersion
-$aspireConfig | ConvertTo-Json -Depth 10 | Set-Content $aspireConfigPath
+$aspireConfig | ConvertTo-Json -Depth 10 | Set-Content $aspireConfigPath -Encoding UTF8
 
 $packageOutputFullPath = (Resolve-Path $packageOutput).Path
 @"
@@ -39,7 +39,7 @@ $packageOutputFullPath = (Resolve-Path $packageOutput).Path
     <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
   </packageSources>
 </configuration>
-"@ | Set-Content (Join-Path $fixtureWork "NuGet.Config")
+"@ | Set-Content (Join-Path $fixtureWork "NuGet.Config") -Encoding UTF8
 
 Push-Location $fixtureWork
 try {
