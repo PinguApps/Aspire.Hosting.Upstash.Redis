@@ -1,0 +1,7 @@
+# TypeScript AppHost Fixture
+
+This fixture validates the supported TypeScript AppHost authoring path for `PinguApps.Aspire.Hosting.Upstash.Redis`.
+
+Generated `.modules/` content is intentionally not checked in. Validation must regenerate it through Aspire CLI commands such as `aspire restore` before running TypeScript checks.
+
+`aspire.config.json` references the in-repo integration project so `aspire restore` validates the package export surface that this worktree builds.
