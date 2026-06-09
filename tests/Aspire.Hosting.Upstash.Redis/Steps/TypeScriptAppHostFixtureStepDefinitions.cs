@@ -18,7 +18,7 @@ public sealed class TypeScriptAppHostFixtureStepDefinitions
     public void GivenTheTypeScriptAppHostFixture()
     {
         _fixtureDirectory = FindFixtureDirectory();
-        string appHostPath = Path.Combine(_fixtureDirectory, "apphost.ts");
+        string appHostPath = Path.Combine(_fixtureDirectory, "apphost.mts");
         string packageJsonPath = Path.Combine(_fixtureDirectory, "package.json");
         string aspireConfigPath = Path.Combine(_fixtureDirectory, "aspire.config.json");
 
@@ -36,7 +36,7 @@ public sealed class TypeScriptAppHostFixtureStepDefinitions
     {
         string source = GetAppHostSource();
 
-        Assert.Contains("from \"./.modules/aspire.js\"", source, StringComparison.Ordinal);
+        Assert.Contains("from \"./.aspire/modules/aspire.mjs\"", source, StringComparison.Ordinal);
         Assert.Contains("upstashRedisCloudPlatform", source, StringComparison.Ordinal);
         Assert.Contains("upstashRedisOwnershipMode", source, StringComparison.Ordinal);
         Assert.Contains("upstashRedisPlan", source, StringComparison.Ordinal);
@@ -110,7 +110,6 @@ public sealed class TypeScriptAppHostFixtureStepDefinitions
         string gitIgnorePath = Path.Combine(fixtureDirectory, ".gitignore");
 
         Assert.Contains(".aspire/", File.ReadAllText(gitIgnorePath), StringComparison.Ordinal);
-        Assert.Contains(".modules/", File.ReadAllText(gitIgnorePath), StringComparison.Ordinal);
     }
 
     [Then("the fixture package can restore generated SDK modules")]
@@ -154,11 +153,11 @@ public sealed class TypeScriptAppHostFixtureStepDefinitions
     [Then("the generated TypeScript SDK exposes the Upstash Redis surface")]
     public void ThenTheGeneratedTypeScriptSdkExposesTheUpstashRedisSurface()
     {
-        string modulesDirectory = Path.Combine(GetFixtureDirectory(), ".modules");
+        string modulesDirectory = Path.Combine(GetFixtureDirectory(), ".aspire", "modules");
 
         Assert.True(Directory.Exists(modulesDirectory), $"Expected Aspire restore to generate '{modulesDirectory}'.");
 
-        string generatedSource = File.ReadAllText(Path.Combine(modulesDirectory, "aspire.ts"));
+        string generatedSource = File.ReadAllText(Path.Combine(modulesDirectory, "aspire.mts"));
 
         Assert.Contains("publishToUpstash", generatedSource, StringComparison.Ordinal);
         Assert.Contains("getUpstashRedisOutputs", generatedSource, StringComparison.Ordinal);

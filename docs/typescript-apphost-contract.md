@@ -1,6 +1,6 @@
 # TypeScript AppHost Export Contract
 
-This note locks the planned TypeScript AppHost authoring contract for `PinguApps.Aspire.Hosting.Upstash.Redis`. Implementation tickets should treat this as the API-shape source of truth unless a later ADR explicitly supersedes it.
+This note records the TypeScript AppHost authoring contract for `PinguApps.Aspire.Hosting.Upstash.Redis`. Implementation tickets should treat this as the API-shape source of truth unless a later ADR explicitly supersedes it.
 
 ## Decision Summary
 
@@ -15,16 +15,16 @@ The TypeScript surface should be DTO-based and intentionally smaller than the cu
 
 ## Recommended TypeScript Shape
 
-Pseudocode for the generated TypeScript AppHost API:
+The generated TypeScript AppHost API shape:
 
 ```ts
-import { createBuilder } from "./.aspire/modules/aspire.mjs";
 import {
+  createBuilder,
   upstashRedisCloudPlatform,
   upstashRedisOwnershipMode,
   upstashRedisPlan,
   upstashRedisRegion,
-} from "./.aspire/modules/pinguapps-aspire-hosting-upstash-redis.mjs";
+} from "./.aspire/modules/aspire.mjs";
 
 const builder = await createBuilder();
 
@@ -40,8 +40,8 @@ cache = await cache.publishToUpstash(
   {
     ownershipMode: upstashRedisOwnershipMode.createOrAdopt,
     platform: upstashRedisCloudPlatform.aws,
-    primaryRegion: upstashRedisRegion.awsEuWest2,
-    readRegions: [upstashRedisRegion.awsEuWest1],
+    primaryRegion: upstashRedisRegion.awsEuWest1,
+    readRegions: [upstashRedisRegion.awsEuWest2],
     plan: upstashRedisPlan.payAsYouGo,
     budget: 20,
     eviction: true,

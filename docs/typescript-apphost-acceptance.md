@@ -45,7 +45,7 @@ Package consumption should use both paths, for different purposes:
 - normal CI uses a project/package reference to the current repository output so tests validate the working tree directly
 - an always-on packaging check packs the NuGet package and verifies the TypeScript fixture can consume that `.nupkg`, catching packaging and generated-module layout issues before release
 
-Generated `.aspire/modules/` output is not committed. Tests should regenerate it from the current package and inspect or type-check the generated output. If a stable expected shape is needed, assert targeted facts such as exported names and callable signatures instead of snapshotting the whole generated directory.
+Generated `.aspire/` output is not committed. Tests should regenerate it from the current package and inspect or type-check the generated output. If a stable expected shape is needed, assert targeted facts such as exported names and callable signatures instead of snapshotting the whole generated directory.
 
 Product behaviour must remain in the Reqnroll suite. TypeScript support should add feature files under the existing groups where the behaviour belongs:
 
@@ -102,7 +102,7 @@ Demo drift is caught by:
 - Reqnroll fixture scenarios compiling/type-checking the sample or sample-derived snippet
 - docs sample coverage for commands and code snippets that can be validated deterministically
 - gated live-provider scenarios for the deploy path
-- avoiding checked-in generated `.aspire/modules/` output
+- avoiding checked-in generated `.aspire/` output
 
 ## Human Acceptance Checklist
 
