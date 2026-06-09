@@ -9,8 +9,7 @@ aspire new aspire-ts-empty --name MyApp --output .\MyApp --non-interactive
 Set-Location .\MyApp
 ```
 
-Add the Redis hosting package and this package to `aspire.config.json`:
-
+Edit the generated `aspire.config.json` and add the Redis hosting package and this package (keeping the existing `appHost` section created by `aspire new aspire-ts-empty`):
 ```json
 {
   "packages": {
