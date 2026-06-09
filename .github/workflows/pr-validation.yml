@@ -7,12 +7,43 @@ on:
       - synchronize
       - reopened
       - ready_for_review
+  workflow_dispatch:
+    inputs:
+      run_live_upstash:
+        description: Run credential-gated @live-upstash scenarios
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: pull-request-validation-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
+  typescript-apphost-package:
+    name: TypeScript AppHost package gate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5
+        with:
+          global-json-file: global.json
+
+      - name: Setup Aspire CLI
+        run: |
+          dotnet tool install -g Aspire.Cli --version 13.4.2
+          echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
+
+      - name: Validate NuGet-backed TypeScript AppHost fixture
+        shell: pwsh
+        run: ./eng/Validate-TypeScriptAppHostPackage.ps1
+
   tests:
     uses: ./.github/workflows/_run-tests.yml
     permissions:
@@ -20,6 +51,20 @@ jobs:
       checks: write
       pull-requests: write
     with:
-      publish_test_results_to_github: ${{ !github.event.pull_request.head.repo.fork }}
+      publish_test_results_to_github: ${{ github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork }}
       publish_test_results_comment_mode: always
       publish_test_results_check_name: Pull Request Test Results
+
+  live-upstash:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_live_upstash
+    uses: ./.github/workflows/_run-tests.yml
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+    secrets: inherit
+    with:
+      test_filter: Category=live-upstash
+      publish_test_results_to_github: true
+      publish_test_results_comment_mode: off
+      publish_test_results_check_name: Live Upstash Test Results
