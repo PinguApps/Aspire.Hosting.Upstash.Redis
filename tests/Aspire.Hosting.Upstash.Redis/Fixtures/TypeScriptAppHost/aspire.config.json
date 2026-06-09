@@ -6,5 +6,10 @@
   "packages": {
     "Aspire.Hosting.Redis": "13.4.2",
     "PinguApps.Aspire.Hosting.Upstash.Redis": "../../../../src/Aspire.Hosting.Upstash.Redis/Aspire.Hosting.Upstash.Redis.csproj"
+  },
+  "Parameters": {
+    "upstash-database-name": "typescript-fixture-cache",
+    "upstash-account-email": "fixture@example.com",
+    "upstash-api-key": "fixture-management-api-key"
   }
 }
