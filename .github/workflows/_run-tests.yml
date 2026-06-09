@@ -29,6 +29,12 @@ on:
       UPSTASH_API_KEY:
         required: false
   workflow_dispatch:
+    inputs:
+      test_filter:
+        description: Test filter passed to dotnet test
+        required: false
+        default: Category!=live-upstash
+        type: string
 
 permissions:
   contents: read
@@ -67,6 +73,10 @@ jobs:
         shell: pwsh
         run: |
           $testFilter = "${{ inputs.test_filter }}"
+          if ([string]::IsNullOrWhiteSpace($testFilter)) {
+            $testFilter = "Category!=live-upstash"
+          }
+
           $arguments = @(
             "test",
             "Aspire.Hosting.Upstash.Redis.slnx",
