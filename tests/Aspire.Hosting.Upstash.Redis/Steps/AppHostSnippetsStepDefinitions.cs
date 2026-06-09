@@ -47,7 +47,7 @@ public sealed class AppHostSnippetsStepDefinitions
     public void WhenTheTypeScriptDemoAppHostSourceIsLoaded()
     {
         string repositoryRoot = FindRepositoryRoot();
-        string demoPath = Path.Combine(repositoryRoot, "samples", "TypeScriptAppHost", "apphost.ts");
+        string demoPath = Path.Combine(repositoryRoot, "samples", "TypeScriptAppHost", "apphost.mts");
 
         Assert.True(File.Exists(demoPath), $"Expected TypeScript demo AppHost '{demoPath}' to exist.");
 
@@ -57,7 +57,7 @@ public sealed class AppHostSnippetsStepDefinitions
     [Then("the TypeScript demo AppHost uses the documented generated API")]
     public void ThenTheTypeScriptDemoAppHostUsesTheDocumentedGeneratedApi()
     {
-        Assert.Contains("from \"./.modules/aspire.js\"", _typeScriptDemoSource, StringComparison.Ordinal);
+        Assert.Contains("from \"./.aspire/modules/aspire.mjs\"", _typeScriptDemoSource, StringComparison.Ordinal);
         Assert.Contains("upstashRedisCloudPlatform", _typeScriptDemoSource, StringComparison.Ordinal);
         Assert.Contains("upstashRedisOwnershipMode", _typeScriptDemoSource, StringComparison.Ordinal);
         Assert.Contains("upstashRedisPlan", _typeScriptDemoSource, StringComparison.Ordinal);

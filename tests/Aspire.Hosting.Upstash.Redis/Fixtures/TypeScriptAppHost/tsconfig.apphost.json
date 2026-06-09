@@ -8,8 +8,8 @@
     "noEmit": true
   },
   "include": [
-    "apphost.ts",
-    ".modules/**/*.ts"
+    "apphost.mts",
+    ".aspire/modules/**/*.mts"
   ],
   "exclude": [
     "node_modules"

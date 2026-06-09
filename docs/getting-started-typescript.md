@@ -1,6 +1,6 @@
 # TypeScript AppHost Usage
 
-TypeScript AppHosts use Aspire's generated module surface from the NuGet package. Run `aspire restore` so Aspire generates `./.modules/aspire.js`, then import the generated Upstash value catalogs and extension methods from that file.
+TypeScript AppHosts use Aspire's generated module surface from the NuGet package. In Aspire 13.4 and later, run `aspire restore` so Aspire generates `./.aspire/modules/aspire.mjs`, then import the generated Upstash value catalogs and extension methods from that file.
 
 ```ts
 import {
@@ -9,7 +9,7 @@ import {
   upstashRedisOwnershipMode,
   upstashRedisPlan,
   upstashRedisRegion,
-} from "./.modules/aspire.js";
+} from "./.aspire/modules/aspire.mjs";
 
 const builder = await createBuilder();
 
@@ -33,7 +33,7 @@ const app = await builder.build();
 await app.run();
 ```
 
-The maintained TypeScript demo is [`samples/TypeScriptAppHost/apphost.ts`](../samples/TypeScriptAppHost/apphost.ts). The tested fixture is [`tests/Aspire.Hosting.Upstash.Redis/Fixtures/TypeScriptAppHost/apphost.ts`](../tests/Aspire.Hosting.Upstash.Redis/Fixtures/TypeScriptAppHost/apphost.ts).
+The maintained TypeScript demo is [`samples/TypeScriptAppHost/apphost.mts`](../samples/TypeScriptAppHost/apphost.mts). The tested fixture is [`tests/Aspire.Hosting.Upstash.Redis/Fixtures/TypeScriptAppHost/apphost.mts`](../tests/Aspire.Hosting.Upstash.Redis/Fixtures/TypeScriptAppHost/apphost.mts).
 
 ## Shape Differences From C#
 

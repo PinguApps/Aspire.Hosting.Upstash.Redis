@@ -4,7 +4,7 @@ import {
   upstashRedisOwnershipMode,
   upstashRedisPlan,
   upstashRedisRegion,
-} from "./.modules/aspire.js";
+} from "./.aspire/modules/aspire.mjs";
 
 const builder = await createBuilder();
 
@@ -17,12 +17,25 @@ cache = await cache.publishToUpstash(databaseName, accountEmail, apiKey, {
   ownershipMode: upstashRedisOwnershipMode.createOrAdopt,
   platform: upstashRedisCloudPlatform.aws,
   primaryRegion: upstashRedisRegion.awsEuWest1,
+  readRegions: [upstashRedisRegion.awsEuWest2],
   plan: upstashRedisPlan.payAsYouGo,
+  budget: 20,
   eviction: true,
+  tls: true,
 });
+
+const outputs = await cache.getUpstashRedisOutputs();
+const outputReferences = [
+  await outputs.endpoint(),
+  await outputs.port(),
+  await outputs.password(),
+  await outputs.tls(),
+  await outputs.databaseName(),
+];
 
 let worker = await builder.addContainer("worker", "mcr.microsoft.com/dotnet/runtime-deps:10.0");
 worker = await worker.withReference(cache);
+void outputReferences;
 
 const app = await builder.build();
 await app.run();

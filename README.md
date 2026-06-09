@@ -55,7 +55,7 @@ builder.Build().Run();
 
 ## Minimal TypeScript AppHost Example
 
-Maintained demo source: [`samples/TypeScriptAppHost/apphost.ts`](samples/TypeScriptAppHost/apphost.ts)
+Maintained demo source: [`samples/TypeScriptAppHost/apphost.mts`](samples/TypeScriptAppHost/apphost.mts)
 
 ```ts
 import {
@@ -64,7 +64,7 @@ import {
   upstashRedisOwnershipMode,
   upstashRedisPlan,
   upstashRedisRegion,
-} from "./.modules/aspire.js";
+} from "./.aspire/modules/aspire.mjs";
 
 const builder = await createBuilder();
 

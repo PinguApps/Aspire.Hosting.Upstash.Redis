@@ -28,7 +28,7 @@ aspire start --non-interactive --isolated
 aspire publish --non-interactive --list-steps
 ```
 
-`aspire restore` generates `.modules/aspire.js`. Do not commit generated `.modules/` or `.aspire/` content.
+`aspire restore` generates `.aspire/modules/aspire.mjs`. Do not commit generated `.aspire/` content.
 
 The demo uses local parameter values in `aspire.config.json` for deterministic restore and type-checking. Live deployment should use real `UPSTASH_EMAIL` and `UPSTASH_API_KEY` values through your normal Aspire parameter flow and a disposable database name.
 

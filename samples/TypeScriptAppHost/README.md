@@ -11,4 +11,4 @@ npm run typecheck
 aspire publish --non-interactive --list-steps
 ```
 
-`aspire.config.json` references the in-repo package project so the generated TypeScript module matches this checkout. Generated `.modules/` and `.aspire/` content is intentionally ignored.
+`aspire.config.json` references the in-repo package project so the generated TypeScript module matches this checkout. Generated `.aspire/` content is intentionally ignored.
