@@ -137,7 +137,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ### Technical Baseline
 - Target framework: `.NET 10`.
-- Target Aspire version: `13.4.2`.
+- Target Aspire version: `13.4.3`.
 - Keep Aspire's built-in `RedisResource` as the resource of record.
 - Preserve normal local Redis behavior unless the work is explicitly about deploy-time Upstash behavior.
 - Keep app-facing Redis outputs separate from infrastructure-only management credentials.

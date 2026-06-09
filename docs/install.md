@@ -1,20 +1,48 @@
 # Install
 
-Install `PinguApps.Aspire.Hosting.Upstash.Redis` into the AppHost project.
+## C# AppHost
 
 ```powershell
 dotnet add package PinguApps.Aspire.Hosting.Upstash.Redis
 ```
 
-For C# AppHosts, import the namespace:
+Import the namespace in the AppHost:
 
 ```csharp
 using Aspire.Hosting.Upstash.Redis;
 ```
 
-## TypeScript Package Consumption
+## TypeScript AppHost
 
-TypeScript AppHosts also consume this integration through NuGet.
+TypeScript AppHosts also consume this integration through NuGet, but the package is added through `aspire.config.json`, not `dotnet add package`.
+
+For a released package:
+
+```json
+{
+  "packages": {
+    "Aspire.Hosting.Redis": "13.4.3",
+    "PinguApps.Aspire.Hosting.Upstash.Redis": "<package version>"
+  }
+}
+```
+
+When validating this repository checkout instead of the published package, point the package entry at the local project:
+
+```json
+{
+  "packages": {
+    "Aspire.Hosting.Redis": "13.4.3",
+    "PinguApps.Aspire.Hosting.Upstash.Redis": "../../src/Aspire.Hosting.Upstash.Redis/Aspire.Hosting.Upstash.Redis.csproj"
+  }
+}
+```
+
+Then generate the TypeScript surface:
+
+```powershell
+aspire restore --non-interactive
+```
 
 Aspire loads the .NET hosting assembly, reads its export metadata, and generates the TypeScript module consumed by the AppHost. That is why the TypeScript examples import from `./.aspire/modules/aspire.mjs` after `aspire restore` rather than from an npm package owned by this repository.
 
@@ -33,3 +61,11 @@ Every AppHost needs:
 | `upstash-api-key` | Yes | Upstash Management API key used by deployment infrastructure. |
 
 The account email and Management API key are deployment inputs. Application resources receive Redis connection details only.
+
+For non-interactive deploys, provide real values as Aspire parameter environment variables:
+
+```powershell
+$env:Parameters__upstash_database_name = "upstash-ts-test"
+$env:Parameters__upstash_account_email = $env:UPSTASH_EMAIL
+$env:Parameters__upstash_api_key = $env:UPSTASH_API_KEY
+```

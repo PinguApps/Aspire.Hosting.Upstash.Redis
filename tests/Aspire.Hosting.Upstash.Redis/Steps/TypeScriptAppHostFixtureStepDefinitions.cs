@@ -236,12 +236,13 @@ public sealed class TypeScriptAppHostFixtureStepDefinitions
     private CommandResult RunCommand(string fileName, string[] arguments, TimeSpan timeout, bool assertSuccess = true)
     {
         string fixtureDirectory = GetFixtureDirectory();
+        string resolvedFileName = FindExecutable(fileName) ?? fileName;
 
         using Process process = new()
         {
             StartInfo = new ProcessStartInfo
             {
-                FileName = fileName,
+                FileName = resolvedFileName,
                 WorkingDirectory = fixtureDirectory,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -306,12 +307,6 @@ public sealed class TypeScriptAppHostFixtureStepDefinitions
                 continue;
             }
 
-            string candidate = Path.Combine(directory, executableName);
-            if (File.Exists(candidate))
-            {
-                return candidate;
-            }
-
             if (OperatingSystem.IsWindows())
             {
                 foreach (string extension in GetWindowsExecutableExtensions())
@@ -322,6 +317,12 @@ public sealed class TypeScriptAppHostFixtureStepDefinitions
                         return windowsCandidate;
                     }
                 }
+            }
+
+            string candidate = Path.Combine(directory, executableName);
+            if (File.Exists(candidate))
+            {
+                return candidate;
             }
         }
 

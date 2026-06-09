@@ -3,8 +3,12 @@
     "path": "apphost.mts",
     "language": "typescript/nodejs"
   },
+  "sdk": {
+    "version": "13.4.3"
+  },
+  "channel": "stable",
   "packages": {
-    "Aspire.Hosting.Redis": "13.4.2",
+    "Aspire.Hosting.Redis": "13.4.3",
     "PinguApps.Aspire.Hosting.Upstash.Redis": "../../src/Aspire.Hosting.Upstash.Redis/Aspire.Hosting.Upstash.Redis.csproj"
   },
   "Parameters": {

@@ -2,6 +2,22 @@
 
 Every publish call needs the remote database name, Upstash account email, Upstash Management API key, and ownership mode.
 
+## Required Inputs
+
+| Input | Secret | Purpose |
+| --- | --- | --- |
+| `upstash-database-name` | No | Stable remote Upstash database identity. |
+| `upstash-account-email` | No | Upstash account email used by deployment infrastructure. |
+| `upstash-api-key` | Yes | Upstash Management API key used by deployment infrastructure. |
+
+For non-interactive TypeScript deploys, the validated path is to provide these values as Aspire parameter environment variables:
+
+```powershell
+$env:Parameters__upstash_database_name = "orders-cache"
+$env:Parameters__upstash_account_email = $env:UPSTASH_EMAIL
+$env:Parameters__upstash_api_key = $env:UPSTASH_API_KEY
+```
+
 ## Ownership Modes
 
 | Mode | Missing database | Existing compatible database | Existing incompatible database |
