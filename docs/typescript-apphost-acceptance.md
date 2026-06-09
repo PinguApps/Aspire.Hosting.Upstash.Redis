@@ -2,7 +2,7 @@
 
 This document defines what full TypeScript AppHost support means for this repository. It is the finish line for later implementation, test, sample, and documentation tickets.
 
-The implementation-ready export contract is locked in [`docs/typescript-apphost-contract.md`](typescript-apphost-contract.md). Use that note as the API-shape source of truth before adding ATS attributes or TypeScript fixtures.
+The implementation-ready export contract is locked in [`docs/typescript-apphost-contract.md`](typescript-apphost-contract.md). Use that note as the API-shape source of truth before adding ATS attributes or TypeScript fixtures. The maintained CI/release split is defined in [`docs/ci-release-gates.md`](ci-release-gates.md).
 
 TypeScript support is complete only when a maintainer can validate the same deploy-only Upstash Redis behaviour from a TypeScript AppHost that is already covered for .NET AppHosts:
 
@@ -43,7 +43,7 @@ The fixture should include:
 Package consumption should use both paths, for different purposes:
 
 - normal CI uses a project/package reference to the current repository output so tests validate the working tree directly
-- a gated packaging check packs the NuGet package and verifies the TypeScript fixture can consume that `.nupkg`, catching packaging and generated-module layout issues before release
+- an always-on packaging check packs the NuGet package and verifies the TypeScript fixture can consume that `.nupkg`, catching packaging and generated-module layout issues before release
 
 Generated `.aspire/modules/` output is not committed. Tests should regenerate it from the current package and inspect or type-check the generated output. If a stable expected shape is needed, assert targeted facts such as exported names and callable signatures instead of snapshotting the whole generated directory.
 

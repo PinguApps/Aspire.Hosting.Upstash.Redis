@@ -21,6 +21,11 @@ jobs:
         with:
           global-json-file: global.json
 
+      - name: Setup Aspire CLI
+        run: |
+          dotnet tool install -g Aspire.Cli --version 13.4.2
+          echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
+
       - name: Resolve package version
         shell: pwsh
         run: |
@@ -30,6 +35,10 @@ jobs:
           }
 
           "PACKAGE_VERSION=$version" >> $env:GITHUB_ENV
+
+      - name: Validate NuGet-backed TypeScript AppHost fixture
+        shell: pwsh
+        run: ./eng/Validate-TypeScriptAppHostPackage.ps1 -PackageVersion "${{ env.PACKAGE_VERSION }}"
 
       - name: Restore
         run: dotnet restore Aspire.Hosting.Upstash.Redis.slnx
