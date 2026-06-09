@@ -263,6 +263,7 @@ public sealed class TypeScriptAppHostFixtureStepDefinitions
         if (!process.WaitForExit(timeout))
         {
             process.Kill(entireProcessTree: true);
+            process.WaitForExit(TimeSpan.FromSeconds(10));
             throw new TimeoutException($"Command '{fileName} {string.Join(' ', arguments)}' did not exit within {timeout}.");
         }
 
