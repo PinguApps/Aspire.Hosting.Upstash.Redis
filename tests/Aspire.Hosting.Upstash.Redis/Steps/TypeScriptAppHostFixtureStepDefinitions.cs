@@ -315,15 +315,30 @@ public sealed class TypeScriptAppHostFixtureStepDefinitions
 
             if (OperatingSystem.IsWindows())
             {
-                string windowsCandidate = Path.Combine(directory, $"{executableName}.exe");
-                if (File.Exists(windowsCandidate))
+                foreach (string extension in GetWindowsExecutableExtensions())
                 {
-                    return windowsCandidate;
+                    string windowsCandidate = Path.Combine(directory, $"{executableName}{extension}");
+                    if (File.Exists(windowsCandidate))
+                    {
+                        return windowsCandidate;
+                    }
                 }
             }
         }
 
         return null;
+    }
+
+    private static string[] GetWindowsExecutableExtensions()
+    {
+        string? pathExt = Environment.GetEnvironmentVariable("PATHEXT");
+
+        if (!string.IsNullOrWhiteSpace(pathExt))
+        {
+            return pathExt.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        }
+
+        return [".com", ".exe", ".bat", ".cmd"];
     }
 
     private string GetFixtureDirectory()
