@@ -21,6 +21,11 @@ jobs:
         with:
           global-json-file: global.json
 
+      - name: Setup Aspire CLI
+        run: |
+          dotnet tool install -g Aspire.Cli --version 13.4.2
+          echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
+
       - name: Resolve package version
         shell: pwsh
         run: |
@@ -31,31 +36,26 @@ jobs:
 
           "PACKAGE_VERSION=$version" >> $env:GITHUB_ENV
 
-      - name: Restore
-        run: dotnet restore Aspire.Hosting.Upstash.Redis.slnx
-
-      - name: Build
-        run: dotnet build Aspire.Hosting.Upstash.Redis.slnx -c Release --no-restore
-
-      - name: Pack
-        run: dotnet pack Aspire.Hosting.Upstash.Redis.slnx -c Release --no-build -p:Version=${{ env.PACKAGE_VERSION }} -o artifacts/packages
+      - name: Validate NuGet-backed TypeScript AppHost fixture
+        shell: pwsh
+        run: ./eng/Validate-TypeScriptAppHostPackage.ps1 -PackageVersion "${{ env.PACKAGE_VERSION }}"
 
       - name: Upload package artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: packages
-          path: artifacts/packages/*
+          path: artifacts/typescript-apphost-package/packages/*
 
       - name: Publish Packages
         run: >
-          dotnet nuget push "artifacts/packages/*.nupkg"
+          dotnet nuget push "artifacts/typescript-apphost-package/packages/*.nupkg"
           --api-key "${{ secrets.NUGET_API_KEY }}"
           --source https://api.nuget.org/v3/index.json
           --skip-duplicate
 
       - name: Publish symbols
         run: >
-          dotnet nuget push "artifacts/packages/*.snupkg"
+          dotnet nuget push "artifacts/typescript-apphost-package/packages/*.snupkg"
           --api-key "${{ secrets.NUGET_API_KEY }}"
           --source https://api.nuget.org/v3/index.json
           --skip-duplicate

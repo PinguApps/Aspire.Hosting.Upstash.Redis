@@ -19,7 +19,22 @@ on:
         required: false
         type: string
         default: ''
+      test_filter:
+        required: false
+        type: string
+        default: Category!=live-upstash
+    secrets:
+      UPSTASH_EMAIL:
+        required: false
+      UPSTASH_API_KEY:
+        required: false
   workflow_dispatch:
+    inputs:
+      test_filter:
+        description: Test filter passed to dotnet test
+        required: false
+        default: Category!=live-upstash
+        type: string
 
 permissions:
   contents: read
@@ -34,6 +49,8 @@ jobs:
       CI: true
       DOTNET_CLI_TELEMETRY_OPTOUT: true
       DOTNET_NOLOGO: true
+      UPSTASH_EMAIL: ${{ secrets.UPSTASH_EMAIL }}
+      UPSTASH_API_KEY: ${{ secrets.UPSTASH_API_KEY }}
 
     steps:
       - name: Checkout repository
@@ -55,11 +72,29 @@ jobs:
       - name: Run tests
         shell: pwsh
         run: |
-          dotnet test Aspire.Hosting.Upstash.Redis.slnx `
-            -c Release `
-            --no-restore `
-            --logger "trx;LogFilePrefix=test-results" `
-            --results-directory TestResults
+          $testFilter = "${{ inputs.test_filter }}"
+          if ([string]::IsNullOrWhiteSpace($testFilter)) {
+            $testFilter = "Category!=live-upstash"
+          }
+
+          $arguments = @(
+            "test",
+            "Aspire.Hosting.Upstash.Redis.slnx",
+            "-c",
+            "Release",
+            "--no-restore",
+            "--logger",
+            "trx;LogFilePrefix=test-results",
+            "--results-directory",
+            "TestResults"
+          )
+
+          if (-not [string]::IsNullOrWhiteSpace($testFilter)) {
+            $arguments += "--filter"
+            $arguments += $testFilter
+          }
+
+          dotnet $arguments
 
       - name: Publish test results
         if: (success() || failure()) && inputs.publish_test_results_to_github
