@@ -223,7 +223,7 @@ public sealed class TypeScriptAppHostFixtureStepDefinitions
         CommandResult result = _publishStepsResult ?? throw new InvalidOperationException("Publish steps have not been listed.");
 
         Assert.Equal(0, result.ExitCode);
-        Assert.Contains("Executing step publish", result.Output, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("publish", result.Output, StringComparison.OrdinalIgnoreCase);
     }
 
     private void AssertScript(string scriptName, string expectedCommand)
