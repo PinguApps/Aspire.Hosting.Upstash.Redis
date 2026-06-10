@@ -1,6 +1,38 @@
 # TypeScript AppHost Usage
 
-TypeScript AppHosts use Aspire's generated module surface from the NuGet package. In Aspire 13.4 and later, run `aspire restore` so Aspire generates `./.aspire/modules/aspire.mjs`, then import the generated Upstash value catalogs and extension methods from that file.
+TypeScript AppHosts use Aspire's generated module surface from the NuGet package.
+
+Start from a fresh AppHost:
+
+```powershell
+aspire new aspire-ts-empty --name MyApp --output .\MyApp --non-interactive
+Set-Location .\MyApp
+```
+
+Edit the generated `aspire.config.json` and add the Redis hosting package and this package (keeping the existing `appHost` section created by `aspire new aspire-ts-empty`):
+```json
+{
+  "packages": {
+    "Aspire.Hosting.Redis": "13.4.3",
+    "PinguApps.Aspire.Hosting.Upstash.Redis": "<package version>"
+  },
+  "Parameters": {
+    "upstash-database-name": "typescript-demo-cache",
+    "upstash-account-email": "demo@example.com",
+    "upstash-api-key": "demo-management-api-key"
+  }
+}
+```
+
+When validating this repository checkout instead of the published package, point `PinguApps.Aspire.Hosting.Upstash.Redis` at the local project path instead of a version string.
+
+Then generate the TypeScript surface:
+
+```powershell
+aspire restore --non-interactive
+```
+
+Import the generated Upstash value catalogs and extension methods from `./.aspire/modules/aspire.mjs`:
 
 ```ts
 import {
@@ -34,6 +66,34 @@ await app.run();
 ```
 
 The maintained TypeScript demo is [`samples/TypeScriptAppHost/apphost.mts`](../samples/TypeScriptAppHost/apphost.mts). The tested fixture is [`tests/Aspire.Hosting.Upstash.Redis/Fixtures/TypeScriptAppHost/apphost.mts`](../tests/Aspire.Hosting.Upstash.Redis/Fixtures/TypeScriptAppHost/apphost.mts).
+
+## Local Validation
+
+From the AppHost directory:
+
+```powershell
+npm install --no-audit --no-fund
+npm run typecheck
+aspire publish --non-interactive --list-steps
+aspire start --non-interactive --isolated
+aspire wait cache --status healthy --timeout 120 --non-interactive
+aspire stop --non-interactive
+```
+
+The local path continues to use standard Aspire Redis behaviour. Upstash credentials are deploy-time inputs, but local demo commands are easier if `aspire.config.json` contains placeholder `Parameters` values like the example above.
+
+## Deploy
+
+For non-interactive deploys, provide real values as Aspire parameter environment variables:
+
+```powershell
+$env:Parameters__upstash_database_name = "upstash-ts-test"
+$env:Parameters__upstash_account_email = $env:UPSTASH_EMAIL
+$env:Parameters__upstash_api_key = $env:UPSTASH_API_KEY
+aspire deploy --non-interactive --pipeline-log-level debug
+```
+
+Run the same deploy again to verify that the package reuses the same configured remote database name instead of creating a second database.
 
 ## Shape Differences From C#
 

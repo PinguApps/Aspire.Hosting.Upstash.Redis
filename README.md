@@ -6,14 +6,34 @@
 
 - Package id: [`PinguApps.Aspire.Hosting.Upstash.Redis`](https://www.nuget.org/packages/PinguApps.Aspire.Hosting.Upstash.Redis/)
 - Distribution: NuGet for both C# and TypeScript AppHosts
+- Tested Aspire baseline: `13.4.3`
 - Provider scope: Upstash Redis through the Upstash Developer API
 - Local behaviour: standard Aspire Redis
 - Deploy behaviour: opt-in Upstash create/adopt/reconcile flow
 
-Install the package in the AppHost project:
+## Install
+
+C# AppHost:
 
 ```powershell
 dotnet add package PinguApps.Aspire.Hosting.Upstash.Redis
+```
+
+TypeScript AppHost:
+
+```json
+{
+  "packages": {
+    "Aspire.Hosting.Redis": "13.4.3",
+    "PinguApps.Aspire.Hosting.Upstash.Redis": "<package version>"
+  }
+}
+```
+
+Then run:
+
+```powershell
+aspire restore --non-interactive
 ```
 
 No npm package is required for the integration itself. TypeScript AppHosts consume the same NuGet package through Aspire's generated guest-language module flow.
@@ -88,13 +108,7 @@ const app = await builder.build();
 await app.run();
 ```
 
-## Behaviour Summary
-
-`builder.AddRedis("cache")` remains the resource of record. `PublishToUpstash(...)` or `publishToUpstash(...)` attaches deploy-time intent to that normal Redis resource.
-
-Local runs keep using standard Aspire Redis behaviour and do not call Upstash while the AppHost model is built. During `aspire deploy`, the package resolves parameters, creates or adopts the named Upstash database, reconciles explicitly configured mutable settings, fails on unsafe drift, and redirects app-facing Redis connection details to Upstash.
-
-Required deploy-time inputs are:
+## Deploy Inputs
 
 | Input | Purpose |
 | --- | --- |
@@ -103,6 +117,20 @@ Required deploy-time inputs are:
 | `upstash-api-key` | Infrastructure-only Upstash Management API key. Mark it secret. |
 
 The management API key is never exposed as an application-facing Redis output.
+
+For non-interactive deploys, provide real values as Aspire parameter environment variables:
+
+```powershell
+$env:Parameters__upstash_database_name = "upstash-ts-test"
+$env:Parameters__upstash_account_email = $env:UPSTASH_EMAIL
+$env:Parameters__upstash_api_key = $env:UPSTASH_API_KEY
+```
+
+## Behaviour Summary
+
+`builder.AddRedis("cache")` remains the resource of record. `PublishToUpstash(...)` or `publishToUpstash(...)` attaches deploy-time intent to that normal Redis resource.
+
+Local runs keep using standard Aspire Redis behaviour and do not call Upstash while the AppHost model is built. During `aspire deploy`, the package resolves parameters, creates or adopts the named Upstash database, reconciles explicitly configured mutable settings, fails on unsafe drift, and redirects app-facing Redis connection details to Upstash.
 
 ## Docs
 
@@ -114,4 +142,3 @@ The management API key is never exposed as an application-facing Redis output.
 - [Deployment behaviour](https://github.com/PinguApps/Aspire.Hosting.Upstash.Redis/blob/main/docs/deployment-behaviour.md)
 - [Outputs and security boundaries](https://github.com/PinguApps/Aspire.Hosting.Upstash.Redis/blob/main/docs/outputs-and-security.md)
 - [Samples and demos](https://github.com/PinguApps/Aspire.Hosting.Upstash.Redis/blob/main/docs/samples-and-demos.md)
-- [Testing guidance](https://github.com/PinguApps/Aspire.Hosting.Upstash.Redis/blob/main/docs/testing.md)

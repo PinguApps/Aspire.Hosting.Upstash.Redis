@@ -15,6 +15,12 @@ During `aspire deploy`, the package:
 7. Retrieves final Redis connection details.
 8. Redirects the standard Aspire Redis connection output to Upstash.
 
+## Deploy Step
+
+The deploy pipeline adds a dedicated step for the Redis resource, named `upstash-redis-<resource-name>`.
+
+For a resource named `cache`, `aspire deploy --non-interactive --list-steps` should show an `upstash-redis-cache` step between deploy prerequisites and the final deploy step.
+
 ## Repeated Deployments
 
 The configured database name is the stable remote identity. Repeated deployments target that name.

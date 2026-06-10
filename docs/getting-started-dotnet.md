@@ -1,6 +1,12 @@
 # C# AppHost Usage
 
-Start with standard Aspire Redis and add `PublishToUpstash`.
+Install the package in the AppHost:
+
+```powershell
+dotnet add package PinguApps.Aspire.Hosting.Upstash.Redis
+```
+
+Then start with standard Aspire Redis and add `PublishToUpstash`.
 
 ```csharp
 using Aspire.Hosting;
@@ -34,6 +40,19 @@ builder.Build().Run();
 ```
 
 The maintained compile-validated C# sample is [`samples/AppHostSnippets/UpstashRedisAppHostSnippets.cs`](../samples/AppHostSnippets/UpstashRedisAppHostSnippets.cs).
+
+## Deploy
+
+Run deploys from the AppHost directory. For non-interactive deploys, provide the required values as Aspire parameter environment variables:
+
+```powershell
+$env:Parameters__upstash_database_name = "orders-cache"
+$env:Parameters__upstash_account_email = $env:UPSTASH_EMAIL
+$env:Parameters__upstash_api_key = $env:UPSTASH_API_KEY
+aspire deploy --non-interactive --pipeline-log-level debug
+```
+
+Repeated deploys should target the same configured database name.
 
 ## Overload Shapes
 

@@ -274,6 +274,7 @@ public sealed class PublishToUpstashStepDefinitions
     {
         MethodInfo publishMethod = typeof(UpstashRedisBuilderExtensions).GetMethod(nameof(UpstashRedisBuilderExtensions.PublishToUpstashForTypeScript))
             ?? throw new InvalidOperationException("The TypeScript publish bridge was not found.");
+        Assert.Equal("PinguApps.Aspire.Hosting.Upstash.Redis", publishMethod.DeclaringType?.Assembly.GetName().Name);
         AspireExportAttribute publishExport = Assert.Single(publishMethod.GetCustomAttributes<AspireExportAttribute>());
         Assert.Equal("pinguapps.upstash.redis.publishToUpstash", publishExport.Id);
         Assert.Equal("publishToUpstash", publishExport.MethodName);
