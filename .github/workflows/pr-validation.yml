@@ -37,7 +37,7 @@ jobs:
 
       - name: Setup Aspire CLI
         run: |
-          dotnet tool install -g Aspire.Cli --version 13.4.3
+          dotnet tool install -g Aspire.Cli --version 13.4.6
           echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
 
       - name: Validate NuGet-backed TypeScript AppHost fixture

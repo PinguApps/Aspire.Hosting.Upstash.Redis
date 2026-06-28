@@ -6,7 +6,7 @@
 
 - Package id: [`PinguApps.Aspire.Hosting.Upstash.Redis`](https://www.nuget.org/packages/PinguApps.Aspire.Hosting.Upstash.Redis/)
 - Distribution: NuGet for both C# and TypeScript AppHosts
-- Tested Aspire baseline: `13.4.3`
+- Tested Aspire baseline: `13.4.6`
 - Provider scope: Upstash Redis through the Upstash Developer API
 - Local behaviour: standard Aspire Redis
 - Deploy behaviour: opt-in Upstash create/adopt/reconcile flow
@@ -24,7 +24,7 @@ TypeScript AppHost:
 ```json
 {
   "packages": {
-    "Aspire.Hosting.Redis": "13.4.3",
+    "Aspire.Hosting.Redis": "13.4.6",
     "PinguApps.Aspire.Hosting.Upstash.Redis": "<package version>"
   }
 }
