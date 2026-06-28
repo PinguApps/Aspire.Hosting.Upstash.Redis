@@ -61,6 +61,10 @@ jobs:
         with:
           global-json-file: global.json
 
+      - name: Validate Aspire version pins
+        shell: pwsh
+        run: ./eng/Test-AspireVersionPins.ps1
+
       - name: Setup Aspire CLI
         run: |
           dotnet tool install -g Aspire.Cli --version 13.4.6

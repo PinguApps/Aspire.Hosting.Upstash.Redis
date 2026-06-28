@@ -2,5 +2,63 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "local>PinguApps/renovate-config"
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/(^|/)\\.github/workflows/.+\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "dotnet tool install -g Aspire\\.Cli --version (?<currentValue>\\S+)"
+      ],
+      "datasourceTemplate": "nuget",
+      "depNameTemplate": "Aspire.Cli"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/(^|/)(samples/TypeScriptAppHost|tests/Aspire\\.Hosting\\.Upstash\\.Redis/Fixtures/TypeScriptAppHost)/aspire\\.config\\.json$/"
+      ],
+      "matchStrings": [
+        "\"sdk\"\\s*:\\s*\\{\\s*\"version\"\\s*:\\s*\"(?<currentValue>[^\"]+)\""
+      ],
+      "datasourceTemplate": "nuget",
+      "depNameTemplate": "Aspire.Cli"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/(^|/)(README\\.md|samples/TypeScriptAppHost/aspire\\.config\\.json|tests/Aspire\\.Hosting\\.Upstash\\.Redis/Fixtures/TypeScriptAppHost/aspire\\.config\\.json)$/"
+      ],
+      "matchStrings": [
+        "\"Aspire\\.Hosting\\.Redis\"\\s*:\\s*\"(?<currentValue>[^\"]+)\""
+      ],
+      "datasourceTemplate": "nuget",
+      "depNameTemplate": "Aspire.Hosting.Redis"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/(^|/)(README|AGENTS)\\.md$/"
+      ],
+      "matchStrings": [
+        "Tested Aspire baseline:\\s*`(?<currentValue>[^`]+)`",
+        "Target Aspire version:\\s*`(?<currentValue>[^`]+)`"
+      ],
+      "datasourceTemplate": "nuget",
+      "depNameTemplate": "Aspire.Hosting"
+    }
+  ],
+  "packageRules": [
+    {
+      "matchPackageNames": [
+        "Aspire.Cli",
+        "Aspire.Hosting",
+        "Aspire.Hosting.Redis"
+      ],
+      "groupName": "aspire monorepo",
+      "groupSlug": "aspire-monorepo"
+    }
   ]
 }
