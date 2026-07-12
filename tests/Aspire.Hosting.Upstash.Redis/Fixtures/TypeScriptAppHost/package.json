@@ -17,6 +17,6 @@
     "@types/node": "24.13.2",
     "tsx": "4.23.0",
     "vscode-jsonrpc": "8.2.1",
-    "typescript": "6.0.3"
+    "typescript": "7.0.2"
   }
 }
