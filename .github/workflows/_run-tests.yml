@@ -83,14 +83,17 @@ jobs:
 
           $arguments = @(
             "test",
+            "--solution",
             "Aspire.Hosting.Upstash.Redis.slnx",
             "-c",
             "Release",
             "--no-restore",
-            "--logger",
-            "trx;LogFilePrefix=test-results",
             "--results-directory",
-            "TestResults"
+            "TestResults",
+            "--",
+            "--report-xunit-trx",
+            "--report-xunit-trx-filename",
+            "test-results.trx"
           )
 
           if (-not [string]::IsNullOrWhiteSpace($testFilter)) {
