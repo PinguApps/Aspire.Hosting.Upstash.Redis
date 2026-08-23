@@ -4,11 +4,11 @@
     "language": "typescript/nodejs"
   },
   "sdk": {
-    "version": "13.5.1"
+    "version": "13.5.2"
   },
   "channel": "stable",
   "packages": {
-    "Aspire.Hosting.Redis": "13.5.1",
+    "Aspire.Hosting.Redis": "13.5.2",
     "PinguApps.Aspire.Hosting.Upstash.Redis": "../../../../src/Aspire.Hosting.Upstash.Redis/Aspire.Hosting.Upstash.Redis.csproj"
   },
   "Parameters": {
