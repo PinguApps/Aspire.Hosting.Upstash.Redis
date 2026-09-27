@@ -35,8 +35,10 @@ jobs:
 
       - name: Resolve package version
         shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag }}
         run: |
-          $version = "${{ github.event.release.tag_name || inputs.tag }}"
+          $version = $env:RELEASE_TAG
           if ($version.StartsWith("v")) {
             $version = $version.Substring(1)
           }
