@@ -1,0 +1,7 @@
+# PR Agent review scope; use $pragent-ignore when assessing new outputs.
+# Aspire-generated SDK bindings vendored from microsoft/aspire-skills (see skills-lock.json).
+# Keep fixture inputs, transport code, generator hashes and skill instructions reviewable.
+/.agents/skills/aspire/evals/fixtures/ts-apphost/.modules/aspire.ts
+/.agents/skills/aspire-deployment/evals/fixtures/ts-apphost/.modules/aspire.ts
+/.agents/skills/aspire-monitoring/evals/fixtures/ts-apphost/.modules/aspire.ts
+/.agents/skills/aspire-orchestration/evals/fixtures/ts-apphost/.modules/aspire.ts
