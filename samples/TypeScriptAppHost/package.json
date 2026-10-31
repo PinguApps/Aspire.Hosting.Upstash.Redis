@@ -14,7 +14,7 @@
     "node": "^20.19.0 || ^22.13.0 || >=24"
   },
   "devDependencies": {
-    "@types/node": "26.6.5",
+    "@types/node": "26.6.6",
     "tsx": "4.23.15",
     "typescript": "7.0.2",
     "vscode-jsonrpc": "8.2.1"
