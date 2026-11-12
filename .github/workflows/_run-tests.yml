@@ -67,7 +67,7 @@ jobs:
 
       - name: Setup Aspire CLI
         run: |
-          dotnet tool install -g Aspire.Cli --version 13.5.2
+          dotnet tool install -g Aspire.Cli --version 13.6.5
           echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
 
       - name: Restore solution

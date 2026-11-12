@@ -237,7 +237,7 @@ public sealed class UpstashRedisDeploymentOptions
         if (ReadRegions is not null)
         {
             List<UpstashRedisProviderValue> mappedReadRegions = [];
-            HashSet<string> literalReadRegions = new(StringComparer.Ordinal);
+            HashSet<string> literalReadRegions = [with(StringComparer.Ordinal)];
 
             foreach (UpstashRedisValue readRegion in ReadRegions)
             {
