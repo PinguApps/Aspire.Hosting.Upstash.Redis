@@ -13,6 +13,7 @@ It covers:
 - supplementary output consumption
 
 The test suite compiles these snippets through the test project so the docs do not drift from the public API.
+The `samples/Api/Api.csproj` fixture lets Aspire resolve the snippet's project path during model construction. Use your own runnable API project when copying the snippet into an AppHost.
 
 ## TypeScript Demo
 

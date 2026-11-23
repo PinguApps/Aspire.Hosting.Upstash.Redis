@@ -17,9 +17,8 @@ C# AppHost:
 
 ```powershell
 dotnet add package PinguApps.Aspire.Hosting.Upstash.Redis
+dotnet add package Aspire.Hosting.Dotnet --version 17.0.0
 ```
-
-The C# example uses `AddDotnetProject` from `Aspire.Hosting.Dotnet`.
 
 TypeScript AppHost:
 
