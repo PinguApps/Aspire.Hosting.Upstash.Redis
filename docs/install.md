@@ -1,5 +1,7 @@
 # Install
 
+This package requires Aspire 17.0.0 or later.
+
 ## C# AppHost
 
 ```powershell
@@ -21,7 +23,7 @@ For a released package:
 ```json
 {
   "packages": {
-    "Aspire.Hosting.Redis": "13.4.3",
+    "Aspire.Hosting.Redis": "17.0.0",
     "PinguApps.Aspire.Hosting.Upstash.Redis": "<package version>"
   }
 }
@@ -32,7 +34,7 @@ When validating this repository checkout instead of the published package, point
 ```json
 {
   "packages": {
-    "Aspire.Hosting.Redis": "13.4.3",
+    "Aspire.Hosting.Redis": "17.0.0",
     "PinguApps.Aspire.Hosting.Upstash.Redis": "../../src/Aspire.Hosting.Upstash.Redis/Aspire.Hosting.Upstash.Redis.csproj"
   }
 }

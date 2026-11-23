@@ -13,7 +13,7 @@ Edit the generated `aspire.config.json` and add the Redis hosting package and th
 ```json
 {
   "packages": {
-    "Aspire.Hosting.Redis": "13.4.3",
+    "Aspire.Hosting.Redis": "17.0.0",
     "PinguApps.Aspire.Hosting.Upstash.Redis": "<package version>"
   },
   "Parameters": {

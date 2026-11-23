@@ -1,5 +1,3 @@
-#pragma warning disable ASPIREPIPELINES001
-
 using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Pipelines;
 using Aspire.Hosting.Upstash.Redis;

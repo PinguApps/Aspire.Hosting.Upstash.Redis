@@ -54,6 +54,7 @@ if ([string]::IsNullOrWhiteSpace($baseline)) {
   throw "Missing Aspire.Hosting baseline in Directory.Packages.props."
 }
 
+Add-Pin -Path "Directory.Packages.props" -Name "Aspire.Hosting.Dotnet" -Version $packageVersions["Aspire.Hosting.Dotnet"]
 Add-Pin -Path "Directory.Packages.props" -Name "Aspire.Hosting.Redis" -Version $packageVersions["Aspire.Hosting.Redis"]
 
 $typeScriptConfigPaths = @(
@@ -77,8 +78,12 @@ foreach ($path in $workflowPaths) {
   Add-RegexPin -Path $path -Name "Aspire.Cli" -Pattern "dotnet tool install -g Aspire\.Cli --version (?<version>\S+)"
 }
 
-Add-RegexPin -Path "README.md" -Name "Tested Aspire baseline" -Pattern 'Tested Aspire baseline:\s*`(?<version>[^`]+)`'
+Add-RegexPin -Path "README.md" -Name "Minimum supported Aspire version" -Pattern 'Minimum supported Aspire version:\s*`(?<version>[^`]+)`'
 Add-RegexPin -Path "README.md" -Name "Aspire.Hosting.Redis sample" -Pattern '"Aspire\.Hosting\.Redis"\s*:\s*"(?<version>[^"]+)"'
+foreach ($path in @("docs/install.md", "docs/getting-started-typescript.md")) {
+  Add-RegexPin -Path $path -Name "Aspire.Hosting.Redis sample" -Pattern '"Aspire\.Hosting\.Redis"\s*:\s*"(?<version>[^"]+)"'
+}
+
 Add-RegexPin -Path "AGENTS.md" -Name "Target Aspire version" -Pattern 'Target Aspire version:\s*`(?<version>[^`]+)`'
 
 $driftedPins = $pins | Where-Object { $_.Version -ne $baseline }

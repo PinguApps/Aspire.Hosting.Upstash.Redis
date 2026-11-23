@@ -26,7 +26,7 @@ public static class UpstashRedisAppHostSnippets
                     options.Eviction = true;
                 });
 
-        builder.AddProject<Projects.Api>("api")
+        builder.AddDotnetProject("api", "../Api/Api.csproj")
             .WithReference(cache);
     }
 

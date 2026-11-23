@@ -1,5 +1,3 @@
-#pragma warning disable ASPIREPIPELINES002
-
 using System.Text.Json.Nodes;
 using Aspire.Hosting.Pipelines;
 
