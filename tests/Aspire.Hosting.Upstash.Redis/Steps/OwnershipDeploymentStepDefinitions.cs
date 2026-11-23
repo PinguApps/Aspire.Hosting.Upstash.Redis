@@ -1,6 +1,3 @@
-#pragma warning disable ASPIREPIPELINES001
-#pragma warning disable ASPIREPIPELINES002
-
 using System.Net;
 using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;

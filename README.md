@@ -6,7 +6,7 @@
 
 - Package id: [`PinguApps.Aspire.Hosting.Upstash.Redis`](https://www.nuget.org/packages/PinguApps.Aspire.Hosting.Upstash.Redis/)
 - Distribution: NuGet for both C# and TypeScript AppHosts
-- Tested Aspire baseline: `13.6.5`
+- Minimum supported Aspire version: `17.0.0`
 - Provider scope: Upstash Redis through the Upstash Developer API
 - Local behaviour: standard Aspire Redis
 - Deploy behaviour: opt-in Upstash create/adopt/reconcile flow
@@ -17,6 +17,7 @@ C# AppHost:
 
 ```powershell
 dotnet add package PinguApps.Aspire.Hosting.Upstash.Redis
+dotnet add package Aspire.Hosting.Dotnet --version 17.0.0
 ```
 
 TypeScript AppHost:
@@ -24,7 +25,7 @@ TypeScript AppHost:
 ```json
 {
   "packages": {
-    "Aspire.Hosting.Redis": "13.6.5",
+    "Aspire.Hosting.Redis": "17.0.0",
     "PinguApps.Aspire.Hosting.Upstash.Redis": "<package version>"
   }
 }
@@ -67,7 +68,7 @@ IResourceBuilder<RedisResource> cache = builder.AddRedis("cache")
             options.Eviction = true;
         });
 
-builder.AddProject<Projects.Api>("api")
+builder.AddDotnetProject("api", "../Api/Api.csproj")
     .WithReference(cache);
 
 builder.Build().Run();

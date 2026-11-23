@@ -25,7 +25,10 @@ public sealed class AppHostSnippetsStepDefinitions
 
         foreach (Action<IDistributedApplicationBuilder> snippet in snippets)
         {
-            snippet(DistributedApplication.CreateBuilder());
+            snippet(DistributedApplication.CreateBuilder(new DistributedApplicationOptions
+            {
+                ProjectDirectory = Path.Combine(FindRepositoryRoot(), "samples", "AppHostSnippets"),
+            }));
         }
 
         _sampleMethodNames = snippets

@@ -7,7 +7,7 @@ There are two application-facing output paths.
 This is the recommended path:
 
 ```csharp
-builder.AddProject<Projects.Api>("api")
+builder.AddDotnetProject("api", "../Api/Api.csproj")
     .WithReference(cache);
 ```
 

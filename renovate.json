@@ -43,7 +43,7 @@
         "/(^|/)(README|AGENTS)\\.md$/"
       ],
       "matchStrings": [
-        "Tested Aspire baseline:\\s*`(?<currentValue>[^`]+)`",
+        "Minimum supported Aspire version:\\s*`(?<currentValue>[^`]+)`",
         "Target Aspire version:\\s*`(?<currentValue>[^`]+)`"
       ],
       "datasourceTemplate": "nuget",
@@ -53,12 +53,9 @@
   "packageRules": [
     {
       "matchPackageNames": [
-        "Aspire.Cli",
-        "Aspire.Hosting",
-        "Aspire.Hosting.Redis"
+        "/^Aspire(?:\\.|$)/i"
       ],
-      "groupName": "aspire monorepo",
-      "groupSlug": "aspire-monorepo"
+      "enabled": false
     }
   ]
 }

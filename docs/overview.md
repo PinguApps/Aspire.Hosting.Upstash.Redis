@@ -24,7 +24,7 @@ C# AppHosts add `.PublishToUpstash(...)`. TypeScript AppHosts add `await cache.p
 In both languages the resource remains a normal Redis resource for consumers:
 
 ```csharp
-builder.AddProject<Projects.Api>("api")
+builder.AddDotnetProject("api", "../Api/Api.csproj")
     .WithReference(cache);
 ```
 

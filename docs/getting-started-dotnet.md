@@ -4,6 +4,7 @@ Install the package in the AppHost:
 
 ```powershell
 dotnet add package PinguApps.Aspire.Hosting.Upstash.Redis
+dotnet add package Aspire.Hosting.Dotnet --version 17.0.0
 ```
 
 Then start with standard Aspire Redis and add `PublishToUpstash`.
@@ -33,7 +34,7 @@ IResourceBuilder<RedisResource> cache = builder.AddRedis("cache")
             options.Eviction = true;
         });
 
-builder.AddProject<Projects.Api>("api")
+builder.AddDotnetProject("api", "../Api/Api.csproj")
     .WithReference(cache);
 
 builder.Build().Run();

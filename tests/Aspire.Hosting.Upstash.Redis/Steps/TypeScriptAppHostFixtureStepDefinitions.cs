@@ -293,6 +293,16 @@ public sealed class TypeScriptAppHostFixtureStepDefinitions
 
     private static string? FindExecutable(string executableName)
     {
+        if (executableName == "aspire" && Environment.GetEnvironmentVariable("ASPIRE_TEST_CLI_PATH") is { Length: > 0 } aspirePath)
+        {
+            if (!Path.IsPathFullyQualified(aspirePath) || !File.Exists(aspirePath))
+            {
+                throw new InvalidOperationException("ASPIRE_TEST_CLI_PATH must identify an existing Aspire CLI executable by absolute path.");
+            }
+
+            return aspirePath;
+        }
+
         string? path = Environment.GetEnvironmentVariable("PATH");
 
         if (string.IsNullOrWhiteSpace(path))
